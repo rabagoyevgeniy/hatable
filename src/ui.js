@@ -92,7 +92,9 @@ export function renderCraft(player) {
 }
 
 export function renderStorage(world) {
-  fillItemList($("storage-list"), world.locker.storage, false);
+  const list = $("storage-list");
+  list.innerHTML = "";
+  fillItemList(list, world.locker.storage, false);
 }
 
 export function renderInv(player) {

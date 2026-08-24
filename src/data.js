@@ -34,17 +34,17 @@ export const CONSUME = {
 /** Seconds-ish rates per second of game time. Walking and storms cost more. */
 export const SURVIVAL = {
   pocketMax: 8,
-  hungerWalk: 0.95,
-  hungerIdle: 0.48,
-  hungerHab: 0.26,
-  thirstWalk: 1.45,
-  thirstIdle: 0.82,
-  thirstHab: 0.44,
-  o2Outside: 0.48,
-  o2Storm: 0.95,
-  warmthNight: 8.5,
-  warmthDay: 1.6,
-  starveSlow: 0.52,
+  hungerWalk: 0.38,
+  hungerIdle: 0.18,
+  hungerHab: 0.1,
+  thirstWalk: 0.42,
+  thirstIdle: 0.22,
+  thirstHab: 0.12,
+  o2Outside: 0.28,
+  o2Storm: 0.55,
+  warmthNight: 1.15,
+  warmthDay: 0.32,
+  starveSlow: 0.62,
 };
 
 export const NODE_SPAWNS = [

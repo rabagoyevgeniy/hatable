@@ -376,7 +376,7 @@ export function boot() {
   }
 
   function placeCamera(dt) {
-    const dist = 8.7;
+    const dist = 9.2;
     const height = 2.55 + player.pitch * 1.15;
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
@@ -386,6 +386,22 @@ export function boot() {
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
     const minY = heightAt(camera.position.x, camera.position.z) + 1.55;
     if (camera.position.y < minY) camera.position.y = minY;
+    const habDx = camera.position.x;
+    const habDz = camera.position.z - 8;
+    const habR = Math.hypot(habDx, habDz);
+    if (habR < 5.1 && camera.position.y < 4.2) {
+      camera.position.x = (habDx / (habR || 1)) * 5.1;
+      camera.position.z = 8 + (habDz / (habR || 1)) * 5.1;
+    }
+    const lx = world.locker.x;
+    const lz = world.locker.z;
+    const ldx = camera.position.x - lx;
+    const ldz = camera.position.z - lz;
+    const lr = Math.hypot(ldx, ldz);
+    if (lr < 1.7) {
+      camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
+      camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
+    }
     camera.lookAt(player.root.position.x, player.root.position.y + 1.32, player.root.position.z);
   }
 
