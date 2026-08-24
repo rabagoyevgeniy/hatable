@@ -86,7 +86,7 @@ export function createWorld(scene) {
     locker: { x: 3.1, z: 12.3, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
-    clock: 0.22,
+    playTime: 0,
     daylight: 1,
     habSealed: false,
     powered: false,
@@ -442,8 +442,11 @@ export function placementSpot(player) {
   return { x, z, y: heightAt(x, z) };
 }
 
-export function updateWorld(world, dt, playerPos, scanning) {
-  world.clock = (world.clock + dt / 220) % 1;
+export function updateWorld(world, dt, playerPos, scanning, playing = true) {
+  if (playing) {
+    world.clock = (world.clock + dt / 220) % 1;
+    world.playTime = (world.playTime || 0) + dt;
+  }
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
   const night = 1 - world.daylight;
   const ang = world.clock * Math.PI * 2;
@@ -468,7 +471,12 @@ export function updateWorld(world, dt, playerPos, scanning) {
   world.scene.fog.density = 0.009 + night * 0.007 + world.storm * 0.022;
 
   world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.35);
-  if (Math.random() < dt * 0.0045) world.stormTarget = Math.random() < 0.2 ? 0.82 : 0.04;
+  if (!playing || (world.playTime || 0) < 160) {
+    world.stormTarget = 0.04;
+    world.storm = Math.min(world.storm, 0.12);
+  } else if (Math.random() < dt * 0.0032) {
+    world.stormTarget = Math.random() < 0.18 ? 0.82 : 0.04;
+  }
 
   const dustPos = world.dust.geometry.attributes.position;
   const n = world.dust.userData.n;

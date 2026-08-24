@@ -469,7 +469,7 @@ export function boot() {
     if (playing) {
       const result = updatePlayer(player, dt, inputState(), world);
       if (result.blackout) toast(t("warnO2"));
-      updateWorld(world, dt, player.root.position, scanning);
+      updateWorld(world, dt, player.root.position, scanning, true);
       tickStill(
         dt,
         world.stations.some((s) => s.type === "still" && s.fuel > 0)
@@ -486,7 +486,7 @@ export function boot() {
     } else {
       camera.position.set(8, 10, 34);
       camera.lookAt(0, 2.2, 12);
-      updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false);
+      updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
     lookX *= 0.6;
