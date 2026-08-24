@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
-import { RECIPES, OUTPOSTS, SURVIVAL } from "./data.js";
-import { createWorld, updateWorld, placeStation, placementSpot, spawnNode, updatePlotVisual } from "./world.js";
+import { RECIPES, SURVIVAL } from "./data.js";
+import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual } from "./world.js";
 import {
   createPlayer,
   updatePlayer,
@@ -140,7 +140,7 @@ export function boot() {
     if (e.code === "Escape") {
       if (player.placing) {
         player.placing = null;
-        world.ghost.visible = false;
+        setGhost(world, null);
         toast(t("cancelPlace"));
       }
       closeMenus();
@@ -190,13 +190,10 @@ export function boot() {
     if (!hit) return;
     if (hit.kind === "place") {
       const rec = player.placing;
-      const spot = placementSpot(player);
-      if (rec.near) {
-        const site = OUTPOSTS.find((o) => o.id === rec.near);
-        if (Math.hypot(spot.x - site.x, spot.z - site.z) > 14) {
-          toast(t("needNear"));
-          return;
-        }
+      const spot = resolvePlacement(world, rec, player);
+      if (!spot.valid) {
+        toast(t("needNear"));
+        return;
       }
       if (!takeItems(player, rec.need)) {
         toast(t("needMats"));
@@ -204,7 +201,7 @@ export function boot() {
       }
       placeStation(world, rec.station, spot.x, spot.z);
       player.placing = null;
-      world.ghost.visible = false;
+      setGhost(world, null);
       deliverTone();
       toast(`${t("placed")} · ${loc(rec.title)}`);
       maybeGoal();
@@ -233,11 +230,13 @@ export function boot() {
       return;
     }
     if (hit.kind === "sleep") {
-      const result = trySleep(player, world);
-      toast(t(result));
       if (result === "slept") {
         sleepTone();
         journal.sols += 1;
+        const plot = world.stations.find((s) => s.type === "plot" && s.planted);
+        toast(plot ? `${t("slept")} · ${Math.floor(plot.grow * 100)}%` : t("slept"));
+      } else {
+        toast(t(result));
       }
       return;
     }
@@ -274,7 +273,12 @@ export function boot() {
       return;
     }
     if (hit.kind === "harvest-plot") {
-      addItem(player, "potato", 2);
+      let n = 3;
+      while (n && !addItem(player, "potato", n)) n -= 1;
+      if (!n) {
+        toast(t("pocketsFull"));
+        return;
+      }
       player.harvestedCrop = true;
       hit.station.planted = false;
       hit.station.grow = 0;
@@ -456,11 +460,10 @@ export function boot() {
     scanning = playing && keys.has("KeyF");
 
     if (player.placing) {
-      const spot = placementSpot(player);
-      world.ghost.visible = true;
-      world.ghost.position.set(spot.x, spot.y + 0.6, spot.z);
+      const spot = resolvePlacement(world, player.placing, player);
+      setGhost(world, player.placing, spot);
     } else {
-      world.ghost.visible = false;
+      setGhost(world, null);
     }
 
     if (playing) {
@@ -479,7 +482,7 @@ export function boot() {
       });
       placeCamera(dt);
       if (currentGoal(journal)?.id === "escape") maybeGoal();
-      updateHud({ player, world, journal, scanning, camera });
+      updateHud({ player, world, journal, scanning, camera, inside: result.inside });
     } else {
       camera.position.set(8, 10, 34);
       camera.lookAt(0, 2.2, 12);

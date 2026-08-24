@@ -84,6 +84,13 @@ export const NODE_SPAWNS = [
   { type: "scrap", x: 200, z: -160, needHammer: true, amount: 2 },
 ];
 
+export const YARD_PADS = [
+  { id: "still", station: "still", x: -6.4, z: 10.6, label: { en: "STILL PAD", ru: "ДИСТИЛЛЯТОР" } },
+  { id: "plot", station: "plot", x: -9.2, z: 5.4, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
+  { id: "plot2", station: "plot", x: -11.6, z: 9.4, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
+  { id: "solar", station: "solar", x: 7.6, z: 3.8, label: { en: "SOLAR PAD", ru: "ПАНЕЛИ" } },
+];
+
 export const LOCKER_START = { potato: 2, tape: 1 };
 
 export const RECIPES = [
@@ -102,7 +109,7 @@ export const RECIPES = [
     near: "hab",
     need: { fabric: 2, tape: 1 },
     title: { en: "Hab seal", ru: "Заплата Hab" },
-    brief: { en: "Canvas + tape. Patch the hole or the O₂ keeps leaving.", ru: "Брезент + скотч. Заделай дыру, или кислород уйдёт." },
+    brief: { en: "Two canvas, one tape from the locker. E at the Hab — the patch sits on the leak.", ru: "Два брезента, скотч из шкафа. E у Hab — заплата сядет на дыру." },
   },
   {
     id: "still",
@@ -111,7 +118,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { scrap: 2, fabric: 1, ice: 1 },
     title: { en: "Water still", ru: "Дистиллятор" },
-    brief: { en: "Hammer + scrap, canvas, ice. Fuel with ice or hydrazine, then drink.", ru: "Молоток + лом, брезент, лёд. Заправь льдом или гидразином и пей." },
+    brief: { en: "2 scrap, canvas, ice. Place on the amber STILL ring west of the airlock.", ru: "2 лома, брезент, лёд. Ставь на янтарное кольцо ДИСТИЛЛЯТОР слева от шлюза." },
   },
   {
     id: "plot",
@@ -120,7 +127,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { soil: 2, scrap: 1 },
     title: { en: "Farm plot", ru: "Грядка" },
-    brief: { en: "Regolith box. Plant a potato, wait, harvest more.", ru: "Ящик с реголитом. Посади картофель, подожди, сними урожай." },
+    brief: { en: "2 soil west of Hab + scrap. Place on a PLOT ring. Plant, sleep or water, harvest three.", ru: "2 грунта к западу от Hab + лом. Ставь на кольцо ГРЯДКА. Посадка, сон или полив, урожай — три." },
   },
   {
     id: "solar",
@@ -142,6 +149,17 @@ export const RECIPES = [
     brief: { en: "Place it at Pathfinder. Hello, Earth.", ru: "Поставь у Pathfinder. Привет, Земля." },
   },
 ];
+
+export const GOAL_DEST = {
+  gather: { x: 1.4, z: 16.4 },
+  hammer: { x: 0, z: 8 },
+  seal: { x: 0, z: 8 },
+  water: { x: -6.4, z: 10.6 },
+  farm: { x: -18, z: 13 },
+  power: { x: 48, z: 108 },
+  contact: { x: -138, z: -92 },
+  escape: { x: 196, z: -158 },
+};
 
 export const GOALS = [
   {
@@ -177,8 +195,8 @@ export const GOALS = [
     sol: 20,
     title: { en: "Seal the Hab", ru: "Запечатай Hab" },
     brief: {
-      en: "Two canvas, one tape. Place the seal at the Hab or the oxygen leak wins.",
-      ru: "Два брезента, один скотч. Поставь заплату у Hab, иначе утечка победит.",
+      en: "Two canvas, one tape (locker). Craft, then E at the Hab — the patch goes on the leak, not in the yard.",
+      ru: "Два брезента, один скотч (шкаф). Скрафть и нажми E у Hab — заплата сядет на дыру, не во двор.",
     },
     log: {
       from: "WATNEY",

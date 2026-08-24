@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, SURVIVAL, GOALS } from "./data.js";
+import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS } from "./data.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
-import { nearestOutpost } from "./world.js";
+import { nearestOutpost, resolvePlacement } from "./world.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -150,7 +150,7 @@ function needLine(need) {
     .join(" + ");
 }
 
-export function updateHud({ player, world, journal, scanning, camera }) {
+export function updateHud({ player, world, journal, scanning, camera, inside }) {
   $("bar-o2").style.width = `${player.oxygen}%`;
   $("bar-hunger").style.width = `${player.hunger}%`;
   $("bar-thirst").style.width = `${player.thirst}%`;
@@ -177,6 +177,14 @@ export function updateHud({ player, world, journal, scanning, camera }) {
     const text = goalText(goal);
     $("order-title").textContent = text.title;
     $("order-brief").textContent = text.brief;
+    const dest = GOAL_DEST[goal.id];
+    const destEl = $("order-dest");
+    if (destEl && dest) {
+      const dx = dest.x - player.root.position.x;
+      const dz = dest.z - player.root.position.z;
+      const meters = Math.round(Math.hypot(dx, dz));
+      destEl.textContent = meters < 6 ? t("here") : `${meters} м`;
+    }
     $("sol-label").textContent = `SOL ${journal.sols}`;
   }
   const tod = $("tod-label");
@@ -226,6 +234,7 @@ export function updateHud({ player, world, journal, scanning, camera }) {
   $("storm-overlay").style.opacity = String(world.storm * 0.85);
   $("night-overlay").style.opacity = String(Math.max(0, 0.55 - world.daylight));
   $("scan-overlay").style.opacity = scanning ? "1" : "0";
+  document.body.classList.toggle("inside-hab", !!inside);
 
   if (!$("craft").classList.contains("hidden")) renderCraft(player);
   if (!$("inv").classList.contains("hidden")) renderInv(player);
@@ -280,7 +289,10 @@ function colorBar(id, v) {
 }
 
 export function findInteract(player, world) {
-  if (player.placing) return { kind: "place", label: t("place") };
+  if (player.placing) {
+    const spot = resolvePlacement(world, player.placing, player);
+    return { kind: "place", label: spot.valid ? t("place") : t("needNear") };
+  }
   const p = player.root.position;
   const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
   const inside = isInsideHab(player);
@@ -412,6 +424,20 @@ function updateScanLabels(player, world, camera, scanning) {
       y: 2.2,
       z: 6.4,
       title: lang === "ru" ? "КОЙКА · СОН" : "BUNK · SLEEP",
+      sub: "",
+      loot: true,
+    });
+  }
+  for (const pad of YARD_PADS) {
+    const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
+    if (occupied) continue;
+    const d = Math.hypot(p.x - pad.x, p.z - pad.z);
+    if (d > 26 && !scanning) continue;
+    targets.push({
+      x: pad.x,
+      y: 1.8,
+      z: pad.z,
+      title: pad.label[lang] || pad.label.en,
       sub: "",
       loot: true,
     });

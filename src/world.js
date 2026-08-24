@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { heightAt, fbm } from "./noise.js";
-import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START } from "./data.js";
+import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 140;
@@ -45,12 +45,23 @@ export function createWorld(scene) {
   const scanRing = makeScanRing();
   scene.add(scanRing);
 
-  const ghost = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 1.2, 1.4),
-    new THREE.MeshBasicMaterial({ color: 0xffb15a, transparent: true, opacity: 0.35 })
-  );
-  ghost.visible = false;
+  const ghost = new THREE.Group();
   scene.add(ghost);
+
+  const pads = YARD_PADS.map((p) => {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(1.15, 1.42, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffb15a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(p.x, heightAt(p.x, p.z) + 0.07, p.z);
+    scene.add(ring);
+    const plate = makePlate(p.label.ru, 1.6, 0.28);
+    plate.position.set(p.x, heightAt(p.x, p.z) + 0.04, p.z + 0.02);
+    plate.rotation.x = -Math.PI / 2;
+    scene.add(plate);
+    return { ...p, ring, taken: false };
+  });
 
   const outposts = OUTPOSTS.map((data) => {
     const group = buildOutpost(data);
@@ -68,6 +79,7 @@ export function createWorld(scene) {
     dust,
     scanRing,
     ghost,
+    pads,
     outposts,
     nodes: [],
     stations: [],
@@ -247,7 +259,88 @@ function makePlate(text, w, h) {
   );
 }
 
+export function padTaken(world, pad) {
+  return world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
+}
+
+export function resolvePlacement(world, rec, player) {
+  const raw = placementSpot(player);
+  if (rec.station === "seal") {
+    const d = Math.hypot(player.root.position.x, player.root.position.z - 8);
+    return { x: 0, z: 3.6, y: heightAt(0, 3.6), valid: d < 16 && !world.habSealed, snap: true };
+  }
+  if (rec.station === "radio") {
+    const site = OUTPOSTS.find((o) => o.id === "pathfinder");
+    const d = Math.hypot(raw.x - site.x, raw.z - site.z);
+    return { ...raw, valid: d < 16 };
+  }
+  const pads = (world.pads || YARD_PADS).filter((p) => p.station === rec.station && !padTaken(world, p));
+  let best = null;
+  let bestD = 7.5;
+  for (const pad of pads) {
+    const d = Math.hypot(raw.x - pad.x, raw.z - pad.z);
+    if (d < bestD) {
+      bestD = d;
+      best = pad;
+    }
+  }
+  if (best) return { x: best.x, z: best.z, y: heightAt(best.x, best.z), valid: true, snap: true, pad: best };
+  const habD = Math.hypot(raw.x, raw.z - 8);
+  const free = habD < 22 && habD > 5.8;
+  return { ...raw, valid: free };
+}
+
+export function setGhost(world, rec, spot) {
+  if (!rec) {
+    world.ghost.visible = false;
+    world.ghost.userData.kind = null;
+    return;
+  }
+  if (world.ghost.userData.kind !== rec.station) {
+    while (world.ghost.children.length) world.ghost.remove(world.ghost.children[0]);
+    const preview = rec.station === "seal" ? makeSealGhost() : buildStation(rec.station);
+    preview.traverse((o) => {
+      if (o.isMesh && o.material) {
+        o.material = o.material.clone();
+        o.material.transparent = true;
+        o.material.opacity = 0.42;
+        o.material.depthWrite = false;
+      }
+    });
+    world.ghost.add(preview);
+    world.ghost.userData.kind = rec.station;
+  }
+  world.ghost.visible = true;
+  world.ghost.position.set(spot.x, spot.y, spot.z);
+  const col = spot.valid ? 0x8fd3b0 : 0xff5a3c;
+  world.ghost.traverse((o) => {
+    if (o.isMesh && o.material && o.material.color) o.material.color.setHex(col);
+  });
+}
+
+function makeSealGhost() {
+  const g = new THREE.Group();
+  const m = new THREE.Mesh(
+    new THREE.CircleGeometry(0.8, 16),
+    new THREE.MeshBasicMaterial({ color: 0xe8dcc8, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
+  );
+  m.position.y = 1.6;
+  g.add(m);
+  return g;
+}
+
 export function placeStation(world, station, x, z) {
+  if (station === "seal") {
+    world.habSealed = true;
+    const hab = world.outposts.find((o) => o.kind === "hab");
+    const leak = hab?.group.getObjectByName("leak");
+    const patch = hab?.group.getObjectByName("patch");
+    if (leak) leak.visible = false;
+    if (patch) patch.visible = true;
+    const st = { type: "seal", mesh: hab?.group, x: 0, z: 8, water: 0, fuel: 0, planted: false, grow: 0 };
+    world.stations.push(st);
+    return st;
+  }
   const mesh = buildStation(station);
   mesh.position.set(x, heightAt(x, z), z);
   world.scene.add(mesh);
@@ -262,16 +355,19 @@ export function placeStation(world, station, x, z) {
     grow: 0,
   };
   world.stations.push(st);
-  if (station === "seal") {
-    world.habSealed = true;
+  if (station === "solar") {
+    world.powered = true;
     const hab = world.outposts.find((o) => o.kind === "hab");
-    const leak = hab?.group.getObjectByName("leak");
-    const patch = hab?.group.getObjectByName("patch");
-    if (leak) leak.visible = false;
-    if (patch) patch.visible = true;
+    hab?.group.traverse((o) => {
+      if (o.name === "habWindow" && o.material) o.material.emissiveIntensity = 0.85;
+    });
   }
-  if (station === "solar") world.powered = true;
   if (station === "radio") world.contacted = true;
+  const pad = (world.pads || []).find((p) => p.station === station && Math.hypot(p.x - x, p.z - z) < 2.2);
+  if (pad) {
+    pad.taken = true;
+    if (pad.ring) pad.ring.material.opacity = 0.18;
+  }
   return st;
 }
 
@@ -414,6 +510,8 @@ export function updateWorld(world, dt, playerPos, scanning) {
       st.water += dt * 0.045;
       const globe = st.mesh.getObjectByName("stillGlobe");
       if (globe) globe.material.emissiveIntensity = 0.55 + Math.sin(performance.now() / 280) * 0.25;
+      const gauge = st.mesh.getObjectByName("waterGauge");
+      if (gauge) gauge.scale.set(1, 1 + Math.min(6, st.water * 0.4), 1);
     }
     if (st.type === "plot" && st.planted && st.grow < 1) {
       st.grow += dt * (0.018 + world.daylight * 0.016);
@@ -642,6 +740,7 @@ function buildOutpost(data) {
       const w = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.72, 0.08), glassMat);
       w.position.set(Math.sin(a) * 4.16, 1.72, Math.cos(a) * 4.16);
       w.lookAt(0, 1.72, 0);
+      w.name = "habWindow";
       g.add(w);
     }
     g.add(box(hull, 2.15, 2.2, 2.5, 0, 1.1, 5.15));
@@ -700,41 +799,79 @@ function buildOutpost(data) {
     patch.visible = false;
     g.add(patch);
   } else if (data.kind === "rover") {
-    g.add(box(white, 3.6, 1.1, 2.2, 0, 1.1, 0));
-    g.add(box(dark, 1.4, 0.8, 1.6, -1.4, 1.7, 0));
-    for (const wx of [-1.2, 0.2, 1.3]) {
-      for (const wz of [-1.2, 1.2]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.28, 10), dark);
+    g.add(box(white, 4.2, 1.15, 2.4, 0.2, 1.15, 0));
+    g.add(box(dark, 1.6, 0.9, 1.8, -1.7, 1.85, 0));
+    g.add(box(rust, 0.9, 0.4, 1.1, 1.8, 1.5, 0.4));
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.08, 12), gold);
+    dish.position.set(-1.5, 2.55, 0);
+    dish.rotation.x = 0.6;
+    g.add(dish);
+    for (const wx of [-1.4, 0.3, 1.6]) {
+      for (const wz of [-1.35, 1.35]) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.32, 12), dark);
         wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(wx, 0.45, wz);
+        wheel.position.set(wx, 0.52, wz);
         g.add(wheel);
       }
     }
+    g.add(box(rust, 1.2, 0.35, 0.8, 2.6, 0.3, 1.4));
   } else if (data.kind === "farm") {
-    const gh = new THREE.Mesh(
-      new THREE.CylinderGeometry(5, 5, 8, 12, 1, false, 0, Math.PI),
-      new THREE.MeshStandardMaterial({ color: 0x7ec98a, transparent: true, opacity: 0.28, roughness: 0.2 })
+    const hoop = new THREE.Mesh(
+      new THREE.TorusGeometry(4.2, 0.08, 6, 20, Math.PI),
+      white
     );
-    gh.rotation.z = Math.PI / 2;
-    gh.position.y = 2;
-    g.add(gh);
+    hoop.rotation.z = Math.PI / 2;
+    hoop.position.y = 0.2;
+    g.add(hoop);
+    const hoop2 = hoop.clone();
+    hoop2.position.z = 2.2;
+    g.add(hoop2);
+    const plastic = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.2, 4.2, 6, 12, 1, true, 0, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x7ec98a, transparent: true, opacity: 0.22, roughness: 0.15, side: THREE.DoubleSide })
+    );
+    plastic.rotation.z = Math.PI / 2;
+    plastic.position.y = 2;
+    g.add(plastic);
+    const dirt = new THREE.MeshStandardMaterial({ color: 0x5a3318, roughness: 1 });
+    g.add(box(dirt, 2.4, 0.25, 6.5, 0, 0.2, 0));
+    g.add(box(dirt, 2.4, 0.25, 6.5, 2.8, 0.2, 0));
+    g.add(box(dirt, 2.4, 0.25, 6.5, -2.8, 0.2, 0));
   } else if (data.kind === "solar") {
-    for (let i = -2; i <= 2; i++) {
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 1.6), dark);
-      panel.position.set(i * 1.1, 1.4, 0);
-      panel.rotation.x = -0.5;
+    for (let i = -3; i <= 3; i++) {
+      const broken = i === -1 || i === 2;
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.5), broken ? rust : dark);
+      panel.position.set(i * 1.05, broken ? 0.9 : 1.45, (i % 2) * 0.4);
+      panel.rotation.x = broken ? -1.1 : -0.55;
       g.add(panel);
+      g.add(box(white, 0.08, 1.2, 0.08, i * 1.05, 0.6, 0.5));
     }
   } else if (data.kind === "pathfinder") {
-    const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(1.6), gold);
-    tetra.position.y = 2.4;
+    const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(1.35), gold);
+    tetra.position.y = 2.1;
     g.add(tetra);
-    g.add(cyl(white, 0.18, 2.2, 0, 1.1, 0));
+    g.add(cyl(white, 0.16, 2.0, 0, 1.0, 0));
+    for (const a of [0, 2.1, 4.2]) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 1.1), dark);
+      petal.position.set(Math.cos(a) * 1.3, 0.55, Math.sin(a) * 1.3);
+      petal.rotation.set(-0.7, a, 0);
+      g.add(petal);
+    }
   } else if (data.kind === "mav") {
-    g.add(cyl(white, 1.3, 11, 0, 6, 0));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.3, 3.2, 10), white);
-    nose.position.y = 13.1;
+    g.add(cyl(white, 1.35, 12, 0, 6.4, 0));
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.35, 3.4, 12), white);
+    nose.position.y = 14.1;
     g.add(nose);
+    const bell = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.8, 10), dark);
+    bell.position.y = 0.4;
+    g.add(bell);
+    for (const a of [0, 2.1, 4.2]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 5.2, 6), rust);
+      leg.position.set(Math.cos(a) * 2.4, 1.4, Math.sin(a) * 2.4);
+      leg.rotation.z = Math.cos(a) * 0.45;
+      leg.rotation.x = Math.sin(a) * 0.45;
+      g.add(leg);
+    }
   }
 
   const beacon = new THREE.PointLight(0xffb15a, 0.45, 18);

@@ -41,8 +41,15 @@ canvas#scene {
   pointer-events: none;
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(8, 3, 2, 0.55) 100%);
   z-index: 2;
+}
+
+body:not(.inside-hab) #vignette {
+  background: radial-gradient(ellipse at center, transparent 38%, rgba(8, 3, 2, 0.72) 100%);
+}
+
+body.inside-hab #vignette {
+  background: radial-gradient(ellipse at center, transparent 62%, rgba(8, 3, 2, 0.35) 100%);
 }
 
 #night-overlay,

@@ -68,7 +68,7 @@ const strings = {
     fueled: "STILL FUELED",
     waterPlot: "E  WATER CROP",
     growing: "GROWING — sleep or water",
-    helpDrop: "drop",
+    here: "HERE",
   },
   ru: {
     eyebrow: "АРИС III — РАВНИНА АЦИДАЛИЯ",
@@ -139,7 +139,7 @@ const strings = {
     fueled: "ЗАПРАВЛЕН",
     waterPlot: "E  ПОЛИТЬ",
     growing: "РАСТЁТ — сон или вода",
-    helpDrop: "бросить",
+    here: "ЗДЕСЬ",
   },
 };
 
