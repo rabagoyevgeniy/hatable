@@ -84,7 +84,7 @@ function updatePrompt(player, world, order) {
 export function findInteract(player, world, order) {
   const p = player.root.position;
   let best = null;
-  let bestD = 3.4;
+  let bestD = 5.4;
 
   for (const c of world.cargo) {
     if (c.taken) continue;

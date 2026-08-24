@@ -52,7 +52,7 @@ export const OUTPOSTS = [
 ];
 
 export const CARGO_TYPES = {
-  emergency: { weight: 12, color: 0xc45c2a, name: { en: "Emergency crate", ru: "Аварийный ящик" } },
+  emergency: { weight: 12, color: 0xff6a24, name: { en: "Emergency crate", ru: "Аварийный ящик" } },
   water: { weight: 16, color: 0x3d7ea6, name: { en: "Water drum", ru: "Бочка воды" } },
   fertilizer: { weight: 14, color: 0x6b4a2b, name: { en: "Fertilizer", ru: "Удобрение" } },
   solar: { weight: 18, color: 0x1c2430, name: { en: "Solar cells", ru: "Солнечные панели" } },
@@ -68,7 +68,7 @@ export const ORDERS = [
     dest: "rover",
     need: { emergency: 1 },
     connect: "rover",
-    spawn: [{ type: "emergency", x: 10, z: 18 }],
+    spawn: [{ type: "emergency", x: 7, z: 16 }],
     title: { en: "First Steps", ru: "Первые шаги" },
     brief: {
       en: "The Hab survived the storm. Recover the emergency crate and walk it to the Rover Cache.",

@@ -177,15 +177,47 @@ function makeScanRing() {
 
 function makeCrate(type, x, z) {
   const def = CARGO_TYPES[type];
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.55, 0.7),
-    new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.7, metalness: 0.1 })
+  const group = new THREE.Group();
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(1.05, 0.8, 1.05),
+    new THREE.MeshStandardMaterial({
+      color: def.color,
+      emissive: def.color,
+      emissiveIntensity: 0.45,
+      roughness: 0.48,
+      metalness: 0.12,
+    })
   );
-  mesh.position.set(x, heightAt(x, z) + 0.35, z);
-  mesh.castShadow = true;
+  box.castShadow = true;
+  group.add(box);
+
+  const stripe = new THREE.Mesh(
+    new THREE.BoxGeometry(1.12, 0.12, 1.12),
+    new THREE.MeshStandardMaterial({ color: 0xffd08a, emissive: 0xffb15a, emissiveIntensity: 0.6 })
+  );
+  stripe.position.y = 0.12;
+  group.add(stripe);
+
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.045, 0.045, 2.4, 8),
+    new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.8 })
+  );
+  pole.position.y = 1.5;
+  group.add(pole);
+
+  const beacon = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.28),
+    new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
+  );
+  beacon.position.y = 2.75;
+  group.add(beacon);
+
+  group.position.set(x, heightAt(x, z) + 0.45, z);
+  group.userData.marker = [pole, beacon];
+  group.userData.beacon = beacon;
   return {
     type,
-    mesh,
+    mesh: group,
     weight: def.weight,
     condition: 100,
     taken: false,
@@ -310,7 +342,9 @@ export function updateWorld(world, dt, playerPos, scanning) {
 
   for (const c of world.cargo) {
     if (c.taken) continue;
-    c.mesh.position.y = heightAt(c.mesh.position.x, c.mesh.position.z) + 0.35 + Math.sin(performance.now() / 400) * 0.04;
+    c.mesh.position.y = heightAt(c.mesh.position.x, c.mesh.position.z) + 0.45 + Math.sin(performance.now() / 400) * 0.05;
+    const spin = c.mesh.userData.beacon;
+    if (spin) spin.rotation.y += dt * 2.2;
   }
 }
 

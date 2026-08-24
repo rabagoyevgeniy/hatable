@@ -196,6 +196,7 @@ export function pickupCargo(player, crate) {
   crate.mesh.parent?.remove(crate.mesh);
   player.cargoAnchor.add(crate.mesh);
   crate.mesh.rotation.set(0, 0, 0);
+  for (const m of crate.mesh.userData.marker || []) m.visible = false;
   player.cargo.push(crate);
   layoutBackpack(player);
   return true;
@@ -211,7 +212,8 @@ export function dropTopCargo(player, world, scatter) {
   const oz = scatter ? 1.4 + Math.random() : 1.2;
   const x = p.x - Math.sin(player.yaw) * oz + Math.cos(player.yaw) * ox;
   const z = p.z - Math.cos(player.yaw) * oz - Math.sin(player.yaw) * ox;
-  crate.mesh.position.set(x, heightAt(x, z) + 0.35, z);
+  crate.mesh.position.set(x, heightAt(x, z) + 0.45, z);
+  for (const m of crate.mesh.userData.marker || []) m.visible = true;
   crate.condition = Math.max(20, crate.condition - (scatter ? 22 : 4));
   return crate;
 }
