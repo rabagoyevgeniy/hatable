@@ -130,7 +130,13 @@ function lootMesh(type, color, wreck) {
 
 function makeLocker(x, z) {
   const g = new THREE.Group();
-  const white = new THREE.MeshStandardMaterial({ color: 0xe8e2d8, roughness: 0.5, metalness: 0.15 });
+  const white = new THREE.MeshStandardMaterial({
+    color: 0xf4eee4,
+    emissive: 0xfff6e8,
+    emissiveIntensity: 0.22,
+    roughness: 0.4,
+    metalness: 0.12,
+  });
   const amber = new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.4 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.7), white);
   body.position.y = 0.85;

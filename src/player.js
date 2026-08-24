@@ -57,7 +57,7 @@ export function createPlayer(scene) {
     vel: new THREE.Vector3(),
     inv,
     tools: { hammer: false },
-    oxygen: 72,
+    oxygen: 82,
     hunger: 58,
     thirst: 48,
     warmth: 70,
@@ -189,7 +189,7 @@ export function updatePlayer(player, dt, input, world) {
 
   const inside = isInsideHab(player);
   const night = world.daylight < 0.28;
-  const leak = world.habSealed ? 0.18 : 1.55;
+  const leak = world.habSealed ? 0.12 : 0.52;
   if (inside) {
     player.oxygen = clamp(player.oxygen + dt * (world.habSealed ? 8 : -leak));
     player.warmth = clamp(player.warmth + dt * (world.powered ? 10 : night ? -3.2 : 3));
