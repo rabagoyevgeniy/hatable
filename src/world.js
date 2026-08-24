@@ -11,12 +11,24 @@ export function createWorld(scene) {
 
   const hemi = new THREE.HemisphereLight(0xf0c8a0, 0x5a2a18, 0.85);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd2a8, 1.15);
+  const sun = new THREE.DirectionalLight(0xffd2a8, 1.35);
   sun.position.set(80, 70, -40);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.near = 4;
+  sun.shadow.camera.far = 240;
+  sun.shadow.camera.left = -55;
+  sun.shadow.camera.right = 55;
+  sun.shadow.camera.top = 55;
+  sun.shadow.camera.bottom = -55;
+  sun.shadow.bias = -0.0007;
   scene.add(sun);
-  scene.add(new THREE.AmbientLight(0x6a3a18, 0.28));
+  scene.add(sun.target);
+  scene.add(new THREE.AmbientLight(0x6a3a18, 0.22));
 
-  scene.add(makeTerrain());
+  const terrain = makeTerrain();
+  terrain.receiveShadow = true;
+  scene.add(terrain);
   scene.add(makeRocks());
   scene.add(makeMountains());
   const dust = makeDust();
@@ -48,7 +60,7 @@ export function createWorld(scene) {
     outposts,
     nodes: [],
     stations: [],
-    locker: { x: 7.2, z: 8.4, storage: { ...LOCKER_START } },
+    locker: { x: 3.6, z: 13.4, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
     clock: 0.35,
@@ -67,23 +79,52 @@ export function createWorld(scene) {
 export function spawnNode(world, type, x, z, extra = {}) {
   const def = ITEMS[type];
   const wreck = !!extra.needHammer;
+  const starter = !!extra.starter;
   const group = new THREE.Group();
   group.add(lootMesh(type, def.color, wreck));
-  if (!wreck) {
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.03, 0.03, 1.35, 6),
-      new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
+
+  const beaconCol = wreck ? 0xff4a32 : starter ? 0x7ee8ff : 0xffe0a8;
+  const stemH = wreck ? 1.9 : starter ? 3.15 : 2.15;
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(starter ? 0.06 : 0.04, starter ? 0.08 : 0.045, stemH, 6),
+    new THREE.MeshBasicMaterial({ color: beaconCol })
+  );
+  stem.position.y = stemH * 0.5 + 0.15;
+  group.add(stem);
+  const bulb = new THREE.Mesh(
+    new THREE.SphereGeometry(starter ? 0.18 : wreck ? 0.14 : 0.11, 10, 8),
+    new THREE.MeshBasicMaterial({ color: beaconCol })
+  );
+  bulb.position.y = stemH + 0.28;
+  group.add(bulb);
+
+  if (starter) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.58, 0.78, 24),
+      new THREE.MeshBasicMaterial({ color: 0x7ee8ff, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
     );
-    stem.position.y = 1.0;
-    group.add(stem);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.05;
+    group.add(ring);
+    const light = new THREE.PointLight(0x7ee8ff, 1.4, 15);
+    light.position.y = 2.1;
+    group.add(light);
   }
-  group.position.set(x, heightAt(x, z) + (wreck ? 0.2 : 0.32), z);
+
+  group.position.set(x, heightAt(x, z) + (wreck ? 0.16 : 0.3), z);
+  group.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
   world.scene.add(group);
   const node = {
     type,
     mesh: group,
     taken: false,
     needHammer: wreck,
+    starter,
     amount: extra.amount || 1,
   };
   world.nodes.push(node);
@@ -94,20 +135,20 @@ function lootMesh(type, color, wreck) {
   const mat = new THREE.MeshStandardMaterial({
     color,
     emissive: color,
-    emissiveIntensity: wreck ? 0.12 : 0.32,
-    roughness: 0.75,
-    metalness: type === "scrap" || type === "wire" ? 0.35 : 0.05,
+    emissiveIntensity: wreck ? 0.2 : 0.58,
+    roughness: 0.52,
+    metalness: type === "scrap" || type === "wire" ? 0.48 : 0.08,
     flatShading: true,
   });
   if (wreck || type === "scrap") {
     const g = new THREE.Group();
-    const a = new THREE.Mesh(new THREE.BoxGeometry(wreck ? 1.6 : 0.7, wreck ? 0.7 : 0.4, wreck ? 1.1 : 0.55), mat);
+    const a = new THREE.Mesh(new THREE.BoxGeometry(wreck ? 1.7 : 0.95, wreck ? 0.75 : 0.48, wreck ? 1.15 : 0.7), mat);
     a.rotation.y = 0.4;
     g.add(a);
-    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.8), mat));
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.38, 0.85), mat));
     return g;
   }
-  if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.48, 0), mat);
+  if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.62, 0), mat);
   if (type === "ice") return new THREE.Mesh(new THREE.OctahedronGeometry(0.42), mat);
   if (type === "fabric") {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.6), mat);
@@ -131,21 +172,52 @@ function lootMesh(type, color, wreck) {
 function makeLocker(x, z) {
   const g = new THREE.Group();
   const white = new THREE.MeshStandardMaterial({
-    color: 0xf4eee4,
+    color: 0xf7f1e8,
     emissive: 0xfff6e8,
-    emissiveIntensity: 0.22,
-    roughness: 0.4,
-    metalness: 0.12,
+    emissiveIntensity: 0.35,
+    roughness: 0.38,
+    metalness: 0.14,
   });
-  const amber = new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.4 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.7), white);
-  body.position.y = 0.85;
+  const amber = new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.7 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.75, 0.82), white);
+  body.position.y = 0.95;
   g.add(body);
-  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), amber);
-  lamp.position.set(0, 1.7, 0.2);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), amber);
+  lamp.position.set(0, 1.95, 0.28);
   g.add(lamp);
+  const light = new THREE.PointLight(0xffc878, 1.1, 10);
+  light.position.set(0, 2.1, 0.4);
+  g.add(light);
+  const plate = makePlate("LOCKER", 1.1, 0.28);
+  plate.position.set(0, 1.25, 0.43);
+  g.add(plate);
   g.position.set(x, heightAt(x, z), z);
+  g.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
   return g;
+}
+
+function makePlate(text, w, h) {
+  const c = document.createElement("canvas");
+  c.width = 256;
+  c.height = 64;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#1a1410";
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.fillStyle = "#f4ebe2";
+  ctx.font = "bold 28px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 128, 34);
+  const tex = new THREE.CanvasTexture(c);
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55 })
+  );
 }
 
 export function placeStation(world, station, x, z) {
@@ -163,7 +235,12 @@ export function placeStation(world, station, x, z) {
     grow: 0,
   };
   world.stations.push(st);
-  if (station === "seal") world.habSealed = true;
+  if (station === "seal") {
+    world.habSealed = true;
+    const hab = world.outposts.find((o) => o.kind === "hab");
+    const leak = hab?.group.getObjectByName("leak");
+    if (leak) leak.visible = false;
+  }
   if (station === "solar") world.powered = true;
   if (station === "radio") world.contacted = true;
   return st;
@@ -219,8 +296,11 @@ export function updateWorld(world, dt, playerPos, scanning) {
   world.clock = (world.clock + dt / 160) % 1;
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
   const night = 1 - world.daylight;
-  world.sun.intensity = 0.25 + world.daylight * 1.05;
-  world.hemi.intensity = 0.25 + world.daylight * 0.7;
+  const ang = world.clock * Math.PI * 2;
+  world.sun.position.set(Math.cos(ang) * 90, 18 + Math.max(6, Math.sin(ang) * 72), -36);
+  world.sun.target.position.set(playerPos.x, 0, playerPos.z);
+  world.sun.intensity = 0.18 + world.daylight * 1.25;
+  world.hemi.intensity = 0.22 + world.daylight * 0.7;
   const fogCol = new THREE.Color().setRGB(0.55 * world.daylight + 0.08, 0.28 * world.daylight + 0.04, 0.16);
   world.scene.background.copy(fogCol);
   world.scene.fog.color.copy(fogCol);
@@ -255,7 +335,8 @@ export function updateWorld(world, dt, playerPos, scanning) {
 
   for (const node of world.nodes) {
     if (node.taken) continue;
-    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + 0.35 + Math.sin(performance.now() / 380) * 0.05;
+    const bob = node.needHammer ? 0 : 0.06 * Math.sin(performance.now() / 380 + node.mesh.position.x);
+    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + (node.needHammer ? 0.16 : 0.32) + bob;
   }
 
   for (const st of world.stations) {
@@ -371,11 +452,61 @@ function buildOutpost(data) {
   const gold = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.35, metalness: 0.55 });
 
   if (data.kind === "hab") {
-    g.add(cyl(white, 4.2, 3.2, 0, 1.6, 0));
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(4.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), white);
-    dome.position.y = 3.2;
+    const hull = new THREE.MeshStandardMaterial({ color: 0xece6dc, roughness: 0.46, metalness: 0.18 });
+    const ribMat = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.85 });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x1c2228,
+      roughness: 0.2,
+      metalness: 0.55,
+      emissive: 0x142028,
+      emissiveIntensity: 0.35,
+    });
+    const orange = new THREE.MeshStandardMaterial({
+      color: 0xe07030,
+      roughness: 0.45,
+      emissive: 0xe07030,
+      emissiveIntensity: 0.35,
+    });
+    g.add(cyl(hull, 4.2, 3.1, 0, 1.55, 0));
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(4.2, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), hull);
+    dome.position.y = 3.1;
     g.add(dome);
-    g.add(box(white, 1.6, 1.8, 2.2, 4.2, 0.9, 0));
+    for (const y of [0.55, 1.55, 2.55]) {
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(4.22, 0.09, 8, 28), ribMat);
+      rib.rotation.x = Math.PI / 2;
+      rib.position.y = y;
+      g.add(rib);
+    }
+    for (const a of [-0.85, 0.85, 2.2]) {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.72, 0.08), glassMat);
+      w.position.set(Math.sin(a) * 4.16, 1.72, Math.cos(a) * 4.16);
+      w.lookAt(0, 1.72, 0);
+      g.add(w);
+    }
+    g.add(box(hull, 2.05, 2.15, 2.7, 0, 1.08, 5.25));
+    g.add(box(glassMat, 1.4, 1.75, 0.1, 0, 1.08, 6.62));
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.2), orange);
+    lamp.position.set(0, 2.25, 6.68);
+    g.add(lamp);
+    const airLight = new THREE.PointLight(0xffb15a, 1.55, 18);
+    airLight.position.set(0, 2.3, 6.3);
+    g.add(airLight);
+    const plate = makePlate("ARES III", 2.3, 0.55);
+    plate.position.set(0, 2.55, 6.68);
+    g.add(plate);
+    const hole = new THREE.Mesh(
+      new THREE.CircleGeometry(0.58, 14),
+      new THREE.MeshStandardMaterial({
+        color: 0x1a0c08,
+        emissive: 0x501808,
+        emissiveIntensity: 0.4,
+        side: THREE.DoubleSide,
+      })
+    );
+    hole.position.set(0, 1.65, -4.18);
+    hole.rotation.y = Math.PI;
+    hole.name = "leak";
+    g.add(hole);
   } else if (data.kind === "rover") {
     g.add(box(white, 3.6, 1.1, 2.2, 0, 1.1, 0));
     g.add(box(dark, 1.4, 0.8, 1.6, -1.4, 1.7, 0));
@@ -418,6 +549,12 @@ function buildOutpost(data) {
   beacon.position.y = 5;
   g.add(beacon);
   g.userData.beacon = beacon;
+  g.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
   return g;
 }
 

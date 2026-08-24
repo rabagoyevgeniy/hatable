@@ -215,35 +215,70 @@ button:hover {
 }
 
 #compass {
-  width: min(520px, 70vw);
-  height: 28px;
-  margin: 10px auto 0;
-  overflow: hidden;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px auto 0;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  border: none;
   position: relative;
 }
 
 #compass::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--amber);
+  display: none;
 }
 
-#compass-strip {
-  height: 100%;
-  display: flex;
-  align-items: center;
+#compass-dir {
   font-family: "Share Tech Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  color: rgba(244, 235, 226, 0.75);
-  white-space: nowrap;
-  transform: translateX(0);
+  font-size: 22px;
+  color: var(--amber);
+  letter-spacing: 0.12em;
+}
+
+#compass-deg {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 12px;
+  color: rgba(244, 235, 226, 0.65);
+}
+
+#first-hint {
+  position: absolute;
+  left: 50%;
+  top: 78px;
+  bottom: auto;
+  transform: translateX(-50%);
+  width: min(580px, 92vw);
+  padding: 12px 16px;
+  background: rgba(8, 4, 2, 0.84);
+  border: 1px solid #7ee8ff;
+  color: #e8f8ff;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+  z-index: 9;
+  text-shadow: 0 2px 12px #000;
+}
+
+#goal-list {
+  list-style: none;
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(244, 235, 226, 0.5);
+  line-height: 1.45;
+}
+
+#goal-list li.now {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+#goal-list li.done {
+  color: var(--ok);
+  opacity: 0.85;
 }
 
 #order-card {
@@ -281,12 +316,12 @@ button:hover {
   left: 50%;
   bottom: 150px;
   transform: translateX(-50%);
-  padding: 8px 14px;
+  padding: 10px 16px;
   border: 1px solid var(--amber);
-  background: rgba(12, 7, 5, 0.7);
+  background: rgba(12, 7, 5, 0.78);
   font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.12em;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 #log {
@@ -500,6 +535,84 @@ kbd {
   opacity: 0.42;
 }
 
+li.ready .recipe {
+  border-bottom-color: #7ee8ff;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+}
+
+.item-acts {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.chip {
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-color: var(--amber);
+}
+
+#touch-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+#joy {
+  pointer-events: auto;
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(12, 7, 5, 0.42);
+}
+
+#joy-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: var(--amber);
+  opacity: 0.88;
+}
+
+#touch-actions {
+  pointer-events: auto;
+  position: absolute;
+  right: 18px;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#touch-actions button {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  padding: 0;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+  background: rgba(12, 7, 5, 0.7);
+}
+
 #pack-list {
   list-style: none;
   margin: 10px 0;
@@ -553,6 +666,19 @@ kbd {
   pointer-events: none;
 }
 
+.scan-tag.loot {
+  color: #7ee8ff;
+  font-size: 13px;
+  background: rgba(8, 4, 2, 0.62);
+  padding: 2px 7px;
+  border: 1px solid rgba(126, 232, 255, 0.35);
+}
+
+.scan-tag.far {
+  opacity: 0.55;
+  font-size: 10px;
+}
+
 .scan-tag small {
   display: block;
   color: var(--sand);
@@ -564,13 +690,48 @@ kbd {
     padding: 28px 20px;
   }
 
-  #order-card,
+  #order-card {
+    display: block;
+    top: 64px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    padding: 10px 12px;
+  }
+
+  #order-card h2 {
+    font-size: 18px;
+    margin: 4px 0 6px;
+  }
+
+  #goal-list,
   #log,
   #help {
     display: none;
   }
 
+  #first-hint:not(.hidden) {
+    display: block;
+    top: 58px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    transform: none;
+    font-size: 14px;
+    bottom: auto;
+  }
+
+  #hud:has(#first-hint:not(.hidden)) #order-card {
+    display: none;
+  }
+
   .dock {
-    width: calc(100% - 20px);
+    width: calc(100% - 16px);
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .meter {
+    width: 70px;
   }
 }

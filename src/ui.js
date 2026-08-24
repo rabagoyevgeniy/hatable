@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, SURVIVAL } from "./data.js";
+import { ITEMS, RECIPES, SURVIVAL, GOALS } from "./data.js";
 import { count, canAfford, itemName, isInsideHab } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost } from "./world.js";
@@ -17,7 +17,9 @@ export function bindUi(handlers) {
   });
   $("inv-list").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-item]");
-    if (btn) handlers.consume(btn.dataset.item);
+    if (!btn) return;
+    if (btn.dataset.act === "stash") handlers.stash(btn.dataset.item);
+    else handlers.consume(btn.dataset.item);
   });
   $("storage-list").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-item]");
@@ -80,6 +82,7 @@ export function renderCraft(player) {
     const li = document.createElement("li");
     const ok =
       canAfford(player, rec.need) && (!rec.requireTool || player.tools[rec.requireTool]);
+    li.className = rec.id === "hammer" && ok ? "ready" : "";
     li.innerHTML = `<button class="recipe ${ok ? "" : "locked"}" data-recipe="${rec.id}">
       <span><b>${loc(rec.title)}</b><small>${needLine(rec.need)}${rec.requireTool ? " · hammer" : ""}</small></span>
       <span>${ok ? "▸" : "–"}</span>
@@ -100,10 +103,10 @@ export function renderInv(player) {
     li.innerHTML = `<span>${getLang() === "ru" ? "Молоток" : "Hammer"}</span><span>tool</span>`;
     list.appendChild(li);
   }
-  fillItemList(list, player.inv, true);
+  fillItemList(list, player.inv, { eat: true, stash: storageOpen() });
   if (totalShown(player) === 0) {
     const li = document.createElement("li");
-    li.innerHTML = `<span>${getLang() === "ru" ? "пусто — шкаф у двери Hab" : "empty — locker by the Hab door"}</span>`;
+    li.innerHTML = `<span>${getLang() === "ru" ? "пусто — шкаф у шлюза Hab" : "empty — locker by the Hab airlock"}</span>`;
     list.appendChild(li);
   }
 }
@@ -112,12 +115,29 @@ function totalShown(player) {
   return Object.values(player.inv).reduce((s, n) => s + n, 0) + (player.tools.hammer ? 1 : 0);
 }
 
-function fillItemList(list, bag, eat) {
+function fillItemList(list, bag, opts) {
+  const eat = opts === true || opts?.eat;
+  const stash = opts?.stash;
+  const take = opts === false;
   for (const [id, n] of Object.entries(bag)) {
     if (!n) continue;
     const li = document.createElement("li");
-    const use = eat && (id === "potato" || id === "water");
-    li.innerHTML = `<button class="recipe" data-item="${id}"><span>${itemName(id)}</span><span>${n}${use ? (getLang() === "ru" ? " · съесть" : " · use") : ""}</span></button>`;
+    const actions = [];
+    if (stash) {
+      actions.push(`<button class="chip" data-item="${id}" data-act="stash">${t("stash")}</button>`);
+    }
+    if (eat && (id === "potato" || id === "water")) {
+      actions.push(
+        `<button class="chip" data-item="${id}" data-act="eat">${id === "water" ? t("drink") : t("eat")}</button>`
+      );
+    }
+    if (take) {
+      actions.push(`<button class="chip" data-item="${id}" data-act="take">${t("take")}</button>`);
+    }
+    const btns = actions.length
+      ? `<span class="item-acts">${actions.join("")}</span>`
+      : `<span>${n}</span>`;
+    li.innerHTML = `<div class="item-row"><span>${itemName(id)} ×${n}</span>${btns}</div>`;
     list.appendChild(li);
   }
 }
@@ -157,6 +177,16 @@ export function updateHud({ player, world, journal, scanning, camera }) {
     $("order-brief").textContent = text.brief;
     $("sol-label").textContent = `SOL ${text.sol}`;
   }
+  const list = $("goal-list");
+  if (list) {
+    list.innerHTML = GOALS.map((g, i) => {
+      const cls = i < journal.index ? "done" : i === journal.index ? "now" : "";
+      const mark = i < journal.index ? "✓" : i === journal.index ? "▸" : "·";
+      return `<li class="${cls}">${mark} ${loc(g.title)}</li>`;
+    }).join("");
+  }
+  const hint = $("first-hint");
+  if (hint) hint.classList.toggle("hidden", player.tools.hammer);
 
   const leak = world.habSealed ? (world.powered ? "SEALED + PWR" : "SEALED") : "LEAK";
   $("hab-status").textContent = leak;
@@ -166,10 +196,11 @@ export function updateHud({ player, world, journal, scanning, camera }) {
   $("location-label").textContent =
     near.dist < 22 ? near.outpost.short[getLang()] : getLang() === "ru" ? "ПУСТЫНЯ" : "OPEN DESERT";
 
-  const headings = getLang() === "ru" ? "С  СВ  В  ЮВ  Ю  ЮЗ  З  СЗ  " : "N  NE  E  SE  S  SW  W  NW  ";
-  $("compass-strip").textContent = (headings + headings + headings).repeat(3);
-  const px = ((player.yaw / (Math.PI * 2) + 10) % 1) * 220;
-  $("compass-strip").style.transform = `translateX(${-80 - px}px)`;
+  const deg = ((-player.yaw * 180) / Math.PI + 360) % 360;
+  const dirs = getLang() === "ru" ? ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const dir = dirs[Math.round(deg / 45) % 8];
+  $("compass-dir").textContent = dir;
+  $("compass-deg").textContent = `${Math.round(deg)}°`;
 
   $("storm-overlay").style.opacity = String(world.storm * 0.85);
   $("night-overlay").style.opacity = String(Math.max(0, 0.55 - world.daylight));
@@ -191,7 +222,7 @@ export function findInteract(player, world) {
   if (player.placing) return { kind: "place", label: t("place") };
   const p = player.root.position;
   let best = null;
-  let bestD = 4.8;
+  let bestD = 5.4;
   for (const node of world.nodes) {
     if (node.taken) continue;
     const d = Math.hypot(p.x - node.mesh.position.x, p.z - node.mesh.position.z);
@@ -244,33 +275,55 @@ function updatePrompt(player, world) {
 function updateScanLabels(player, world, camera, scanning) {
   const root = $("scan-labels");
   root.innerHTML = "";
-  if (!scanning || !camera) return;
+  if (!camera) return;
   const lang = getLang();
-  const targets = [
-    ...world.outposts.map((o) => ({
-      x: o.x,
-      y: o.group.position.y + 4,
-      z: o.z,
-      title: o.short[lang],
-      sub: loc(o.name),
-    })),
-    ...world.nodes
-      .filter((n) => !n.taken)
-      .map((n) => ({
-        x: n.mesh.position.x,
-        y: n.mesh.position.y + 1.4,
-        z: n.mesh.position.z,
-        title: itemName(n.type),
-        sub: "",
-      })),
-  ];
+  const p = player.root.position;
+  const targets = [];
+  for (const o of world.outposts) {
+    const d = Math.hypot(p.x - o.x, p.z - o.z);
+    if (scanning || d < 42) {
+      targets.push({
+        x: o.x,
+        y: o.group.position.y + 4.6,
+        z: o.z,
+        title: o.short[lang],
+        sub: loc(o.name),
+        far: d > 22,
+      });
+    }
+  }
+  for (const n of world.nodes) {
+    if (n.taken) continue;
+    const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
+    if (d > 18 && !scanning) continue;
+    if (d > 48) continue;
+    targets.push({
+      x: n.mesh.position.x,
+      y: n.mesh.position.y + 2.2,
+      z: n.mesh.position.z,
+      title: itemName(n.type),
+      sub: n.needHammer ? (lang === "ru" ? "молоток" : "needs hammer") : "",
+      loot: true,
+    });
+  }
+  const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
+  if (lockerD < 18 || scanning) {
+    targets.push({
+      x: world.locker.x,
+      y: world.locker.mesh.position.y + 2.4,
+      z: world.locker.z,
+      title: lang === "ru" ? "ШКАФ" : "LOCKER",
+      sub: "",
+      loot: true,
+    });
+  }
   const v = new THREE.Vector3();
   for (const item of targets) {
     v.set(item.x, item.y, item.z);
     v.project(camera);
     if (v.z > 1) continue;
     const el = document.createElement("div");
-    el.className = "scan-tag";
+    el.className = `scan-tag${item.loot ? " loot" : ""}${item.far ? " far" : ""}`;
     el.innerHTML = `${item.title}${item.sub ? `<small>${item.sub}</small>` : ""}`;
     el.style.left = `${(v.x * 0.5 + 0.5) * 100}%`;
     el.style.top = `${(-v.y * 0.5 + 0.5) * 100}%`;

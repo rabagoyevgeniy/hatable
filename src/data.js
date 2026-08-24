@@ -9,19 +9,21 @@ export const OUTPOSTS = [
   { id: "mav", kind: "mav", x: 196, z: -158, name: { en: "Schiaparelli MAV", ru: "МАВ Скиапарелли" }, short: { en: "MAV", ru: "МАВ" } },
 ];
 
+export const SPAWN = { x: 1.2, z: 18.5 };
+
 export const ITEMS = {
-  scrap: { color: 0xb8b0a4, name: { en: "Scrap", ru: "Металлолом" } },
-  rock: { color: 0x6b3b28, name: { en: "Rock", ru: "Камень" } },
-  ice: { color: 0xb9d4e8, name: { en: "Ice", ru: "Лёд" } },
-  fabric: { color: 0xe8dcc8, name: { en: "Canvas", ru: "Брезент" } },
-  tape: { color: 0xc9a227, name: { en: "Duct tape", ru: "Скотч" } },
-  soil: { color: 0x5a3318, name: { en: "Regolith", ru: "Реголит" } },
-  potato: { color: 0xc4a05a, name: { en: "Potato", ru: "Картофель" } },
-  water: { color: 0x4aa0c8, name: { en: "Water", ru: "Вода" } },
-  solar: { color: 0x1c2430, name: { en: "Solar cell", ru: "Солнечный элемент" } },
-  wire: { color: 0xc76b2a, name: { en: "Wire", ru: "Провод" } },
-  comms: { color: 0xc9a227, name: { en: "Comms board", ru: "Плата связи" } },
-  hydrazine: { color: 0x8fd3b0, name: { en: "Hydrazine", ru: "Гидразин" } },
+  scrap: { color: 0xe8e2d4, name: { en: "Scrap", ru: "Металлолом" } },
+  rock: { color: 0xd4893a, name: { en: "Rock", ru: "Камень" } },
+  ice: { color: 0xd4f0ff, name: { en: "Ice", ru: "Лёд" } },
+  fabric: { color: 0xfff0d8, name: { en: "Canvas", ru: "Брезент" } },
+  tape: { color: 0xffc94a, name: { en: "Duct tape", ru: "Скотч" } },
+  soil: { color: 0x7a4a22, name: { en: "Regolith", ru: "Реголит" } },
+  potato: { color: 0xe8b84a, name: { en: "Potato", ru: "Картофель" } },
+  water: { color: 0x4ec4e8, name: { en: "Water", ru: "Вода" } },
+  solar: { color: 0x243044, name: { en: "Solar cell", ru: "Солнечный элемент" } },
+  wire: { color: 0xff7a32, name: { en: "Wire", ru: "Провод" } },
+  comms: { color: 0xe8c227, name: { en: "Comms board", ru: "Плата связи" } },
+  hydrazine: { color: 0x6fe0b0, name: { en: "Hydrazine", ru: "Гидразин" } },
 };
 
 export const CONSUME = {
@@ -46,14 +48,14 @@ export const SURVIVAL = {
 };
 
 export const NODE_SPAWNS = [
-  { type: "scrap", x: 7, z: 16 },
-  { type: "scrap", x: -8, z: 14 },
-  { type: "rock", x: -5, z: 20 },
+  { type: "scrap", x: 0.5, z: 16.2, starter: true },
+  { type: "scrap", x: 2.6, z: 15.6, starter: true },
+  { type: "rock", x: 1.4, z: 16.8, starter: true },
+  { type: "rock", x: -4.5, z: 20 },
   { type: "rock", x: 16, z: 22 },
-  { type: "rock", x: 9, z: 4 },
-  { type: "fabric", x: -10, z: 4 },
-  { type: "fabric", x: -12, z: 10 },
-  { type: "tape", x: -6, z: 16 },
+  { type: "fabric", x: -8.5, z: 12 },
+  { type: "fabric", x: -11, z: 9 },
+  { type: "tape", x: -5, z: 15 },
   { type: "ice", x: 18, z: 28 },
   { type: "ice", x: -14, z: 24 },
   { type: "ice", x: 22, z: 8 },
@@ -139,10 +141,10 @@ export const GOALS = [
   {
     id: "gather",
     sol: 19,
-    title: { en: "Scavenge", ru: "Собирай" },
+    title: { en: "Pick up scrap", ru: "Подбери лом" },
     brief: {
-      en: "The crew is gone. Loot scrap and rock around the Hab. Wreck piles need a hammer. Potatoes are in the locker — ration them.",
-      ru: "Экипаж ушёл. Собери лом и камень у Hab. Кучи обломков — только молотком. Картошка в шкафу: экономь.",
+      en: "Walk to the cyan glowing sticks in front of you. E on scrap and rock. Red piles need a hammer later. Potatoes are in the white locker by the airlock — ration them.",
+      ru: "Иди к голубым светящимся палкам прямо перед тобой. E — лом и камень. Красные кучи — только молотком. Картошка в белом шкафу у шлюза: экономь.",
     },
     log: {
       from: "WATNEY",
@@ -155,8 +157,8 @@ export const GOALS = [
     sol: 19,
     title: { en: "Make a hammer", ru: "Сделай молоток" },
     brief: {
-      en: "Open craft (C). Scrap plus rock. No hammer, no stations — same as being stranded with empty hands.",
-      ru: "Открой крафт (C). Лом плюс камень. Без молотка нет станций — как сидеть с пустыми руками.",
+      en: "Press C. First recipe: 1 scrap + 1 rock. Craft the hammer. Without it you cannot salvage wrecks or build stations.",
+      ru: "Нажми C. Первый рецепт: 1 лом + 1 камень. Скрафти молоток. Без него не разобрать кучи и не строить станции.",
     },
     log: {
       from: "WATNEY",
