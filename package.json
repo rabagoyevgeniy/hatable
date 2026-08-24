@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Martian Stranding — a Mars walking-delivery game inspired by The Martian and Death Stranding",
+  "description": "Stranded Mars — a Mars survival-crafting game inspired by The Martian and Stranded Deep",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",

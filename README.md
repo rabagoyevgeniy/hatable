@@ -1,51 +1,49 @@
-# MARTIAN STRANDING
+# STRANDED MARS
 
-A walking-delivery game on Mars. You are the botanist left behind after Ares III. The planet is empty. Walk, carry, connect.
+A survival-crafting game on Mars. You are the botanist left behind after Ares III. The planet is an island of rust. Scavenge wreckage, craft stations, keep yourself alive, and science a way home.
 
-Inspired by *The Martian* and the stride of *Death Stranding*. This is not an app builder.
+Inspired by *The Martian* and the grain of *Stranded Deep* — gather, craft, build, survive. Not a delivery game.
 
 ## How it is arranged
 
-Acidalia Planitia is a sparse map of **six outposts**. They start isolated. Your job is to carry crates between them and bring the **Ares Link** back online — the same fantasy as connecting chiral network knots, except the weather is dust, the cargo is potatoes, and Earth is 12 minutes away.
+You wash up at the damaged **Hab**. Everything useful is on the ground: scrap, rock, canvas, tape, a few potatoes. Distant Ares wrecks are salvage islands, not delivery stops.
 
 ```
-              SOLAR FARM
-                  |
-     POTATO FARM -+-- HAB -- ROVER CACHE
-                  |     |
-            PATHFINDER  |
-                        |
-                   SCHIAPARELLI MAV
+              SOLAR GRAVEYARD  (cells, wire)
+                       |
+     SOIL FLATS ------- HAB ------- ROVER WRECK (hydrazine)
+     (regolith)         |
+                 PATHFINDER        (comms board)
+                       |
+                  SCHIAPARELLI MAV  (leave)
 ```
 
-| Site | What it is |
-| --- | --- |
-| **Hab** | Home. Rest, oxygen, first crates. |
-| **Rover Cache** | First walk. Learn weight and bracing. |
-| **Potato Farm** | Greenhouse. Food is a countdown. |
-| **Solar Farm** | Power. Dust storms eat the arrays. |
-| **Pathfinder** | A radio in a tomb. Hello, Earth. |
-| **MAV** | The long walk. Hermes is coming. |
+## Survival loop
 
-## How you play
+Same verbs as Stranded Deep, Martian materials:
 
-You are a porter, not a shooter. Third-person walk across dunes. Cargo on your back has **weight**: it slows you, throws your **balance** on slopes, and will spill if you stumble. Hold **Shift** to brace, like planting your feet against the load.
+1. **Gather** wreckage with **E**
+2. **Craft** a crude hammer (**C**)
+3. **Seal** the Hab or the oxygen leak wins
+4. Build a **water still**, fuel it with ice or hydrazine, drink
+5. Build a **farm plot**, plant potatoes, harvest copies
+6. Patch **solar** so night doesn't freeze you
+7. Loot Pathfinder, place a **radio**, talk to Earth
+8. Walk to the **MAV** with water and food. Hermes is coming.
 
-Dust storms are the timefall. Visibility dies, wind shoves you, crate condition drops. Rest at a beacon to refill O₂ and plant a Link node.
-
-Six story orders follow Watney's arc: survive the storm, farm, restore power, talk to Earth, stockpile, then haul life support to the MAV.
+Meters: **O₂, hunger, thirst, warmth**. Dust storms and night punish you outside a sealed, powered Hab.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
 | WASD | Walk |
-| Mouse | Look (click the desert to capture the cursor) |
-| Shift | Brace the load |
-| E | Pick up / deliver / rest |
-| Q | Drop top crate |
-| C | Scan (outposts and cargo through the dust) |
-| Tab | Backpack |
+| Mouse | Look (click the desert) |
+| E | Gather / use station / place |
+| C | Craft menu |
+| Tab | Pockets (click potato or water to eat / drink) |
+| F | Scan resources through dust |
+| Esc | Cancel placement |
 
 EN / RU toggle is on the title card.
 
@@ -55,5 +53,3 @@ EN / RU toggle is on the title card.
 npm install
 npm run dev
 ```
-
-Open the local Vite URL (port 5173). `npm run build` emits a static `dist/` you can host anywhere.

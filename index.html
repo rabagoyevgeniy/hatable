@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MARTIAN STRANDING</title>
+    <title>STRANDED MARS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,38 +17,39 @@
 
       <div id="vignette"></div>
       <div id="storm-overlay"></div>
+      <div id="night-overlay"></div>
       <div id="scan-overlay"></div>
 
       <div id="title-screen" class="screen">
         <div class="title-dust"></div>
         <div class="title-frame">
           <p class="eyebrow" data-i18n="eyebrow">ARES III — ACIDALIA PLANITIA</p>
-          <h1>MARTIAN<br />STRANDING</h1>
+          <h1>STRANDED<br />MARS</h1>
           <p class="tagline" data-i18n="tagline">
-            You were left for dead. The planet is empty. Walk, carry, connect.
+            You were left for dead. Scavenge. Craft. Survive. Science the shit out of it.
           </p>
           <div class="title-actions">
-            <button id="btn-start" class="primary" data-i18n="begin">BEGIN EXPEDITION</button>
+            <button id="btn-start" class="primary" data-i18n="begin">WAKE UP</button>
             <button id="btn-lang" class="ghost">RU / EN</button>
           </div>
-          <p class="hint" data-i18n="clickHint">Click the desert to look around. WASD to walk.</p>
+          <p class="hint" data-i18n="clickHint">WASD to walk. E to gather. C to craft.</p>
         </div>
-        <p class="credit">hatable · after The Martian · in the stride of Death Stranding</p>
+        <p class="credit">hatable · The Martian survival · in the grain of Stranded Deep</p>
       </div>
 
       <div id="hud" class="hidden">
         <header class="topbar">
           <div>
-            <p class="label" data-i18n="link">ARES LINK</p>
-            <p id="link-status">2 / 6</p>
+            <p class="label" data-i18n="journal">JOURNAL</p>
+            <p id="goal-step">1 / 8</p>
           </div>
           <div class="center-title">
             <p id="sol-label">SOL 19</p>
             <p id="location-label">HAB</p>
           </div>
           <div class="right">
-            <p class="label" data-i18n="likes">LIKES</p>
-            <p id="likes-count">0</p>
+            <p class="label">HAB</p>
+            <p id="hab-status">LEAK</p>
           </div>
         </header>
 
@@ -57,16 +58,14 @@
         </div>
 
         <aside id="order-card">
-          <p class="label" data-i18n="order">ORDER</p>
+          <p class="label" data-i18n="journal">JOURNAL</p>
           <h2 id="order-title"></h2>
           <p id="order-brief"></p>
           <p id="order-dest"></p>
         </aside>
 
         <div id="scan-labels"></div>
-
         <div id="prompt" class="hidden"></div>
-
         <div id="log"></div>
         <div id="toast"></div>
 
@@ -76,33 +75,38 @@
             <div class="bar"><i id="bar-o2"></i></div>
           </div>
           <div class="meter">
-            <span data-i18n="stamina">STAMINA</span>
-            <div class="bar"><i id="bar-stamina"></i></div>
+            <span data-i18n="hunger">HUNGER</span>
+            <div class="bar"><i id="bar-hunger"></i></div>
           </div>
           <div class="meter warn">
-            <span data-i18n="balance">BALANCE</span>
-            <div class="bar"><i id="bar-balance"></i></div>
+            <span data-i18n="thirst">THIRST</span>
+            <div class="bar"><i id="bar-thirst"></i></div>
           </div>
-          <div class="weight">
-            <span id="weight-label">0 kg</span>
-            <small data-i18n="cargo">CARGO</small>
+          <div class="meter">
+            <span data-i18n="warmth">WARMTH</span>
+            <div class="bar"><i id="bar-warmth"></i></div>
           </div>
         </footer>
 
         <ul id="help">
           <li><kbd>WASD</kbd> <span data-i18n="helpMove">walk</span></li>
-          <li><kbd>SHIFT</kbd> <span data-i18n="helpBrace">brace</span></li>
-          <li><kbd>E</kbd> <span data-i18n="helpUse">use</span></li>
-          <li><kbd>Q</kbd> <span data-i18n="helpDrop">drop</span></li>
-          <li><kbd>C</kbd> <span data-i18n="helpScan">scan</span></li>
-          <li><kbd>TAB</kbd> <span data-i18n="helpPack">pack</span></li>
+          <li><kbd>E</kbd> <span data-i18n="helpUse">gather / use</span></li>
+          <li><kbd>C</kbd> <span data-i18n="helpCraft">craft</span></li>
+          <li><kbd>TAB</kbd> <span data-i18n="helpInv">pockets</span></li>
+          <li><kbd>F</kbd> <span data-i18n="helpScan">scan</span></li>
         </ul>
       </div>
 
-      <div id="pack" class="panel hidden">
-        <p class="label" data-i18n="pack">BACKPACK</p>
-        <ul id="pack-list"></ul>
-        <p class="muted" data-i18n="packHint">Q drops the top crate. Condition falls if you stumble or walk through a storm.</p>
+      <div id="inv" class="panel hidden menu">
+        <p class="label" data-i18n="inv">POCKETS</p>
+        <ul id="inv-list"></ul>
+        <p class="muted" data-i18n="invHint">Click potato or water to eat / drink.</p>
+      </div>
+
+      <div id="craft" class="panel hidden menu wide">
+        <p class="label" data-i18n="craft">CRAFT</p>
+        <ul id="craft-list"></ul>
+        <p class="muted" data-i18n="craftHint">Need a hammer to build stations. Place with E.</p>
       </div>
 
       <div id="end-screen" class="screen hidden">
@@ -110,7 +114,7 @@
         <h1 data-i18n="endTitle">KEEP ON KEEPING ON</h1>
         <p id="end-copy"></p>
         <p id="end-stats"></p>
-        <button id="btn-again" class="primary" data-i18n="again">WALK IT AGAIN</button>
+        <button id="btn-again" class="primary" data-i18n="again">SURVIVE AGAIN</button>
       </div>
     </div>
     <script type="module" src="/src/main.js"></script>

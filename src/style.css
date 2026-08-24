@@ -45,6 +45,7 @@ canvas#scene {
   z-index: 2;
 }
 
+#night-overlay,
 #storm-overlay,
 #scan-overlay {
   pointer-events: none;
@@ -53,6 +54,10 @@ canvas#scene {
   z-index: 3;
   opacity: 0;
   transition: opacity 0.6s ease;
+}
+
+#night-overlay {
+  background: rgba(4, 8, 22, 0.62);
 }
 
 #storm-overlay {
@@ -419,6 +424,46 @@ kbd {
   border: 1px solid var(--line);
   padding: 14px 16px;
   pointer-events: none;
+}
+
+.panel.menu {
+  pointer-events: auto;
+  z-index: 14;
+  max-height: 52vh;
+  overflow: auto;
+}
+
+.panel.wide {
+  width: min(440px, 56vw);
+}
+
+.recipe {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: inherit;
+  letter-spacing: 0.02em;
+  padding: 8px 0;
+  font-size: 15px;
+}
+
+.recipe small {
+  display: block;
+  color: var(--sand);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+
+.recipe.locked {
+  opacity: 0.42;
 }
 
 #pack-list {

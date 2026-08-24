@@ -1,17 +1,32 @@
 import * as THREE from "three";
-import { applyDom, toggleLang, t, getLang } from "./i18n.js";
+import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setStormAudio, pickupTone, deliverTone } from "./audio.js";
-import { createWorld, updateWorld } from "./world.js";
+import { RECIPES, OUTPOSTS } from "./data.js";
+import { createWorld, updateWorld, placeStation, placementSpot } from "./world.js";
 import {
   createPlayer,
   updatePlayer,
-  pickupCargo,
-  dropTopCargo,
-  takeMatching,
-  respawnAtLastRest,
+  addItem,
+  takeItems,
+  canAfford,
+  consumeItem,
+  count,
 } from "./player.js";
-import { createCampaign, currentOrder, spawnOrderCargo, completeOrder, orderText } from "./campaign.js";
-import { bindUi, showHud, updateHud, findInteract, pushLog, toast, showEnd, togglePack } from "./ui.js";
+import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
+import {
+  bindUi,
+  showHud,
+  updateHud,
+  findInteract,
+  pushLog,
+  toast,
+  showEnd,
+  toggleCraft,
+  toggleInv,
+  closeMenus,
+  menusOpen,
+  renderCraft,
+} from "./ui.js";
 
 export function boot() {
   applyDom();
@@ -30,7 +45,7 @@ export function boot() {
 
   const world = createWorld(scene);
   const player = createPlayer(scene);
-  const campaign = createCampaign();
+  const journal = createJournal();
 
   const keys = new Set();
   let playing = false;
@@ -43,16 +58,26 @@ export function boot() {
       startAudio();
       playing = true;
       showHud();
-      beginOrder();
+      const g = currentGoal(journal);
+      if (g) pushLog(goalText(g).from, goalText(g).log);
       canvas.requestPointerLock?.();
     },
     lang() {
       toggleLang();
+      renderCraft(player);
+    },
+    craft: onCraft,
+    consume(id) {
+      if (consumeItem(player, id)) {
+        pickupTone();
+        toast(id === "water" ? t("drank") : t("ate"));
+        maybeGoal();
+      }
     },
   });
 
   canvas.addEventListener("click", () => {
-    if (playing) canvas.requestPointerLock?.();
+    if (playing && !menusOpen()) canvas.requestPointerLock?.();
   });
 
   document.addEventListener("mousemove", (e) => {
@@ -67,55 +92,130 @@ export function boot() {
     if (!playing) return;
     if (e.code === "Tab") {
       e.preventDefault();
-      togglePack();
+      const open = toggleInv(player);
+      if (open) document.exitPointerLock?.();
+      else canvas.requestPointerLock?.();
     }
-    if (e.code === "KeyE") interact();
-    if (e.code === "KeyQ") {
-      dropTopCargo(player, world, false);
+    if (e.code === "KeyC") {
+      const open = toggleCraft(player);
+      if (open) document.exitPointerLock?.();
+      else canvas.requestPointerLock?.();
     }
+    if (e.code === "Escape") {
+      if (player.placing) {
+        player.placing = null;
+        world.ghost.visible = false;
+        toast(t("cancelPlace"));
+      }
+      closeMenus();
+    }
+    if (e.code === "KeyE" && !menusOpen()) interact();
   });
   document.addEventListener("keyup", (e) => keys.delete(e.code));
 
-  function beginOrder() {
-    const order = currentOrder(campaign);
-    if (!order) return;
-    spawnOrderCargo(world, order);
-    const text = orderText(order);
-    pushLog(text.from, text.log);
-    if (order.storm) toast(t("storm"));
+  function onCraft(id) {
+    const rec = RECIPES.find((r) => r.id === id);
+    if (!rec) return;
+    if (rec.requireTool && !player.tools[rec.requireTool]) {
+      toast(t("needHammer"));
+      return;
+    }
+    if (!canAfford(player, rec.need)) {
+      toast(t("needMats"));
+      return;
+    }
+    if (rec.kind === "tool") {
+      takeItems(player, rec.need);
+      player.tools[rec.tool] = true;
+      deliverTone();
+      toast(`${t("crafted")} · ${loc(rec.title)}`);
+      maybeGoal();
+      return;
+    }
+    player.placing = rec;
+    closeMenus();
+    canvas.requestPointerLock?.();
+    toast(t("place"));
   }
 
   function interact() {
-    const order = currentOrder(campaign);
-    const hit = findInteract(player, world, order);
+    const hit = findInteract(player, world);
     if (!hit) return;
-    if (hit.kind === "pickup") {
-      if (pickupCargo(player, hit.crate)) pickupTone();
-    } else if (hit.kind === "deliver") {
-      const delivered = takeMatching(player, order.need);
-      hit.outpost.connected = true;
-      player.lastRestId = hit.outpost.id;
-      player.oxygen = 100;
-      player.stamina = 100;
-      const result = completeOrder(campaign, delivered);
-      deliverTone();
-      toast(`+${result.likes} ${t("likesGain")}`);
-      if (campaign.finished) {
-        hit.outpost.connected = true;
-        showEnd(campaign, player);
-        playing = false;
-        document.exitPointerLock?.();
+    if (hit.kind === "place") {
+      const rec = player.placing;
+      const spot = placementSpot(player);
+      if (rec.near) {
+        const site = OUTPOSTS.find((o) => o.id === rec.near);
+        if (Math.hypot(spot.x - site.x, spot.z - site.z) > 14) {
+          toast(t("needNear"));
+          return;
+        }
+      }
+      if (!takeItems(player, rec.need)) {
+        toast(t("needMats"));
         return;
       }
-      beginOrder();
-    } else if (hit.kind === "rest") {
-      hit.outpost.connected = true;
-      player.lastRestId = hit.outpost.id;
-      player.oxygen = Math.min(100, player.oxygen + 45);
-      player.stamina = 100;
-      player.balance = 0;
-      toast(t("connected"));
+      placeStation(world, rec.station, spot.x, spot.z);
+      player.placing = null;
+      world.ghost.visible = false;
+      deliverTone();
+      toast(`${t("placed")} · ${loc(rec.title)}`);
+      maybeGoal();
+      return;
     }
+    if (hit.kind === "gather") {
+      if (!addItem(player, hit.node.type, 1)) return;
+      hit.node.taken = true;
+      world.scene.remove(hit.node.mesh);
+      pickupTone();
+      maybeGoal();
+      return;
+    }
+    if (hit.kind === "still-fuel") {
+      const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
+      takeItems(player, { [fuel]: 1 });
+      hit.station.fuel += fuel === "hydrazine" ? 50 : 28;
+      pickupTone();
+      return;
+    }
+    if (hit.kind === "still-take") {
+      hit.station.water -= 1;
+      addItem(player, "water", 1);
+      pickupTone();
+      maybeGoal();
+      return;
+    }
+    if (hit.kind === "plant") {
+      takeItems(player, { potato: 1 });
+      hit.station.planted = true;
+      hit.station.grow = 0;
+      pickupTone();
+      return;
+    }
+    if (hit.kind === "harvest-plot") {
+      addItem(player, "potato", 3);
+      player.harvestedCrop = true;
+      hit.station.planted = false;
+      hit.station.grow = 0;
+      const plant = hit.station.mesh.getObjectByName("plant");
+      if (plant) plant.visible = false;
+      deliverTone();
+      maybeGoal();
+    }
+  }
+
+  function maybeGoal() {
+    const prev = currentGoal(journal);
+    if (!checkProgress(journal, player, world)) return;
+    if (journal.finished) {
+      showEnd(journal, player);
+      playing = false;
+      document.exitPointerLock?.();
+      return;
+    }
+    const next = currentGoal(journal);
+    if (next) pushLog(goalText(next).from, goalText(next).log);
+    if (prev) toast(loc(prev.title));
   }
 
   function inputState() {
@@ -124,22 +224,17 @@ export function boot() {
       back: keys.has("KeyS") || keys.has("ArrowDown"),
       left: keys.has("KeyA") || keys.has("ArrowLeft"),
       right: keys.has("KeyD") || keys.has("ArrowRight"),
-      brace: keys.has("ShiftLeft") || keys.has("ShiftRight"),
       lookX,
     };
   }
 
   function placeCamera(dt) {
-    const yaw = player.yaw;
-    const pitch = player.pitch;
     const dist = 6.2;
-    const height = 1.7 + pitch * 0.4;
-    const ox = Math.sin(yaw) * dist;
-    const oz = Math.cos(yaw) * dist;
+    const height = 1.7 + player.pitch * 0.4;
     const target = new THREE.Vector3(
-      player.root.position.x + ox,
+      player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
-      player.root.position.z + oz
+      player.root.position.z + Math.cos(player.yaw) * dist
     );
     camera.position.lerp(target, 1 - Math.pow(0.0004, dt));
     camera.lookAt(player.root.position.x, player.root.position.y + 1.45, player.root.position.z);
@@ -154,19 +249,25 @@ export function boot() {
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    scanning = playing && keys.has("KeyC");
+    scanning = playing && keys.has("KeyF");
+
+    if (player.placing) {
+      const spot = placementSpot(player);
+      world.ghost.visible = true;
+      world.ghost.position.set(spot.x, spot.y + 0.6, spot.z);
+    } else {
+      world.ghost.visible = false;
+    }
 
     if (playing) {
       const result = updatePlayer(player, dt, inputState(), world);
-      if (result.stumbled) toast(t("stumble"));
-      if (result.blackout) {
-        respawnAtLastRest(player, world);
-        toast(getLang() === "ru" ? "О₂ НА НУЛЕ — ВОЗВРАТ К МАЯКУ" : "O₂ GONE — RETURNED TO BEACON");
-      }
+      if (result.blackout) toast(t("o2") + " — HAB");
       updateWorld(world, dt, player.root.position, scanning);
       setStormAudio(world.storm);
       placeCamera(dt);
-      updateHud({ player, world, campaign, order: currentOrder(campaign), scanning, camera });
+      journal.sols = 19 + Math.floor(player.distance / 90);
+      if (currentGoal(journal)?.id === "escape") maybeGoal();
+      updateHud({ player, world, journal, scanning, camera });
     } else {
       camera.position.set(18, 9, 28);
       camera.lookAt(0, 2, 8);

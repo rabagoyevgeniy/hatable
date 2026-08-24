@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { heightAt, fbm } from "./noise.js";
-import { OUTPOSTS, CARGO_TYPES } from "./data.js";
-import { getLang } from "./i18n.js";
+import { OUTPOSTS, ITEMS, NODE_SPAWNS } from "./data.js";
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 140;
@@ -15,63 +14,204 @@ export function createWorld(scene) {
   const sun = new THREE.DirectionalLight(0xffd2a8, 1.15);
   sun.position.set(80, 70, -40);
   scene.add(sun);
-  scene.add(new THREE.AmbientLight(0x6a3a28, 0.28));
+  scene.add(new THREE.AmbientLight(0x6a3a18, 0.28));
 
-  const terrain = makeTerrain();
-  scene.add(terrain);
-
-  const rocks = makeRocks();
-  scene.add(rocks);
-
-  const mountains = makeMountains();
-  scene.add(mountains);
-
+  scene.add(makeTerrain());
+  scene.add(makeRocks());
+  scene.add(makeMountains());
   const dust = makeDust();
   scene.add(dust);
-
   const scanRing = makeScanRing();
   scene.add(scanRing);
+
+  const ghost = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 1.2, 1.4),
+    new THREE.MeshBasicMaterial({ color: 0xffb15a, transparent: true, opacity: 0.35 })
+  );
+  ghost.visible = false;
+  scene.add(ghost);
 
   const outposts = OUTPOSTS.map((data) => {
     const group = buildOutpost(data);
     group.position.set(data.x, heightAt(data.x, data.z), data.z);
     scene.add(group);
-    return { ...data, group, connected: data.id === "hab", beacon: group.userData.beacon };
+    return { ...data, group, beacon: group.userData.beacon };
   });
 
-  const cargo = [];
-
-  return {
+  const world = {
     scene,
-    terrain,
+    sun,
+    hemi,
     dust,
     scanRing,
+    ghost,
     outposts,
-    cargo,
+    nodes: [],
+    stations: [],
     storm: 0,
-    stormTarget: 0,
-    spawnCargo(type, x, z) {
-      const crate = makeCrate(type, x, z);
-      scene.add(crate.mesh);
-      cargo.push(crate);
-      return crate;
-    },
-    nearestOutpost(pos) {
-      let best = null;
-      let bestD = Infinity;
-      for (const o of outposts) {
-        const d = Math.hypot(pos.x - o.x, pos.z - o.z);
-        if (d < bestD) {
-          bestD = d;
-          best = o;
-        }
-      }
-      return { outpost: best, dist: bestD };
-    },
-    connectedCount() {
-      return outposts.filter((o) => o.connected).length;
-    },
+    stormTarget: 0.05,
+    clock: 0.35,
+    daylight: 1,
+    habSealed: false,
+    powered: false,
+    contacted: false,
   };
+
+  for (const spawn of NODE_SPAWNS) spawnNode(world, spawn.type, spawn.x, spawn.z);
+  return world;
+}
+
+export function spawnNode(world, type, x, z) {
+  const def = ITEMS[type];
+  const group = new THREE.Group();
+  const pile = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(0.42, 0),
+    new THREE.MeshStandardMaterial({
+      color: def.color,
+      emissive: def.color,
+      emissiveIntensity: 0.35,
+      roughness: 0.7,
+      flatShading: true,
+    })
+  );
+  group.add(pile);
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6),
+    new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
+  );
+  stem.position.y = 1.05;
+  group.add(stem);
+  group.position.set(x, heightAt(x, z) + 0.35, z);
+  world.scene.add(group);
+  const node = { type, mesh: group, taken: false };
+  world.nodes.push(node);
+  return node;
+}
+
+export function placeStation(world, station, x, z) {
+  const mesh = buildStation(station);
+  mesh.position.set(x, heightAt(x, z), z);
+  world.scene.add(mesh);
+  const st = {
+    type: station,
+    mesh,
+    x,
+    z,
+    water: 0,
+    fuel: 0,
+    planted: false,
+    grow: 0,
+  };
+  world.stations.push(st);
+  if (station === "seal") world.habSealed = true;
+  if (station === "solar") world.powered = true;
+  if (station === "radio") world.contacted = true;
+  return st;
+}
+
+function buildStation(type) {
+  const g = new THREE.Group();
+  const scrap = new THREE.MeshStandardMaterial({ color: 0xc2bbb0, roughness: 0.55, metalness: 0.2 });
+  const rust = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.9 });
+  const soil = new THREE.MeshStandardMaterial({ color: 0x5a3318, roughness: 1 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x1c2430, roughness: 0.35, metalness: 0.4 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.3, metalness: 0.5 });
+  if (type === "still") {
+    g.add(mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.4, 10), scrap, 0, 0.8, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.1, 8), rust, 0.55, 1.4, 0));
+    g.add(mesh(new THREE.SphereGeometry(0.28, 8, 8), new THREE.MeshStandardMaterial({ color: 0x4aa0c8 }), 0.55, 2, 0));
+  } else if (type === "plot") {
+    g.add(mesh(new THREE.BoxGeometry(2.2, 0.35, 2.2), rust, 0, 0.2, 0));
+    g.add(mesh(new THREE.BoxGeometry(1.9, 0.2, 1.9), soil, 0, 0.4, 0));
+    const plant = mesh(new THREE.ConeGeometry(0.18, 0.7, 5), new THREE.MeshStandardMaterial({ color: 0x5d8a4a }), 0, 0.85, 0);
+    plant.visible = false;
+    plant.name = "plant";
+    g.add(plant);
+  } else if (type === "solar") {
+    const panel = mesh(new THREE.BoxGeometry(2.4, 0.08, 1.3), dark, 0, 1.1, 0);
+    panel.rotation.x = -0.45;
+    g.add(panel);
+    g.add(mesh(new THREE.BoxGeometry(0.12, 1.1, 0.12), scrap, 0, 0.55, 0.4));
+  } else if (type === "seal") {
+    g.add(mesh(new THREE.BoxGeometry(1.8, 1.4, 0.12), new THREE.MeshStandardMaterial({ color: 0xe8dcc8 }), 0, 1.1, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), gold, 0.6, 1.4, 0.08));
+  } else if (type === "radio") {
+    g.add(mesh(new THREE.BoxGeometry(0.8, 0.5, 0.6), scrap, 0, 0.4, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), gold, 0, 2.1, 0));
+    g.add(mesh(new THREE.TetrahedronGeometry(0.45), gold, 0, 3.8, 0));
+  }
+  return g;
+}
+
+function mesh(geo, mat, x, y, z) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  return m;
+}
+
+export function placementSpot(player) {
+  const x = player.root.position.x - Math.sin(player.yaw) * 3.2;
+  const z = player.root.position.z - Math.cos(player.yaw) * 3.2;
+  return { x, z, y: heightAt(x, z) };
+}
+
+export function updateWorld(world, dt, playerPos, scanning) {
+  world.clock = (world.clock + dt / 160) % 1;
+  world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
+  const night = 1 - world.daylight;
+  world.sun.intensity = 0.25 + world.daylight * 1.05;
+  world.hemi.intensity = 0.25 + world.daylight * 0.7;
+  const fogCol = new THREE.Color().setRGB(0.55 * world.daylight + 0.08, 0.28 * world.daylight + 0.04, 0.16);
+  world.scene.background.copy(fogCol);
+  world.scene.fog.color.copy(fogCol);
+  world.scene.fog.density = 0.01 + night * 0.008 + world.storm * 0.02;
+
+  world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.45);
+  if (Math.random() < dt * 0.02) world.stormTarget = Math.random() < 0.22 ? 0.8 : 0.05;
+
+  const dustPos = world.dust.geometry.attributes.position;
+  const n = world.dust.userData.n;
+  for (let i = 0; i < n; i++) {
+    let x = dustPos.getX(i) + dt * (4 + world.storm * 18);
+    let z = dustPos.getZ(i) + dt * (1 + world.storm * 6);
+    if (x > 110) x -= 220;
+    if (z > 110) z -= 220;
+    dustPos.setXYZ(i, x, dustPos.getY(i), z);
+  }
+  dustPos.needsUpdate = true;
+  world.dust.position.set(playerPos.x, playerPos.y, playerPos.z);
+  world.dust.material.opacity = 0.18 + world.storm * 0.5 + night * 0.1;
+
+  if (scanning) {
+    world.scanRing.position.set(playerPos.x, playerPos.y + 0.05, playerPos.z);
+    world.scanRing.scale.x += dt * 18;
+    world.scanRing.scale.y += dt * 18;
+    world.scanRing.material.opacity = Math.max(0, 0.7 - world.scanRing.scale.x * 0.03);
+    if (world.scanRing.scale.x > 22) world.scanRing.scale.set(1, 1, 1);
+  } else {
+    world.scanRing.material.opacity = 0;
+    world.scanRing.scale.set(1, 1, 1);
+  }
+
+  for (const node of world.nodes) {
+    if (node.taken) continue;
+    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + 0.35 + Math.sin(performance.now() / 380) * 0.05;
+  }
+
+  for (const st of world.stations) {
+    if (st.type === "still" && st.fuel > 0) {
+      st.fuel -= dt;
+      st.water += dt * 0.04;
+    }
+    if (st.type === "plot" && st.planted && st.grow < 1) {
+      st.grow += dt * (0.022 + world.daylight * 0.02);
+      const plant = st.mesh.getObjectByName("plant");
+      if (plant) {
+        plant.visible = true;
+        plant.scale.setScalar(0.4 + st.grow * 0.9);
+      }
+    }
+  }
 }
 
 function makeTerrain() {
@@ -93,22 +233,17 @@ function makeTerrain() {
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.96,
-    metalness: 0.04,
-    flatShading: false,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.receiveShadow = true;
-  return mesh;
+  return new THREE.Mesh(
+    geo,
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0.04 })
+  );
 }
 
 function makeRocks() {
   const geo = new THREE.DodecahedronGeometry(1.1, 0);
   const mat = new THREE.MeshStandardMaterial({ color: 0x6b3b28, roughness: 1, flatShading: true });
   const count = 220;
-  const mesh = new THREE.InstancedMesh(geo, mat, count);
+  const meshInst = new THREE.InstancedMesh(geo, mat, count);
   const dummy = new THREE.Object3D();
   let placed = 0;
   let guard = 0;
@@ -122,10 +257,10 @@ function makeRocks() {
     const s = 0.6 + Math.random() * 2.4;
     dummy.scale.set(s, s * (0.5 + Math.random()), s);
     dummy.updateMatrix();
-    mesh.setMatrixAt(placed, dummy.matrix);
+    meshInst.setMatrixAt(placed, dummy.matrix);
     placed++;
   }
-  return mesh;
+  return meshInst;
 }
 
 function makeMountains() {
@@ -134,9 +269,9 @@ function makeMountains() {
   for (let i = 0; i < 18; i++) {
     const ang = (i / 18) * Math.PI * 2;
     const r = 290 + (i % 3) * 18;
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(28 + (i % 5) * 6, 22 + (i % 4) * 10, 5), mat);
-    mesh.position.set(Math.cos(ang) * r, 8, Math.sin(ang) * r);
-    group.add(mesh);
+    const m = new THREE.Mesh(new THREE.ConeGeometry(28 + (i % 5) * 6, 22 + (i % 4) * 10, 5), mat);
+    m.position.set(Math.cos(ang) * r, 8, Math.sin(ang) * r);
+    group.add(m);
   }
   return group;
 }
@@ -151,14 +286,10 @@ function makeDust() {
     positions[i * 3 + 2] = (Math.random() - 0.5) * 220;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const mat = new THREE.PointsMaterial({
-    color: 0xe2b089,
-    size: 0.28,
-    transparent: true,
-    opacity: 0.35,
-    depthWrite: false,
-  });
-  const points = new THREE.Points(geo, mat);
+  const points = new THREE.Points(
+    geo,
+    new THREE.PointsMaterial({ color: 0xe2b089, size: 0.28, transparent: true, opacity: 0.35, depthWrite: false })
+  );
   points.userData.n = n;
   return points;
 }
@@ -166,63 +297,10 @@ function makeDust() {
 function makeScanRing() {
   const geo = new THREE.RingGeometry(0.4, 0.55, 48);
   geo.rotateX(-Math.PI / 2);
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0xffb15a,
-    transparent: true,
-    opacity: 0,
-    side: THREE.DoubleSide,
-  });
-  return new THREE.Mesh(geo, mat);
-}
-
-function makeCrate(type, x, z) {
-  const def = CARGO_TYPES[type];
-  const group = new THREE.Group();
-  const box = new THREE.Mesh(
-    new THREE.BoxGeometry(1.05, 0.8, 1.05),
-    new THREE.MeshStandardMaterial({
-      color: def.color,
-      emissive: def.color,
-      emissiveIntensity: 0.45,
-      roughness: 0.48,
-      metalness: 0.12,
-    })
+  return new THREE.Mesh(
+    geo,
+    new THREE.MeshBasicMaterial({ color: 0xffb15a, transparent: true, opacity: 0, side: THREE.DoubleSide })
   );
-  box.castShadow = true;
-  group.add(box);
-
-  const stripe = new THREE.Mesh(
-    new THREE.BoxGeometry(1.12, 0.12, 1.12),
-    new THREE.MeshStandardMaterial({ color: 0xffd08a, emissive: 0xffb15a, emissiveIntensity: 0.6 })
-  );
-  stripe.position.y = 0.12;
-  group.add(stripe);
-
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.045, 0.045, 2.4, 8),
-    new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.8 })
-  );
-  pole.position.y = 1.5;
-  group.add(pole);
-
-  const beacon = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.28),
-    new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
-  );
-  beacon.position.y = 2.75;
-  group.add(beacon);
-
-  group.position.set(x, heightAt(x, z) + 0.45, z);
-  group.userData.marker = [pole, beacon];
-  group.userData.beacon = beacon;
-  return {
-    type,
-    mesh: group,
-    weight: def.weight,
-    condition: 100,
-    taken: false,
-    name: def.name,
-  };
 }
 
 function buildOutpost(data) {
@@ -238,7 +316,6 @@ function buildOutpost(data) {
     dome.position.y = 3.2;
     g.add(dome);
     g.add(box(white, 1.6, 1.8, 2.2, 4.2, 0.9, 0));
-    g.add(box(rust, 0.3, 4.4, 0.3, -3.2, 2.2, 2.4));
   } else if (data.kind === "rover") {
     g.add(box(white, 3.6, 1.1, 2.2, 0, 1.1, 0));
     g.add(box(dark, 1.4, 0.8, 1.6, -1.4, 1.7, 0));
@@ -251,41 +328,33 @@ function buildOutpost(data) {
       }
     }
   } else if (data.kind === "farm") {
-    const gh = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 8, 12, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({
-      color: 0x7ec98a,
-      transparent: true,
-      opacity: 0.35,
-      roughness: 0.2,
-    }));
+    const gh = new THREE.Mesh(
+      new THREE.CylinderGeometry(5, 5, 8, 12, 1, false, 0, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x7ec98a, transparent: true, opacity: 0.28, roughness: 0.2 })
+    );
     gh.rotation.z = Math.PI / 2;
     gh.position.y = 2;
     g.add(gh);
-    g.add(box(white, 8.2, 0.3, 4.6, 0, 0.2, 0));
   } else if (data.kind === "solar") {
     for (let i = -2; i <= 2; i++) {
       const panel = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 1.6), dark);
       panel.position.set(i * 1.1, 1.4, 0);
       panel.rotation.x = -0.5;
       g.add(panel);
-      g.add(box(white, 0.12, 1.4, 0.12, i * 1.1, 0.7, 0.6));
     }
   } else if (data.kind === "pathfinder") {
     const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(1.6), gold);
     tetra.position.y = 2.4;
-    tetra.rotation.y = 0.4;
     g.add(tetra);
     g.add(cyl(white, 0.18, 2.2, 0, 1.1, 0));
-    g.add(box(rust, 1.8, 0.25, 1.8, 0, 0.15, 0));
   } else if (data.kind === "mav") {
     g.add(cyl(white, 1.3, 11, 0, 6, 0));
     const nose = new THREE.Mesh(new THREE.ConeGeometry(1.3, 3.2, 10), white);
     nose.position.y = 13.1;
     g.add(nose);
-    g.add(box(rust, 0.2, 4, 1.8, -1.6, 3, 0));
-    g.add(box(rust, 0.2, 4, 1.8, 1.6, 3, 0));
   }
 
-  const beacon = new THREE.PointLight(0xffb15a, 0.4, 18);
+  const beacon = new THREE.PointLight(0xffb15a, 0.45, 18);
   beacon.position.y = 5;
   g.add(beacon);
   g.userData.beacon = beacon;
@@ -304,51 +373,15 @@ function box(mat, w, h, d, x, y, z) {
   return m;
 }
 
-export function updateWorld(world, dt, playerPos, scanning) {
-  world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.6);
-  const fog = 0.012 + world.storm * 0.018;
-  world.scene.fog.density = fog;
-  const dustPos = world.dust.geometry.attributes.position;
-  const n = world.dust.userData.n;
-  for (let i = 0; i < n; i++) {
-    let x = dustPos.getX(i) + dt * (4 + world.storm * 18);
-    let y = dustPos.getY(i);
-    let z = dustPos.getZ(i) + dt * (1 + world.storm * 6);
-    if (x > 110) x -= 220;
-    if (z > 110) z -= 220;
-    dustPos.setXYZ(i, x, y, z);
-  }
-  dustPos.needsUpdate = true;
-  world.dust.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.dust.material.opacity = 0.22 + world.storm * 0.45;
-
-  if (scanning) {
-    world.scanRing.position.set(playerPos.x, playerPos.y + 0.05, playerPos.z);
-    world.scanRing.scale.x += dt * 18;
-    world.scanRing.scale.y += dt * 18;
-    world.scanRing.material.opacity = Math.max(0, 0.7 - world.scanRing.scale.x * 0.03);
-    if (world.scanRing.scale.x > 22) {
-      world.scanRing.scale.set(1, 1, 1);
-    }
-  } else {
-    world.scanRing.material.opacity = 0;
-    world.scanRing.scale.set(1, 1, 1);
-  }
-
+export function nearestOutpost(world, pos) {
+  let best = null;
+  let bestD = Infinity;
   for (const o of world.outposts) {
-    o.beacon.color.set(o.connected ? 0x8fd3b0 : 0xffb15a);
-    o.beacon.intensity = o.connected ? 1.1 : 0.35;
+    const d = Math.hypot(pos.x - o.x, pos.z - o.z);
+    if (d < bestD) {
+      bestD = d;
+      best = o;
+    }
   }
-
-  for (const c of world.cargo) {
-    if (c.taken) continue;
-    c.mesh.position.y = heightAt(c.mesh.position.x, c.mesh.position.z) + 0.45 + Math.sin(performance.now() / 400) * 0.05;
-    const spin = c.mesh.userData.beacon;
-    if (spin) spin.rotation.y += dt * 2.2;
-  }
-}
-
-export function cargoLabel(crate) {
-  const lang = getLang();
-  return crate.name[lang] || crate.name.en;
+  return { outpost: best, dist: bestD };
 }
