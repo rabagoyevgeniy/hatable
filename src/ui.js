@@ -324,6 +324,7 @@ export function findInteract(player, world) {
   }
 
   if (gather && gatherD < 3.2 && gatherD <= lockerD) return gather;
+  if (inside && habD < 5.1 && lockerD > 2.5) return { kind: "sleep", label: t("sleep") };
   if (lockerD < 4.0) return { kind: "locker", label: t("locker") };
   if (gather) return gather;
   if (inside && habD < 7.4) return { kind: "sleep", label: t("sleep") };
@@ -401,6 +402,16 @@ function updateScanLabels(player, world, camera, scanning) {
       y: world.locker.mesh.position.y + 2.4,
       z: world.locker.z,
       title: lang === "ru" ? "ШКАФ" : "LOCKER",
+      sub: "",
+      loot: true,
+    });
+  }
+  if (Math.hypot(p.x, p.z - 8) < 16) {
+    targets.push({
+      x: -1.4,
+      y: 2.2,
+      z: 6.4,
+      title: lang === "ru" ? "КОЙКА · СОН" : "BUNK · SLEEP",
       sub: "",
       loot: true,
     });

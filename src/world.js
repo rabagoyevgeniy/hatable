@@ -74,7 +74,7 @@ export function createWorld(scene) {
     locker: { x: 3.1, z: 12.3, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
-    clock: 0.35,
+    clock: 0.22,
     daylight: 1,
     habSealed: false,
     powered: false,

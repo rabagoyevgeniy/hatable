@@ -294,7 +294,9 @@ export function attachHammer(player) {
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.12), iron);
   head.position.set(0.14, 0.22, 0);
   g.add(head);
-  g.position.set(0.04, -0.36, 0.08);
+  g.position.set(0.1, -0.4, 0.16);
+  g.rotation.set(0.4, 0.2, -0.5);
+  g.scale.setScalar(1.35);
   player.armR.add(g);
   player.hammerMesh = g;
 }
