@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setStormAudio, pickupTone, deliverTone } from "./audio.js";
-import { RECIPES, OUTPOSTS } from "./data.js";
+import { RECIPES, OUTPOSTS, SURVIVAL } from "./data.js";
 import { createWorld, updateWorld, placeStation, placementSpot } from "./world.js";
 import {
   createPlayer,
@@ -11,6 +11,8 @@ import {
   canAfford,
   consumeItem,
   count,
+  transfer,
+  trySleep,
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
 import {
@@ -26,6 +28,10 @@ import {
   closeMenus,
   menusOpen,
   renderCraft,
+  toggleStorage,
+  storageOpen,
+  renderStorage,
+  renderInv,
 } from "./ui.js";
 
 export function boot() {
@@ -68,11 +74,31 @@ export function boot() {
     },
     craft: onCraft,
     consume(id) {
+      if (storageOpen()) {
+        if (transfer(player.inv, world.locker.storage, id, 1)) {
+          pickupTone();
+          renderInv(player);
+          renderStorage(world);
+        }
+        return;
+      }
+      if (id === "potato" && count(player, "potato") <= 1 && !player.harvestedCrop) {
+        toast(t("warnHunger"));
+      }
       if (consumeItem(player, id)) {
         pickupTone();
         toast(id === "water" ? t("drank") : t("ate"));
         maybeGoal();
       }
+    },
+    takeStorage(id) {
+      if (!transfer(world.locker.storage, player.inv, id, 1, SURVIVAL.pocketMax)) {
+        toast(t("pocketsFull"));
+        return;
+      }
+      pickupTone();
+      renderInv(player);
+      renderStorage(world);
     },
   });
 
@@ -164,11 +190,29 @@ export function boot() {
       return;
     }
     if (hit.kind === "gather") {
-      if (!addItem(player, hit.node.type, 1)) return;
+      if (hit.node.needHammer && !player.tools.hammer) {
+        toast(t("needTool"));
+        return;
+      }
+      if (!addItem(player, hit.node.type, hit.node.amount || 1)) {
+        toast(t("pocketsFull"));
+        return;
+      }
       hit.node.taken = true;
       world.scene.remove(hit.node.mesh);
       pickupTone();
       maybeGoal();
+      return;
+    }
+    if (hit.kind === "locker") {
+      const open = toggleStorage(player, world);
+      if (open) document.exitPointerLock?.();
+      else canvas.requestPointerLock?.();
+      return;
+    }
+    if (hit.kind === "sleep") {
+      const result = trySleep(player, world);
+      toast(t(result));
       return;
     }
     if (hit.kind === "still-fuel") {
@@ -193,7 +237,7 @@ export function boot() {
       return;
     }
     if (hit.kind === "harvest-plot") {
-      addItem(player, "potato", 3);
+      addItem(player, "potato", 2);
       player.harvestedCrop = true;
       hit.station.planted = false;
       hit.station.grow = 0;
@@ -261,7 +305,7 @@ export function boot() {
 
     if (playing) {
       const result = updatePlayer(player, dt, inputState(), world);
-      if (result.blackout) toast(t("o2") + " — HAB");
+      if (result.blackout) toast(t("warnO2"));
       updateWorld(world, dt, player.root.position, scanning);
       setStormAudio(world.storm);
       placeCamera(dt);

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, OUTPOSTS } from "./data.js";
-import { count, canAfford, itemName } from "./player.js";
+import { ITEMS, RECIPES, SURVIVAL } from "./data.js";
+import { count, canAfford, itemName, isInsideHab } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost } from "./world.js";
 
@@ -19,6 +19,10 @@ export function bindUi(handlers) {
     const btn = e.target.closest("[data-item]");
     if (btn) handlers.consume(btn.dataset.item);
   });
+  $("storage-list").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-item]");
+    if (btn) handlers.takeStorage(btn.dataset.item);
+  });
 }
 
 export function showHud() {
@@ -27,7 +31,11 @@ export function showHud() {
 }
 
 export function menusOpen() {
-  return !$("craft").classList.contains("hidden") || !$("inv").classList.contains("hidden");
+  return (
+    !$("craft").classList.contains("hidden") ||
+    !$("inv").classList.contains("hidden") ||
+    !$("storage").classList.contains("hidden")
+  );
 }
 
 export function toggleCraft(player) {
@@ -44,9 +52,25 @@ export function toggleInv(player) {
   return !$("inv").classList.contains("hidden");
 }
 
+export function toggleStorage(player, world) {
+  $("craft").classList.add("hidden");
+  $("storage").classList.toggle("hidden");
+  if (!$("storage").classList.contains("hidden")) {
+    $("inv").classList.remove("hidden");
+    renderInv(player);
+    renderStorage(world);
+  }
+  return !$("storage").classList.contains("hidden");
+}
+
+export function storageOpen() {
+  return !$("storage").classList.contains("hidden");
+}
+
 export function closeMenus() {
   $("craft").classList.add("hidden");
   $("inv").classList.add("hidden");
+  $("storage").classList.add("hidden");
 }
 
 export function renderCraft(player) {
@@ -64,27 +88,36 @@ export function renderCraft(player) {
   }
 }
 
+export function renderStorage(world) {
+  fillItemList($("storage-list"), world.locker.storage, false);
+}
+
 export function renderInv(player) {
   const list = $("inv-list");
   list.innerHTML = "";
-  const entries = Object.entries(player.inv).filter(([, n]) => n > 0);
   if (player.tools.hammer) {
     const li = document.createElement("li");
     li.innerHTML = `<span>${getLang() === "ru" ? "Молоток" : "Hammer"}</span><span>tool</span>`;
     list.appendChild(li);
   }
-  if (entries.length === 0 && !player.tools.hammer) {
+  fillItemList(list, player.inv, true);
+  if (totalShown(player) === 0) {
     const li = document.createElement("li");
-    li.innerHTML = `<span>${getLang() === "ru" ? "пусто — ищи обломки у Hab" : "empty — loot the Hab wreck"}</span>`;
+    li.innerHTML = `<span>${getLang() === "ru" ? "пусто — шкаф у двери Hab" : "empty — locker by the Hab door"}</span>`;
     list.appendChild(li);
-    return;
   }
-  for (const [id, n] of entries) {
+}
+
+function totalShown(player) {
+  return Object.values(player.inv).reduce((s, n) => s + n, 0) + (player.tools.hammer ? 1 : 0);
+}
+
+function fillItemList(list, bag, eat) {
+  for (const [id, n] of Object.entries(bag)) {
+    if (!n) continue;
     const li = document.createElement("li");
-    const eat = id === "potato" || id === "water";
-    li.innerHTML = eat
-      ? `<button class="recipe" data-item="${id}"><span>${itemName(id)}</span><span>${n} · ${getLang() === "ru" ? "съесть" : "use"}</span></button>`
-      : `<span>${itemName(id)}</span><span>${n}</span>`;
+    const use = eat && (id === "potato" || id === "water");
+    li.innerHTML = `<button class="recipe" data-item="${id}"><span>${itemName(id)}</span><span>${n}${use ? (getLang() === "ru" ? " · съесть" : " · use") : ""}</span></button>`;
     list.appendChild(li);
   }
 }
@@ -100,10 +133,21 @@ export function updateHud({ player, world, journal, scanning, camera }) {
   $("bar-hunger").style.width = `${player.hunger}%`;
   $("bar-thirst").style.width = `${player.thirst}%`;
   $("bar-warmth").style.width = `${player.warmth}%`;
+  $("num-o2").textContent = String(Math.round(player.oxygen));
+  $("num-hunger").textContent = String(Math.round(player.hunger));
+  $("num-thirst").textContent = String(Math.round(player.thirst));
+  $("num-warmth").textContent = String(Math.round(player.warmth));
   colorBar("bar-o2", player.oxygen);
   colorBar("bar-hunger", player.hunger);
   colorBar("bar-thirst", player.thirst);
   colorBar("bar-warmth", player.warmth);
+
+  const warn = $("vital-warn");
+  if (player.thirst < 22) warn.textContent = t("warnThirst");
+  else if (player.hunger < 22) warn.textContent = t("warnHunger");
+  else if (player.oxygen < 22) warn.textContent = t("warnO2");
+  else if (player.warmth < 22) warn.textContent = t("warnWarmth");
+  else warn.textContent = "";
 
   const goal = currentGoal(journal);
   $("goal-step").textContent = `${Math.min(journal.index + 1, 8)} / 8`;
@@ -133,6 +177,7 @@ export function updateHud({ player, world, journal, scanning, camera }) {
 
   if (!$("craft").classList.contains("hidden")) renderCraft(player);
   if (!$("inv").classList.contains("hidden")) renderInv(player);
+  if (!$("storage").classList.contains("hidden")) renderStorage(world);
 
   updateScanLabels(player, world, camera, scanning);
   updatePrompt(player, world);
@@ -152,7 +197,12 @@ export function findInteract(player, world) {
     const d = Math.hypot(p.x - node.mesh.position.x, p.z - node.mesh.position.z);
     if (d < bestD) {
       bestD = d;
-      best = { kind: "gather", node, label: `${t("gather")}  ·  ${itemName(node.type)}` };
+      const hammered = node.needHammer;
+      best = {
+        kind: "gather",
+        node,
+        label: hammered ? `${t("salvage")}  ·  ${itemName(node.type)}` : `${t("gather")}  ·  ${itemName(node.type)}`,
+      };
     }
   }
   for (const st of world.stations) {
@@ -169,7 +219,11 @@ export function findInteract(player, world) {
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
     }
   }
-  return best;
+  if (best) return best;
+  const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
+  if (lockerD < 4.2) return { kind: "locker", label: t("locker") };
+  if (isInsideHab(player)) return { kind: "sleep", label: t("sleep") };
+  return null;
 }
 
 function updatePrompt(player, world) {
@@ -249,4 +303,4 @@ export function showEnd(journal, player) {
       : `Sol ${journal.sols} · ${km} km of rust`;
 }
 
-export { OUTPOSTS, ITEMS };
+export { ITEMS, SURVIVAL };

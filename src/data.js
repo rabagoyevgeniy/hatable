@@ -25,13 +25,28 @@ export const ITEMS = {
 };
 
 export const CONSUME = {
-  potato: { hunger: 38, thirst: -4, o2: 0 },
-  water: { hunger: 0, thirst: 48, o2: 4 },
+  potato: { hunger: 16, thirst: -14, o2: 0 },
+  water: { hunger: 2, thirst: 26, o2: 3 },
+};
+
+/** Seconds-ish rates per second of game time. Walking and storms cost more. */
+export const SURVIVAL = {
+  pocketMax: 8,
+  hungerWalk: 0.95,
+  hungerIdle: 0.48,
+  hungerHab: 0.26,
+  thirstWalk: 1.45,
+  thirstIdle: 0.82,
+  thirstHab: 0.44,
+  o2Outside: 1.35,
+  o2Storm: 2.1,
+  warmthNight: 8.5,
+  warmthDay: 1.6,
+  starveSlow: 0.52,
 };
 
 export const NODE_SPAWNS = [
   { type: "scrap", x: 7, z: 16 },
-  { type: "scrap", x: 12, z: 11 },
   { type: "scrap", x: -8, z: 14 },
   { type: "rock", x: -5, z: 20 },
   { type: "rock", x: 16, z: 22 },
@@ -39,27 +54,29 @@ export const NODE_SPAWNS = [
   { type: "fabric", x: 3, z: 6 },
   { type: "fabric", x: -4, z: 5 },
   { type: "tape", x: 1, z: 12 },
-  { type: "potato", x: 5, z: 5 },
   { type: "ice", x: 18, z: 28 },
   { type: "ice", x: -14, z: 24 },
   { type: "ice", x: 22, z: 8 },
-  { type: "scrap", x: 80, z: -42 },
-  { type: "scrap", x: 90, z: -50 },
+  { type: "scrap", x: 12, z: 11, needHammer: true, amount: 2 },
+  { type: "scrap", x: 80, z: -42, needHammer: true, amount: 2 },
+  { type: "scrap", x: 90, z: -50, needHammer: true, amount: 2 },
   { type: "hydrazine", x: 88, z: -40 },
   { type: "soil", x: -74, z: 58 },
   { type: "soil", x: -82, z: 68 },
   { type: "soil", x: -70, z: 66 },
   { type: "soil", x: -86, z: 56 },
-  { type: "solar", x: 46, z: 104 },
-  { type: "solar", x: 52, z: 112 },
+  { type: "solar", x: 46, z: 104, needHammer: true },
+  { type: "solar", x: 52, z: 112, needHammer: true },
   { type: "solar", x: 42, z: 110 },
   { type: "wire", x: 50, z: 106 },
   { type: "wire", x: 54, z: 100 },
   { type: "comms", x: -136, z: -88 },
   { type: "wire", x: -142, z: -94 },
-  { type: "scrap", x: 192, z: -154 },
-  { type: "scrap", x: 200, z: -160 },
+  { type: "scrap", x: 192, z: -154, needHammer: true, amount: 2 },
+  { type: "scrap", x: 200, z: -160, needHammer: true, amount: 2 },
 ];
+
+export const LOCKER_START = { potato: 2, tape: 1 };
 
 export const RECIPES = [
   {
@@ -124,8 +141,8 @@ export const GOALS = [
     sol: 19,
     title: { en: "Scavenge", ru: "Собирай" },
     brief: {
-      en: "The crew is gone. Pick up scrap and rock around the Hab. Everything useful is on the ground.",
-      ru: "Экипаж ушёл. Подбери лом и камень у Hab. Всё полезное лежит на грунте.",
+      en: "The crew is gone. Loot scrap and rock around the Hab. Wreck piles need a hammer. Potatoes are in the locker — ration them.",
+      ru: "Экипаж ушёл. Собери лом и камень у Hab. Кучи обломков — только молотком. Картошка в шкафу: экономь.",
     },
     log: {
       from: "WATNEY",
@@ -180,8 +197,8 @@ export const GOALS = [
     sol: 32,
     title: { en: "Farm potatoes", ru: "Вырасти картошку" },
     brief: {
-      en: "Soil flats west of Hab. Build a plot, plant a potato, harvest the copies. Botany, baby.",
-      ru: "Грунт к западу от Hab. Поставь грядку, посади картофель, сними копии. Ботаника, детка.",
+      en: "Two potatoes in the Hab locker — last one is seed. Soil flats west. Build a plot, plant, harvest copies.",
+      ru: "В шкафу Hab две картофелины, последняя — семена. Грунт к западу: грядка, посадка, урожай.",
     },
     log: {
       from: "WATNEY",

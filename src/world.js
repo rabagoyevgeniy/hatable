@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { heightAt, fbm } from "./noise.js";
-import { OUTPOSTS, ITEMS, NODE_SPAWNS } from "./data.js";
+import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START } from "./data.js";
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 140;
@@ -48,6 +48,7 @@ export function createWorld(scene) {
     outposts,
     nodes: [],
     stations: [],
+    locker: { x: 5.4, z: 5.2, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
     clock: 0.35,
@@ -57,35 +58,88 @@ export function createWorld(scene) {
     contacted: false,
   };
 
-  for (const spawn of NODE_SPAWNS) spawnNode(world, spawn.type, spawn.x, spawn.z);
+  for (const spawn of NODE_SPAWNS) spawnNode(world, spawn.type, spawn.x, spawn.z, spawn);
+  world.locker.mesh = makeLocker(world.locker.x, world.locker.z);
+  world.scene.add(world.locker.mesh);
   return world;
 }
 
-export function spawnNode(world, type, x, z) {
+export function spawnNode(world, type, x, z, extra = {}) {
   const def = ITEMS[type];
+  const wreck = !!extra.needHammer;
   const group = new THREE.Group();
-  const pile = new THREE.Mesh(
-    new THREE.DodecahedronGeometry(0.42, 0),
-    new THREE.MeshStandardMaterial({
-      color: def.color,
-      emissive: def.color,
-      emissiveIntensity: 0.35,
-      roughness: 0.7,
-      flatShading: true,
-    })
-  );
-  group.add(pile);
-  const stem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6),
-    new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
-  );
-  stem.position.y = 1.05;
-  group.add(stem);
-  group.position.set(x, heightAt(x, z) + 0.35, z);
+  group.add(lootMesh(type, def.color, wreck));
+  if (!wreck) {
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 1.35, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffe0a8 })
+    );
+    stem.position.y = 1.0;
+    group.add(stem);
+  }
+  group.position.set(x, heightAt(x, z) + (wreck ? 0.2 : 0.32), z);
   world.scene.add(group);
-  const node = { type, mesh: group, taken: false };
+  const node = {
+    type,
+    mesh: group,
+    taken: false,
+    needHammer: wreck,
+    amount: extra.amount || 1,
+  };
   world.nodes.push(node);
   return node;
+}
+
+function lootMesh(type, color, wreck) {
+  const mat = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: wreck ? 0.12 : 0.32,
+    roughness: 0.75,
+    metalness: type === "scrap" || type === "wire" ? 0.35 : 0.05,
+    flatShading: true,
+  });
+  if (wreck || type === "scrap") {
+    const g = new THREE.Group();
+    const a = new THREE.Mesh(new THREE.BoxGeometry(wreck ? 1.6 : 0.7, wreck ? 0.7 : 0.4, wreck ? 1.1 : 0.55), mat);
+    a.rotation.y = 0.4;
+    g.add(a);
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.8), mat));
+    return g;
+  }
+  if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.48, 0), mat);
+  if (type === "ice") return new THREE.Mesh(new THREE.OctahedronGeometry(0.42), mat);
+  if (type === "fabric") {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.6), mat);
+    m.rotation.z = 0.2;
+    return m;
+  }
+  if (type === "tape") return new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 8, 12), mat);
+  if (type === "potato") return new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat);
+  if (type === "soil") return new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.4, 5), mat);
+  if (type === "solar") {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.6), mat);
+    m.rotation.x = -0.4;
+    return m;
+  }
+  if (type === "wire") return new THREE.Mesh(new THREE.TorusKnotGeometry(0.18, 0.04, 40, 6), mat);
+  if (type === "comms") return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.22, 0.7), mat);
+  if (type === "hydrazine") return new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 10), mat);
+  return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), mat);
+}
+
+function makeLocker(x, z) {
+  const g = new THREE.Group();
+  const white = new THREE.MeshStandardMaterial({ color: 0xe8e2d8, roughness: 0.5, metalness: 0.15 });
+  const amber = new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.4 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.7), white);
+  body.position.y = 0.85;
+  g.add(body);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), amber);
+  lamp.position.set(0, 1.7, 0.2);
+  g.add(lamp);
+  g.position.set(x, heightAt(x, z), z);
+  return g;
 }
 
 export function placeStation(world, station, x, z) {
@@ -201,7 +255,7 @@ export function updateWorld(world, dt, playerPos, scanning) {
   for (const st of world.stations) {
     if (st.type === "still" && st.fuel > 0) {
       st.fuel -= dt;
-      st.water += dt * 0.04;
+      st.water += dt * 0.028;
     }
     if (st.type === "plot" && st.planted && st.grow < 1) {
       st.grow += dt * (0.022 + world.daylight * 0.02);

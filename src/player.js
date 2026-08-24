@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { heightAt, normalAt } from "./noise.js";
-import { ITEMS, CONSUME } from "./data.js";
+import { ITEMS, CONSUME, SURVIVAL } from "./data.js";
 import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
 
@@ -57,10 +57,10 @@ export function createPlayer(scene) {
     vel: new THREE.Vector3(),
     inv,
     tools: { hammer: false },
-    oxygen: 100,
-    hunger: 88,
-    thirst: 82,
-    warmth: 90,
+    oxygen: 72,
+    hunger: 58,
+    thirst: 48,
+    warmth: 70,
     walkPhase: 0,
     lastStep: 0,
     distance: 0,
@@ -80,9 +80,18 @@ export function totalItems(player) {
 }
 
 export function addItem(player, id, n = 1) {
-  if (totalItems(player) + n > 24) return false;
+  if (totalItems(player) + n > SURVIVAL.pocketMax) return false;
   player.inv[id] = (player.inv[id] || 0) + n;
   player.gathered += n;
+  return true;
+}
+
+export function transfer(fromInv, toInv, id, n = 1, cap = Infinity) {
+  if ((fromInv[id] || 0) < n) return false;
+  const toTotal = Object.values(toInv).reduce((s, v) => s + v, 0);
+  if (toTotal + n > cap) return false;
+  fromInv[id] -= n;
+  toInv[id] = (toInv[id] || 0) + n;
   return true;
 }
 
@@ -135,7 +144,11 @@ export function updatePlayer(player, dt, input, world) {
 
   const n = normalAt(player.root.position.x, player.root.position.z);
   const slope = 1 - n[1];
-  const speed = 5.8 * (1 - slope * 1.1) * (player.hunger < 12 || player.thirst < 12 ? 0.55 : 1);
+  const speed =
+    5.8 *
+    (1 - slope * 1.1) *
+    (player.hunger < 18 || player.thirst < 18 ? SURVIVAL.starveSlow : 1) *
+    (player.warmth < 12 ? 0.7 : 1);
   player.vel.lerp(wish.multiplyScalar(Math.max(0.8, speed)), 1 - Math.pow(0.0008, dt));
 
   const pos = player.root.position;
@@ -176,29 +189,52 @@ export function updatePlayer(player, dt, input, world) {
 
   const inside = isInsideHab(player);
   const night = world.daylight < 0.28;
-  const leak = world.habSealed ? 0.15 : 1.35;
+  const leak = world.habSealed ? 0.18 : 1.55;
   if (inside) {
-    player.oxygen = clamp(player.oxygen + dt * (world.habSealed ? 10 : -leak));
-    player.warmth = clamp(player.warmth + dt * (world.powered || !night ? 12 : -2));
+    player.oxygen = clamp(player.oxygen + dt * (world.habSealed ? 8 : -leak));
+    player.warmth = clamp(player.warmth + dt * (world.powered ? 10 : night ? -3.2 : 3));
+    player.hunger = clamp(player.hunger - dt * SURVIVAL.hungerHab);
+    player.thirst = clamp(player.thirst - dt * SURVIVAL.thirstHab);
   } else {
-    player.oxygen = clamp(player.oxygen - dt * (1.05 + leak * 0.35 + world.storm * 1.6));
-    player.warmth = clamp(player.warmth - dt * (night ? 7 : 1.2) * (world.storm + 0.5));
+    player.oxygen = clamp(player.oxygen - dt * (SURVIVAL.o2Outside + leak * 0.4 + world.storm * SURVIVAL.o2Storm));
+    player.warmth = clamp(
+      player.warmth - dt * (night ? SURVIVAL.warmthNight : SURVIVAL.warmthDay) * (world.storm + 0.55)
+    );
+    const hRate = moving ? SURVIVAL.hungerWalk : SURVIVAL.hungerIdle;
+    const tRate = moving ? SURVIVAL.thirstWalk : SURVIVAL.thirstIdle;
+    player.hunger = clamp(player.hunger - dt * hRate);
+    player.thirst = clamp(player.thirst - dt * tRate);
   }
-  player.hunger = clamp(player.hunger - dt * 0.55);
-  player.thirst = clamp(player.thirst - dt * 0.85);
-  if (player.thirst <= 0) player.oxygen -= dt * 4;
-  if (player.hunger <= 0) player.warmth -= dt * 3;
-  if (player.warmth <= 0) player.oxygen -= dt * 3;
+  if (player.thirst <= 0) player.oxygen = clamp(player.oxygen - dt * 5.5);
+  if (player.hunger <= 0) player.warmth = clamp(player.warmth - dt * 4);
+  if (player.warmth <= 0) player.oxygen = clamp(player.oxygen - dt * 4.5);
+
+  const warnings = [];
+  if (player.thirst < 22) warnings.push("thirst");
+  if (player.hunger < 22) warnings.push("hunger");
+  if (player.oxygen < 22) warnings.push("o2");
+  if (player.warmth < 22) warnings.push("warmth");
 
   const blackout = player.oxygen <= 0;
   if (blackout) {
     player.root.position.set(4, heightAt(4, 14), 14);
-    player.oxygen = 55;
-    player.warmth = 50;
-    player.hunger = Math.max(20, player.hunger - 12);
-    player.thirst = Math.max(20, player.thirst - 12);
+    player.oxygen = 38;
+    player.warmth = 32;
+    player.hunger = Math.max(8, player.hunger - 18);
+    player.thirst = Math.max(8, player.thirst - 22);
   }
-  return { blackout, inside };
+  return { blackout, inside, warnings };
+}
+
+export function trySleep(player, world) {
+  if (player.hunger < 18 || player.thirst < 18) return "tooWeak";
+  world.clock = (world.clock + 0.32) % 1;
+  player.hunger = clamp(player.hunger - 12);
+  player.thirst = clamp(player.thirst - 16);
+  if (world.habSealed) player.oxygen = 100;
+  else player.oxygen = clamp(player.oxygen + 12);
+  player.warmth = clamp(world.powered ? 88 : player.warmth + 18);
+  return "slept";
 }
 
 export function itemName(id) {

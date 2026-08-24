@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -66,6 +66,7 @@
 
         <div id="scan-labels"></div>
         <div id="prompt" class="hidden"></div>
+        <div id="vital-warn"></div>
         <div id="log"></div>
         <div id="toast"></div>
 
@@ -73,24 +74,28 @@
           <div class="meter">
             <span data-i18n="o2">O₂</span>
             <div class="bar"><i id="bar-o2"></i></div>
+            <em id="num-o2">72</em>
           </div>
           <div class="meter">
-            <span data-i18n="hunger">HUNGER</span>
+            <span data-i18n="hunger">ЕДА</span>
             <div class="bar"><i id="bar-hunger"></i></div>
+            <em id="num-hunger">58</em>
           </div>
           <div class="meter warn">
-            <span data-i18n="thirst">THIRST</span>
+            <span data-i18n="thirst">ВОДА</span>
             <div class="bar"><i id="bar-thirst"></i></div>
+            <em id="num-thirst">48</em>
           </div>
           <div class="meter">
-            <span data-i18n="warmth">WARMTH</span>
+            <span data-i18n="warmth">ТЕПЛО</span>
             <div class="bar"><i id="bar-warmth"></i></div>
+            <em id="num-warmth">70</em>
           </div>
         </footer>
 
         <ul id="help">
           <li><kbd>WASD</kbd> <span data-i18n="helpMove">walk</span></li>
-          <li><kbd>E</kbd> <span data-i18n="helpUse">gather / use</span></li>
+          <li><kbd>E</kbd> <span data-i18n="helpUse">сбор / действие</span></li>
           <li><kbd>C</kbd> <span data-i18n="helpCraft">craft</span></li>
           <li><kbd>TAB</kbd> <span data-i18n="helpInv">pockets</span></li>
           <li><kbd>F</kbd> <span data-i18n="helpScan">scan</span></li>
@@ -98,9 +103,15 @@
       </div>
 
       <div id="inv" class="panel hidden menu">
-        <p class="label" data-i18n="inv">POCKETS</p>
-        <ul id="inv-list"></ul>
-        <p class="muted" data-i18n="invHint">Click potato or water to eat / drink.</p>
+        <p class="label" data-i18n="inv">КАРМАНЫ</p>
+        <ul id="inv-list" class="grid-list"></ul>
+        <p class="muted" data-i18n="invHint">Кликни картофель или воду. 8 слотов. Последняя картошка — семена.</p>
+      </div>
+
+      <div id="storage" class="panel hidden menu">
+        <p class="label" data-i18n="lockerTitle">ШКАФ HAB</p>
+        <ul id="storage-list" class="grid-list"></ul>
+        <p class="muted" data-i18n="lockerHint">Клик — взять. При открытом шкафе клик по карманам — сложить.</p>
       </div>
 
       <div id="craft" class="panel hidden menu wide">

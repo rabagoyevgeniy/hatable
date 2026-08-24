@@ -355,14 +355,48 @@ button:hover {
   width: 110px;
 }
 
-.meter span,
-.weight small {
+.meter span {
   display: block;
   font-family: "Share Tech Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.16em;
   color: rgba(244, 235, 226, 0.7);
   margin-bottom: 4px;
+}
+
+.meter em {
+  display: block;
+  font-style: normal;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--sand);
+}
+
+#vital-warn {
+  position: absolute;
+  left: 50%;
+  bottom: 118px;
+  transform: translateX(-50%);
+  font-family: "Share Tech Mono", monospace;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+  color: var(--danger);
+  text-shadow: 0 4px 18px #000;
+  pointer-events: none;
+  min-height: 1em;
+}
+
+#storage {
+  left: auto;
+  right: 28px;
+  bottom: 110px;
+}
+
+.grid-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
 }
 
 .bar {
