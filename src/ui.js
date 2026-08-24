@@ -221,21 +221,26 @@ function colorBar(id, v) {
 export function findInteract(player, world) {
   if (player.placing) return { kind: "place", label: t("place") };
   const p = player.root.position;
-  let best = null;
-  let bestD = 5.4;
+  const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
+  const inside = isInsideHab(player);
+  const habD = Math.hypot(p.x, p.z - 8);
+
+  let gather = null;
+  let gatherD = 5.4;
   for (const node of world.nodes) {
     if (node.taken) continue;
     const d = Math.hypot(p.x - node.mesh.position.x, p.z - node.mesh.position.z);
-    if (d < bestD) {
-      bestD = d;
+    if (d < gatherD) {
+      gatherD = d;
       const hammered = node.needHammer;
-      best = {
+      gather = {
         kind: "gather",
         node,
         label: hammered ? `${t("salvage")}  ·  ${itemName(node.type)}` : `${t("gather")}  ·  ${itemName(node.type)}`,
       };
     }
   }
+
   for (const st of world.stations) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);
     if (d > 4.2) continue;
@@ -250,14 +255,11 @@ export function findInteract(player, world) {
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
     }
   }
-  if (best) {
-    const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-    if (lockerD < 3.6) return { kind: "locker", label: t("locker") };
-    return best;
-  }
-  const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-  if (lockerD < 5.2) return { kind: "locker", label: t("locker") };
-  if (isInsideHab(player)) return { kind: "sleep", label: t("sleep") };
+
+  if (gather && gatherD < 3.2 && gatherD <= lockerD) return gather;
+  if (lockerD < 4.0) return { kind: "locker", label: t("locker") };
+  if (gather) return gather;
+  if (inside && habD < 7.4) return { kind: "sleep", label: t("sleep") };
   return null;
 }
 

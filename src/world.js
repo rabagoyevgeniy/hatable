@@ -60,7 +60,7 @@ export function createWorld(scene) {
     outposts,
     nodes: [],
     stations: [],
-    locker: { x: 3.6, z: 13.4, storage: { ...LOCKER_START } },
+    locker: { x: 3.1, z: 12.3, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
     clock: 0.35,
@@ -484,13 +484,25 @@ function buildOutpost(data) {
       g.add(w);
     }
     g.add(box(hull, 2.05, 2.15, 2.7, 0, 1.08, 5.25));
-    g.add(box(glassMat, 1.4, 1.75, 0.1, 0, 1.08, 6.62));
+    g.add(box(hull, 0.28, 2.15, 0.18, -0.95, 1.08, 6.58));
+    g.add(box(hull, 0.28, 2.15, 0.18, 0.95, 1.08, 6.58));
+    g.add(box(hull, 2.05, 0.28, 0.18, 0, 2.05, 6.58));
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.2), orange);
     lamp.position.set(0, 2.25, 6.68);
     g.add(lamp);
     const airLight = new THREE.PointLight(0xffb15a, 1.55, 18);
     airLight.position.set(0, 2.3, 6.3);
     g.add(airLight);
+    const inner = new THREE.PointLight(0xffe0b0, 0.7, 10);
+    inner.position.set(0, 1.8, 1.2);
+    g.add(inner);
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(3.9, 24),
+      new THREE.MeshStandardMaterial({ color: 0xc8b8a4, roughness: 0.85 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0.06;
+    g.add(floor);
     const plate = makePlate("ARES III", 2.3, 0.55);
     plate.position.set(0, 2.55, 6.68);
     g.add(plate);

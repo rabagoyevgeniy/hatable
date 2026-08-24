@@ -166,7 +166,7 @@ function clamp(v) {
 }
 
 export function isInsideHab(player) {
-  return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 9.5;
+  return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 8.8;
 }
 
 export function updatePlayer(player, dt, input, world) {
