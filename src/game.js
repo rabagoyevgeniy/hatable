@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
-import { startAudio, setStormAudio, pickupTone, deliverTone } from "./audio.js";
+import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
 import { RECIPES, OUTPOSTS, SURVIVAL } from "./data.js";
-import { createWorld, updateWorld, placeStation, placementSpot } from "./world.js";
+import { createWorld, updateWorld, placeStation, placementSpot, spawnNode, updatePlotVisual } from "./world.js";
 import {
   createPlayer,
   updatePlayer,
@@ -13,6 +13,8 @@ import {
   count,
   transfer,
   trySleep,
+  attachHammer,
+  pocketSlots,
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
 import { heightAt } from "./noise.js";
@@ -144,6 +146,12 @@ export function boot() {
       closeMenus();
     }
     if (e.code === "KeyE" && !menusOpen()) interact();
+    if (e.code === "KeyQ" && !menusOpen()) dropHeld();
+    if (e.code.startsWith("Digit") && !menusOpen()) {
+      const n = Number(e.code.slice(5));
+      const slots = pocketSlots(player);
+      if (n >= 1 && n <= slots.length) player.heldId = slots[n - 1][0];
+    }
   });
   document.addEventListener("keyup", (e) => keys.delete(e.code));
 
@@ -163,6 +171,7 @@ export function boot() {
     if (rec.kind === "tool") {
       takeItems(player, rec.need);
       player.tools[rec.tool] = true;
+      attachHammer(player);
       closeMenus();
       canvas.requestPointerLock?.();
       deliverTone();
@@ -212,7 +221,8 @@ export function boot() {
       }
       hit.node.taken = true;
       world.scene.remove(hit.node.mesh);
-      pickupTone();
+      pickupTone(hit.node.type);
+      player.heldId = hit.node.type;
       maybeGoal();
       return;
     }
@@ -225,19 +235,25 @@ export function boot() {
     if (hit.kind === "sleep") {
       const result = trySleep(player, world);
       toast(t(result));
+      if (result === "slept") {
+        sleepTone();
+        journal.sols += 1;
+      }
       return;
     }
     if (hit.kind === "still-fuel") {
       const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
       takeItems(player, { [fuel]: 1 });
       hit.station.fuel += fuel === "hydrazine" ? 50 : 28;
-      pickupTone();
+      pickupTone(fuel);
+      toast(t("fueled"));
       return;
     }
     if (hit.kind === "still-take") {
       hit.station.water -= 1;
       addItem(player, "water", 1);
-      pickupTone();
+      pickupTone("water");
+      player.heldId = "water";
       maybeGoal();
       return;
     }
@@ -245,7 +261,16 @@ export function boot() {
       takeItems(player, { potato: 1 });
       hit.station.planted = true;
       hit.station.grow = 0;
-      pickupTone();
+      pickupTone("potato");
+      toast(t("planted"));
+      return;
+    }
+    if (hit.kind === "water-plot") {
+      takeItems(player, { water: 1 });
+      hit.station.grow = Math.min(1, hit.station.grow + 0.42);
+      updatePlotVisual(hit.station);
+      pickupTone("water");
+      toast(t("watered"));
       return;
     }
     if (hit.kind === "harvest-plot") {
@@ -253,8 +278,7 @@ export function boot() {
       player.harvestedCrop = true;
       hit.station.planted = false;
       hit.station.grow = 0;
-      const plant = hit.station.mesh.getObjectByName("plant");
-      if (plant) plant.visible = false;
+      updatePlotVisual(hit.station);
       deliverTone();
       maybeGoal();
     }
@@ -272,6 +296,18 @@ export function boot() {
     const next = currentGoal(journal);
     if (next) pushLog(goalText(next).from, goalText(next).log);
     if (prev) toast(loc(prev.title));
+  }
+
+  function dropHeld() {
+    const id = player.heldId || pocketSlots(player)[0]?.[0];
+    if (!id || count(player, id) < 1) return;
+    player.inv[id] -= 1;
+    const x = player.root.position.x - Math.sin(player.yaw) * 1.7;
+    const z = player.root.position.z - Math.cos(player.yaw) * 1.7;
+    spawnNode(world, id, x, z);
+    pickupTone(id);
+    toast(t("dropped"));
+    if (count(player, id) < 1) player.heldId = pocketSlots(player)[0]?.[0] || null;
   }
 
   function inputState() {
@@ -376,8 +412,9 @@ export function boot() {
   }
 
   function placeCamera(dt) {
-    const dist = 9.2;
-    const height = 2.55 + player.pitch * 1.15;
+    const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
+    const dist = inside ? 6.3 : 9.2;
+    const height = (inside ? 2.2 : 2.55) + player.pitch * 1.15;
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
@@ -386,12 +423,14 @@ export function boot() {
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
     const minY = heightAt(camera.position.x, camera.position.z) + 1.55;
     if (camera.position.y < minY) camera.position.y = minY;
-    const habDx = camera.position.x;
-    const habDz = camera.position.z - 8;
-    const habR = Math.hypot(habDx, habDz);
-    if (habR < 5.1 && camera.position.y < 4.2) {
-      camera.position.x = (habDx / (habR || 1)) * 5.1;
-      camera.position.z = 8 + (habDz / (habR || 1)) * 5.1;
+    if (!inside) {
+      const habDx = camera.position.x;
+      const habDz = camera.position.z - 8;
+      const habR = Math.hypot(habDx, habDz);
+      if (habR < 5.1 && camera.position.y < 4.2) {
+        camera.position.x = (habDx / (habR || 1)) * 5.1;
+        camera.position.z = 8 + (habDz / (habR || 1)) * 5.1;
+      }
     }
     const lx = world.locker.x;
     const lz = world.locker.z;
@@ -428,9 +467,17 @@ export function boot() {
       const result = updatePlayer(player, dt, inputState(), world);
       if (result.blackout) toast(t("warnO2"));
       updateWorld(world, dt, player.root.position, scanning);
-      setStormAudio(world.storm);
+      tickStill(
+        dt,
+        world.stations.some((s) => s.type === "still" && s.fuel > 0)
+      );
+      setAmbience({
+        storm: world.storm,
+        inside: result.inside,
+        sealed: world.habSealed,
+        night: world.daylight < 0.28,
+      });
       placeCamera(dt);
-      journal.sols = 19 + Math.floor(player.distance / 90);
       if (currentGoal(journal)?.id === "escape") maybeGoal();
       updateHud({ player, world, journal, scanning, camera });
     } else {

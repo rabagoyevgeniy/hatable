@@ -7,7 +7,7 @@ const SEGMENTS = 140;
 
 export function createWorld(scene) {
   scene.background = new THREE.Color(0xb56a45);
-  scene.fog = new THREE.FogExp2(0xb56a45, 0.012);
+  scene.fog = new THREE.FogExp2(0xb56a45, 0.011);
 
   const hemi = new THREE.HemisphereLight(0xf0c8a0, 0x5a2a18, 0.85);
   scene.add(hemi);
@@ -26,11 +26,20 @@ export function createWorld(scene) {
   scene.add(sun.target);
   scene.add(new THREE.AmbientLight(0x6a3a18, 0.22));
 
+  const sunMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(7.5, 18, 18),
+    new THREE.MeshBasicMaterial({ color: 0xffe6b0 })
+  );
+  scene.add(sunMesh);
+  const stars = makeStars();
+  scene.add(stars);
+
   const terrain = makeTerrain();
   terrain.receiveShadow = true;
   scene.add(terrain);
   scene.add(makeRocks());
   scene.add(makeMountains());
+  scene.add(makeDebris());
   const dust = makeDust();
   scene.add(dust);
   const scanRing = makeScanRing();
@@ -53,7 +62,9 @@ export function createWorld(scene) {
   const world = {
     scene,
     sun,
+    sunMesh,
     hemi,
+    stars,
     dust,
     scanRing,
     ghost,
@@ -83,7 +94,7 @@ export function spawnNode(world, type, x, z, extra = {}) {
   const group = new THREE.Group();
   group.add(lootMesh(type, def.color, wreck));
 
-  const beaconCol = wreck ? 0xff4a32 : starter ? 0x7ee8ff : 0xffe0a8;
+  const beaconCol = wreck ? 0xff4a32 : starter ? 0x7ee8ff : def.beacon || 0xffe0a8;
   const stemH = wreck ? 1.9 : starter ? 3.15 : 2.15;
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(starter ? 0.06 : 0.04, starter ? 0.08 : 0.045, stemH, 6),
@@ -149,11 +160,27 @@ function lootMesh(type, color, wreck) {
     return g;
   }
   if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.62, 0), mat);
-  if (type === "ice") return new THREE.Mesh(new THREE.OctahedronGeometry(0.42), mat);
+  if (type === "ice") {
+    return new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.48),
+      new THREE.MeshStandardMaterial({
+        color: 0xd4f0ff,
+        emissive: 0x7ec8e8,
+        emissiveIntensity: 0.45,
+        roughness: 0.18,
+        metalness: 0.12,
+        transparent: true,
+        opacity: 0.82,
+      })
+    );
+  }
   if (type === "fabric") {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.6), mat);
-    m.rotation.z = 0.2;
-    return m;
+    const g = new THREE.Group();
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.8, 3, 2), mat);
+    cloth.rotation.set(-0.9, 0.2, 0.35);
+    cloth.position.y = 0.15;
+    g.add(cloth);
+    return g;
   }
   if (type === "tape") return new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 8, 12), mat);
   if (type === "potato") return new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat);
@@ -239,7 +266,9 @@ export function placeStation(world, station, x, z) {
     world.habSealed = true;
     const hab = world.outposts.find((o) => o.kind === "hab");
     const leak = hab?.group.getObjectByName("leak");
+    const patch = hab?.group.getObjectByName("patch");
     if (leak) leak.visible = false;
+    if (patch) patch.visible = true;
   }
   if (station === "solar") world.powered = true;
   if (station === "radio") world.contacted = true;
@@ -256,7 +285,24 @@ function buildStation(type) {
   if (type === "still") {
     g.add(mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.4, 10), scrap, 0, 0.8, 0));
     g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.1, 8), rust, 0.55, 1.4, 0));
-    g.add(mesh(new THREE.SphereGeometry(0.28, 8, 8), new THREE.MeshStandardMaterial({ color: 0x4aa0c8 }), 0.55, 2, 0));
+    const globe = mesh(
+      new THREE.SphereGeometry(0.28, 10, 10),
+      new THREE.MeshStandardMaterial({
+        color: 0x4aa0c8,
+        emissive: 0x1a6088,
+        emissiveIntensity: 0.35,
+        transparent: true,
+        opacity: 0.85,
+      }),
+      0.55,
+      2,
+      0
+    );
+    globe.name = "stillGlobe";
+    g.add(globe);
+    const gauge = mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 10), new THREE.MeshStandardMaterial({ color: 0x4ec4e8, emissive: 0x4ec4e8, emissiveIntensity: 0.4 }), -0.35, 0.55, 0.5);
+    gauge.name = "waterGauge";
+    g.add(gauge);
   } else if (type === "plot") {
     g.add(mesh(new THREE.BoxGeometry(2.2, 0.35, 2.2), rust, 0, 0.2, 0));
     g.add(mesh(new THREE.BoxGeometry(1.9, 0.2, 1.9), soil, 0, 0.4, 0));
@@ -264,6 +310,14 @@ function buildStation(type) {
     plant.visible = false;
     plant.name = "plant";
     g.add(plant);
+    const plant2 = mesh(new THREE.ConeGeometry(0.14, 0.55, 5), new THREE.MeshStandardMaterial({ color: 0x6a9a4a }), 0.35, 0.75, 0.2);
+    plant2.visible = false;
+    plant2.name = "plant2";
+    g.add(plant2);
+    const tuber = mesh(new THREE.SphereGeometry(0.12, 8, 6), new THREE.MeshStandardMaterial({ color: 0xc4a05a }), 0.1, 0.55, -0.15);
+    tuber.visible = false;
+    tuber.name = "tuber";
+    g.add(tuber);
   } else if (type === "solar") {
     const panel = mesh(new THREE.BoxGeometry(2.4, 0.08, 1.3), dark, 0, 1.1, 0);
     panel.rotation.x = -0.45;
@@ -293,34 +347,45 @@ export function placementSpot(player) {
 }
 
 export function updateWorld(world, dt, playerPos, scanning) {
-  world.clock = (world.clock + dt / 160) % 1;
+  world.clock = (world.clock + dt / 220) % 1;
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
   const night = 1 - world.daylight;
   const ang = world.clock * Math.PI * 2;
-  world.sun.position.set(Math.cos(ang) * 90, 18 + Math.max(6, Math.sin(ang) * 72), -36);
+  world.sun.position.set(Math.cos(ang) * 110, 12 + Math.max(4, Math.sin(ang) * 85), -40);
   world.sun.target.position.set(playerPos.x, 0, playerPos.z);
-  world.sun.intensity = 0.18 + world.daylight * 1.25;
-  world.hemi.intensity = 0.22 + world.daylight * 0.7;
-  const fogCol = new THREE.Color().setRGB(0.55 * world.daylight + 0.08, 0.28 * world.daylight + 0.04, 0.16);
+  world.sun.intensity = Math.max(0.04, world.daylight * 1.35);
+  world.hemi.intensity = 0.16 + world.daylight * 0.72;
+  if (world.sunMesh) {
+    world.sunMesh.position.copy(world.sun.position).setLength(320);
+    world.sunMesh.visible = world.daylight > 0.12;
+  }
+  if (world.stars) world.stars.material.opacity = Math.max(0, night * 0.9 - 0.15);
+
+  const dusk = Math.max(0, 1 - Math.abs(world.daylight - 0.45) * 3);
+  const fogCol = new THREE.Color().setRGB(
+    0.08 + 0.5 * world.daylight + 0.18 * dusk,
+    0.04 + 0.24 * world.daylight + 0.04 * dusk,
+    0.1 + 0.08 * world.daylight + 0.12 * night
+  );
   world.scene.background.copy(fogCol);
   world.scene.fog.color.copy(fogCol);
-  world.scene.fog.density = 0.01 + night * 0.008 + world.storm * 0.02;
+  world.scene.fog.density = 0.009 + night * 0.007 + world.storm * 0.022;
 
-  world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.45);
-  if (Math.random() < dt * 0.02) world.stormTarget = Math.random() < 0.22 ? 0.8 : 0.05;
+  world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.35);
+  if (Math.random() < dt * 0.0045) world.stormTarget = Math.random() < 0.2 ? 0.82 : 0.04;
 
   const dustPos = world.dust.geometry.attributes.position;
   const n = world.dust.userData.n;
   for (let i = 0; i < n; i++) {
-    let x = dustPos.getX(i) + dt * (4 + world.storm * 18);
-    let z = dustPos.getZ(i) + dt * (1 + world.storm * 6);
+    let x = dustPos.getX(i) + dt * (4 + world.storm * 22);
+    let z = dustPos.getZ(i) + dt * (1 + world.storm * 8);
     if (x > 110) x -= 220;
     if (z > 110) z -= 220;
     dustPos.setXYZ(i, x, dustPos.getY(i), z);
   }
   dustPos.needsUpdate = true;
   world.dust.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.dust.material.opacity = 0.18 + world.storm * 0.5 + night * 0.1;
+  world.dust.material.opacity = 0.16 + world.storm * 0.55 + night * 0.08;
 
   if (scanning) {
     world.scanRing.position.set(playerPos.x, playerPos.y + 0.05, playerPos.z);
@@ -339,18 +404,49 @@ export function updateWorld(world, dt, playerPos, scanning) {
     node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + (node.needHammer ? 0.16 : 0.32) + bob;
   }
 
+  const hab = world.outposts.find((o) => o.kind === "hab");
+  const inner = hab?.group.getObjectByName("innerLight");
+  if (inner) inner.intensity = (world.habSealed ? 1.1 : 0.45) + (world.powered ? 0.5 : 0) + night * 0.4;
+
   for (const st of world.stations) {
     if (st.type === "still" && st.fuel > 0) {
       st.fuel -= dt;
-      st.water += dt * 0.028;
+      st.water += dt * 0.045;
+      const globe = st.mesh.getObjectByName("stillGlobe");
+      if (globe) globe.material.emissiveIntensity = 0.55 + Math.sin(performance.now() / 280) * 0.25;
     }
     if (st.type === "plot" && st.planted && st.grow < 1) {
-      st.grow += dt * (0.022 + world.daylight * 0.02);
-      const plant = st.mesh.getObjectByName("plant");
-      if (plant) {
-        plant.visible = true;
-        plant.scale.setScalar(0.4 + st.grow * 0.9);
-      }
+      st.grow += dt * (0.018 + world.daylight * 0.016);
+      updatePlotVisual(st);
+    }
+  }
+}
+
+export function updatePlotVisual(st) {
+  const plant = st.mesh.getObjectByName("plant");
+  const plant2 = st.mesh.getObjectByName("plant2");
+  const tuber = st.mesh.getObjectByName("tuber");
+  if (plant) {
+    plant.visible = st.planted;
+    plant.scale.setScalar(0.35 + st.grow * 1.1);
+  }
+  if (plant2) {
+    plant2.visible = st.planted && st.grow > 0.35;
+    plant2.scale.setScalar(0.3 + st.grow * 0.9);
+  }
+  if (tuber) tuber.visible = st.grow >= 1;
+}
+
+export function advanceSol(world) {
+  world.clock = (world.clock + 0.42) % 1;
+  for (const st of world.stations) {
+    if (st.type === "plot" && st.planted) {
+      st.grow = Math.min(1, st.grow + 0.55);
+      updatePlotVisual(st);
+    }
+    if (st.type === "still" && st.fuel > 0) {
+      st.water += 6;
+      st.fuel = Math.max(0, st.fuel - 12);
     }
   }
 }
@@ -435,6 +531,52 @@ function makeDust() {
   return points;
 }
 
+function makeStars() {
+  const n = 1400;
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const r = 420;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(0.08 + Math.random() * 0.72);
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.cos(phi);
+    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const stars = new THREE.Points(
+    geo,
+    new THREE.PointsMaterial({ color: 0xfff4e8, size: 1.4, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: false })
+  );
+  return stars;
+}
+
+function makeDebris() {
+  const g = new THREE.Group();
+  const rust = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.92, flatShading: true });
+  const pale = new THREE.MeshStandardMaterial({ color: 0xd8cfc4, roughness: 0.6, metalness: 0.2, flatShading: true });
+  const spots = [
+    [6.5, 6.2, 1.4, 0.35, rust],
+    [-7.2, 4.8, 1.1, 0.5, pale],
+    [9.4, 11.5, 0.9, 0.4, rust],
+    [-5.8, 2.2, 1.8, 0.25, pale],
+    [11.2, 7.8, 0.7, 0.55, rust],
+    [-12.4, 10.2, 1.2, 0.3, pale],
+  ];
+  for (const [x, z, w, h, mat] of spots) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.7), mat);
+    m.position.set(x, heightAt(x, z) + h * 0.5, z);
+    m.rotation.y = x * 0.3;
+    m.castShadow = true;
+    g.add(m);
+  }
+  const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4.2, 6), pale);
+  strut.position.set(-3.4, heightAt(-3.4, 3.2) + 0.4, 3.2);
+  strut.rotation.z = 1.05;
+  g.add(strut);
+  return g;
+}
+
 function makeScanRing() {
   const geo = new THREE.RingGeometry(0.4, 0.55, 48);
   geo.rotateX(-Math.PI / 2);
@@ -452,7 +594,12 @@ function buildOutpost(data) {
   const gold = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.35, metalness: 0.55 });
 
   if (data.kind === "hab") {
-    const hull = new THREE.MeshStandardMaterial({ color: 0xece6dc, roughness: 0.46, metalness: 0.18 });
+    const hull = new THREE.MeshStandardMaterial({
+      color: 0xece6dc,
+      roughness: 0.46,
+      metalness: 0.18,
+      side: THREE.DoubleSide,
+    });
     const ribMat = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.85 });
     const glassMat = new THREE.MeshStandardMaterial({
       color: 0x1c2228,
@@ -467,58 +614,91 @@ function buildOutpost(data) {
       emissive: 0xe07030,
       emissiveIntensity: 0.35,
     });
-    g.add(cyl(hull, 4.2, 3.1, 0, 1.55, 0));
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(4.2, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), hull);
-    dome.position.y = 3.1;
+    const bunkMat = new THREE.MeshStandardMaterial({ color: 0x6a3a22, roughness: 0.8 });
+    const sheet = new THREE.MeshStandardMaterial({ color: 0xd8c8b0, roughness: 0.7 });
+
+    const wall = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.2, 4.2, 3.15, 28, 1, true, Math.PI * 0.18, Math.PI * 1.64),
+      hull
+    );
+    wall.position.y = 1.55;
+    g.add(wall);
+    const dome = new THREE.Mesh(
+      new THREE.SphereGeometry(4.2, 24, 12, Math.PI * 0.18, Math.PI * 1.64, 0, Math.PI / 2),
+      hull
+    );
+    dome.position.y = 3.12;
     g.add(dome);
-    for (const y of [0.55, 1.55, 2.55]) {
-      const rib = new THREE.Mesh(new THREE.TorusGeometry(4.22, 0.09, 8, 28), ribMat);
-      rib.rotation.x = Math.PI / 2;
+    for (const y of [0.5, 1.55, 2.6]) {
+      const rib = new THREE.Mesh(
+        new THREE.TorusGeometry(4.22, 0.08, 8, 28, Math.PI * 1.64),
+        ribMat
+      );
+      rib.rotation.set(Math.PI / 2, 0, Math.PI * 0.18);
       rib.position.y = y;
       g.add(rib);
     }
-    for (const a of [-0.85, 0.85, 2.2]) {
+    for (const a of [2.35, 3.55, 4.7]) {
       const w = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.72, 0.08), glassMat);
       w.position.set(Math.sin(a) * 4.16, 1.72, Math.cos(a) * 4.16);
       w.lookAt(0, 1.72, 0);
       g.add(w);
     }
-    g.add(box(hull, 2.05, 2.15, 2.7, 0, 1.08, 5.25));
-    g.add(box(hull, 0.28, 2.15, 0.18, -0.95, 1.08, 6.58));
-    g.add(box(hull, 0.28, 2.15, 0.18, 0.95, 1.08, 6.58));
-    g.add(box(hull, 2.05, 0.28, 0.18, 0, 2.05, 6.58));
+    g.add(box(hull, 2.15, 2.2, 2.5, 0, 1.1, 5.15));
+    g.add(box(hull, 0.28, 2.2, 0.16, -1.0, 1.1, 6.42));
+    g.add(box(hull, 0.28, 2.2, 0.16, 1.0, 1.1, 6.42));
+    g.add(box(hull, 2.15, 0.26, 0.16, 0, 2.1, 6.42));
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.2), orange);
-    lamp.position.set(0, 2.25, 6.68);
+    lamp.position.set(0, 2.28, 6.52);
     g.add(lamp);
     const airLight = new THREE.PointLight(0xffb15a, 1.55, 18);
-    airLight.position.set(0, 2.3, 6.3);
+    airLight.position.set(0, 2.3, 6.2);
     g.add(airLight);
-    const inner = new THREE.PointLight(0xffe0b0, 0.7, 10);
-    inner.position.set(0, 1.8, 1.2);
+    const inner = new THREE.PointLight(0xffe0b0, 0.8, 12);
+    inner.position.set(0, 2.1, 0.4);
+    inner.name = "innerLight";
     g.add(inner);
     const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(3.9, 24),
+      new THREE.CircleGeometry(4.05, 28),
       new THREE.MeshStandardMaterial({ color: 0xc8b8a4, roughness: 0.85 })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0.06;
+    floor.position.y = 0.05;
     g.add(floor);
+    g.add(box(bunkMat, 2.1, 0.35, 0.95, -1.6, 0.38, -1.6));
+    g.add(box(sheet, 1.9, 0.12, 0.8, -1.6, 0.58, -1.6));
+    g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
+    g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
+    g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
+    const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), orange);
+    deskLamp.position.set(1.7, 1.05, -1.35);
+    g.add(deskLamp);
+    g.add(box(new THREE.MeshStandardMaterial({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
     const plate = makePlate("ARES III", 2.3, 0.55);
-    plate.position.set(0, 2.55, 6.68);
+    plate.position.set(0, 2.55, 6.55);
     g.add(plate);
     const hole = new THREE.Mesh(
       new THREE.CircleGeometry(0.58, 14),
       new THREE.MeshStandardMaterial({
         color: 0x1a0c08,
         emissive: 0x501808,
-        emissiveIntensity: 0.4,
+        emissiveIntensity: 0.45,
         side: THREE.DoubleSide,
       })
     );
-    hole.position.set(0, 1.65, -4.18);
+    hole.position.set(0, 1.65, -4.15);
     hole.rotation.y = Math.PI;
     hole.name = "leak";
     g.add(hole);
+    const patch = new THREE.Mesh(
+      new THREE.CircleGeometry(0.72, 14),
+      new THREE.MeshStandardMaterial({ color: 0xe8dcc8, roughness: 0.7 })
+    );
+    patch.position.set(0, 1.65, -4.12);
+    patch.rotation.y = Math.PI;
+    patch.name = "patch";
+    patch.visible = false;
+    g.add(patch);
   } else if (data.kind === "rover") {
     g.add(box(white, 3.6, 1.1, 2.2, 0, 1.1, 0));
     g.add(box(dark, 1.4, 0.8, 1.6, -1.4, 1.7, 0));

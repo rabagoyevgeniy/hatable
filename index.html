@@ -49,11 +49,13 @@
           </div>
           <div class="center-title">
             <p id="sol-label">SOL 19</p>
+            <p id="tod-label">ДЕНЬ</p>
             <p id="location-label">HAB</p>
           </div>
           <div class="right">
             <p class="label">HAB</p>
             <p id="hab-status">LEAK</p>
+            <p id="base-line">утечка</p>
           </div>
         </header>
 
@@ -73,6 +75,7 @@
           1. Голубые палки впереди — подойди, E: лом и камень. 2. C — молоток (1 лом + 1 камень). 3. Белый ящик у шлюза — шкаф.
         </div>
 
+        <div id="storm-flag" class="hidden" data-i18n="storm">ПЫЛЕВАЯ БУРЯ</div>
         <div id="scan-labels"></div>
         <div id="prompt" class="hidden"></div>
         <div id="vital-warn"></div>
@@ -108,8 +111,11 @@
           <li><kbd>C</kbd> <span data-i18n="helpCraft">craft</span></li>
           <li><kbd>TAB</kbd> <span data-i18n="helpInv">pockets</span></li>
           <li><kbd>F</kbd> <span data-i18n="helpScan">scan</span></li>
+          <li><kbd>Q</kbd> <span data-i18n="helpDrop">бросить</span></li>
           <li><kbd>HAB</kbd> <span data-i18n="helpSleep">сон в Hab</span></li>
         </ul>
+
+        <div id="hotbar"></div>
       </div>
 
       <div id="inv" class="panel hidden menu">

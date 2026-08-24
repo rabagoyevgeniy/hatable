@@ -62,6 +62,13 @@ const strings = {
     ate: "ATE",
     drank: "DRANK",
     cancelPlace: "Placement cancelled",
+    dropped: "DROPPED",
+    planted: "PLANTED",
+    watered: "WATERED",
+    fueled: "STILL FUELED",
+    waterPlot: "E  WATER CROP",
+    growing: "GROWING — sleep or water",
+    helpDrop: "drop",
   },
   ru: {
     eyebrow: "АРИС III — РАВНИНА АЦИДАЛИЯ",
@@ -126,6 +133,13 @@ const strings = {
     ate: "СЪЕЛ",
     drank: "ВЫПИЛ",
     cancelPlace: "Постройка отменена",
+    dropped: "БРОСИЛ",
+    planted: "ПОСАДИЛ",
+    watered: "ПОЛИЛ",
+    fueled: "ЗАПРАВЛЕН",
+    waterPlot: "E  ПОЛИТЬ",
+    growing: "РАСТЁТ — сон или вода",
+    helpDrop: "бросить",
   },
 };
 

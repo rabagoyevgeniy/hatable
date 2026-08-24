@@ -311,10 +311,96 @@ button:hover {
   letter-spacing: 0.08em;
 }
 
+#tod-label {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--sand);
+}
+
+#base-line {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  color: var(--sand);
+  margin-top: 4px;
+  max-width: 200px;
+}
+
+#storm-flag {
+  position: absolute;
+  left: 50%;
+  top: 112px;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  letter-spacing: 0.28em;
+  font-family: "Share Tech Mono", monospace;
+  background: rgba(20, 4, 2, 0.72);
+  z-index: 9;
+}
+
+#hotbar {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.hb-slot {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--line);
+  background: rgba(12, 7, 5, 0.62);
+  position: relative;
+}
+
+.hb-slot.held {
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(255, 177, 90, 0.35);
+}
+
+.hb-slot.tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+}
+
+.hb-slot i {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+.hb-slot em {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-style: normal;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+}
+
+.hb-slot small {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font-size: 9px;
+  letter-spacing: 0;
+  color: rgba(244, 235, 226, 0.45);
+}
+
 #prompt {
   position: absolute;
   left: 50%;
-  bottom: 150px;
+  bottom: 156px;
   transform: translateX(-50%);
   padding: 10px 16px;
   border: 1px solid var(--amber);
@@ -729,6 +815,16 @@ li.ready .recipe {
     width: calc(100% - 16px);
     gap: 8px;
     padding: 8px 10px;
+  }
+
+  #hotbar {
+    bottom: 88px;
+    gap: 3px;
+  }
+
+  .hb-slot {
+    width: 34px;
+    height: 34px;
   }
 
   .meter {

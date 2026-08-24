@@ -1,7 +1,9 @@
 let ctx;
 let windGain;
 let droneGain;
+let humGain;
 let master;
+let dripTimer = 0;
 
 export function startAudio() {
   if (ctx) {
@@ -10,17 +12,17 @@ export function startAudio() {
   }
   ctx = new AudioContext();
   master = ctx.createGain();
-  master.gain.value = 0.22;
+  master.gain.value = 0.24;
   master.connect(ctx.destination);
 
   const drone = ctx.createOscillator();
   drone.type = "sawtooth";
-  drone.frequency.value = 46;
+  drone.frequency.value = 44;
   const droneFilter = ctx.createBiquadFilter();
   droneFilter.type = "lowpass";
-  droneFilter.frequency.value = 180;
+  droneFilter.frequency.value = 160;
   droneGain = ctx.createGain();
-  droneGain.gain.value = 0.18;
+  droneGain.gain.value = 0.14;
   drone.connect(droneFilter);
   droneFilter.connect(droneGain);
   droneGain.connect(master);
@@ -35,27 +37,56 @@ export function startAudio() {
   wind.loop = true;
   const windFilter = ctx.createBiquadFilter();
   windFilter.type = "bandpass";
-  windFilter.frequency.value = 700;
+  windFilter.frequency.value = 620;
   windGain = ctx.createGain();
-  windGain.gain.value = 0.05;
+  windGain.gain.value = 0.045;
   wind.connect(windFilter);
   windFilter.connect(windGain);
   windGain.connect(master);
   wind.start();
+
+  const hum = ctx.createOscillator();
+  hum.type = "sine";
+  hum.frequency.value = 118;
+  humGain = ctx.createGain();
+  humGain.gain.value = 0;
+  hum.connect(humGain);
+  humGain.connect(master);
+  hum.start();
+}
+
+export function setAmbience({ storm = 0, inside = false, sealed = false, night = false } = {}) {
+  if (!windGain) return;
+  const outside = inside ? 0.28 : 1;
+  windGain.gain.value = (0.04 + storm * 0.28 + (night ? 0.03 : 0)) * outside;
+  if (droneGain) droneGain.gain.value = 0.12 + storm * 0.1;
+  if (humGain) humGain.gain.value = inside && sealed ? 0.05 : inside ? 0.02 : 0;
 }
 
 export function setStormAudio(intensity) {
-  if (!windGain) return;
-  windGain.gain.value = 0.05 + intensity * 0.22;
-  if (droneGain) droneGain.gain.value = 0.18 + intensity * 0.08;
+  setAmbience({ storm: intensity });
 }
 
-export function footstep() {
-  beep(180, 0.04, 0.07, "square");
+export function footstep(inside) {
+  beep(inside ? 140 : 190, inside ? 0.03 : 0.05, 0.06, "square");
 }
 
-export function pickupTone() {
-  beep(520, 0.08, 0.12, "triangle");
+export function pickupTone(type = "scrap") {
+  const map = {
+    scrap: 480,
+    rock: 220,
+    ice: 880,
+    fabric: 360,
+    tape: 640,
+    soil: 180,
+    potato: 520,
+    water: 760,
+    solar: 440,
+    wire: 560,
+    comms: 700,
+    hydrazine: 500,
+  };
+  beep(map[type] || 520, 0.09, 0.11, type === "ice" || type === "water" ? "sine" : "triangle");
 }
 
 export function deliverTone() {
@@ -64,8 +95,25 @@ export function deliverTone() {
   setTimeout(() => beep(660, 0.18, 0.2, "sine"), 180);
 }
 
-export function stumbleTone() {
-  beep(90, 0.2, 0.18, "sawtooth");
+export function sleepTone() {
+  beep(180, 0.1, 0.4, "sine");
+  setTimeout(() => beep(140, 0.08, 0.5, "sine"), 200);
+}
+
+export function dripTone() {
+  beep(920, 0.04, 0.07, "sine");
+}
+
+export function tickStill(dt, running) {
+  if (!running) {
+    dripTimer = 0;
+    return;
+  }
+  dripTimer += dt;
+  if (dripTimer > 1.15) {
+    dripTimer = 0;
+    dripTone();
+  }
 }
 
 function beep(freq, gain, dur, type) {

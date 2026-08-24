@@ -3,6 +3,7 @@ import { heightAt, normalAt } from "./noise.js";
 import { ITEMS, CONSUME, SURVIVAL, SPAWN } from "./data.js";
 import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
+import { advanceSol } from "./world.js";
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
@@ -111,6 +112,8 @@ export function createPlayer(scene) {
     drank: false,
     harvestedCrop: false,
     placing: null,
+    heldId: null,
+    hammerMesh: null,
   };
 }
 
@@ -206,7 +209,8 @@ export function updatePlayer(player, dt, input, world) {
   }
   pos.y = heightAt(pos.x, pos.z);
   player.distance += Math.hypot(pos.x - prevX, pos.z - prevZ);
-  if (world.storm > 0.4) {
+  const inside = isInsideHab(player);
+  if (world.storm > 0.4 && !inside) {
     pos.x += dt * world.storm * 0.9;
     pos.z += dt * world.storm * 0.35;
   }
@@ -220,7 +224,7 @@ export function updatePlayer(player, dt, input, world) {
     player.armR.rotation.x = swing * 0.7;
     if (player.walkPhase - player.lastStep > 1.6) {
       player.lastStep = player.walkPhase;
-      footstep();
+      footstep(inside);
     }
   } else {
     player.legL.rotation.x *= 0.8;
@@ -230,7 +234,6 @@ export function updatePlayer(player, dt, input, world) {
   }
   player.root.rotation.y = yaw;
 
-  const inside = isInsideHab(player);
   const night = world.daylight < 0.28;
   const leak = world.habSealed ? 0.12 : 0.52;
   if (inside) {
@@ -271,13 +274,33 @@ export function updatePlayer(player, dt, input, world) {
 
 export function trySleep(player, world) {
   if (player.hunger < 18 || player.thirst < 18) return "tooWeak";
-  world.clock = (world.clock + 0.32) % 1;
+  advanceSol(world);
   player.hunger = clamp(player.hunger - 12);
   player.thirst = clamp(player.thirst - 16);
   if (world.habSealed) player.oxygen = 100;
   else player.oxygen = clamp(player.oxygen + 12);
   player.warmth = clamp(world.powered ? 88 : player.warmth + 18);
   return "slept";
+}
+
+export function attachHammer(player) {
+  if (player.hammerMesh) return;
+  const g = new THREE.Group();
+  const wood = new THREE.MeshStandardMaterial({ color: 0x6a4428, roughness: 0.8 });
+  const iron = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, metalness: 0.45, roughness: 0.4 });
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.55, 6), wood);
+  handle.rotation.z = 0.35;
+  g.add(handle);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.12), iron);
+  head.position.set(0.14, 0.22, 0);
+  g.add(head);
+  g.position.set(0.04, -0.36, 0.08);
+  player.armR.add(g);
+  player.hammerMesh = g;
+}
+
+export function pocketSlots(player) {
+  return Object.entries(player.inv).filter(([, n]) => n > 0);
 }
 
 export function itemName(id) {

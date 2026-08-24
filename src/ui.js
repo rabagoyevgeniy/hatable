@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS } from "./data.js";
-import { count, canAfford, itemName, isInsideHab } from "./player.js";
+import { count, canAfford, itemName, isInsideHab, pocketSlots } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost } from "./world.js";
 
@@ -177,7 +177,26 @@ export function updateHud({ player, world, journal, scanning, camera }) {
     const text = goalText(goal);
     $("order-title").textContent = text.title;
     $("order-brief").textContent = text.brief;
-    $("sol-label").textContent = `SOL ${text.sol}`;
+    $("sol-label").textContent = `SOL ${journal.sols}`;
+  }
+  const tod = $("tod-label");
+  if (tod) tod.textContent = timeOfDay(world);
+  const stormFlag = $("storm-flag");
+  if (stormFlag) {
+    stormFlag.classList.toggle("hidden", world.storm < 0.42);
+    stormFlag.textContent = t("storm");
+  }
+  renderHotbar(player);
+  const base = $("base-line");
+  if (base) {
+    const still = world.stations.find((s) => s.type === "still");
+    const plot = world.stations.find((s) => s.type === "plot");
+    const bits = [];
+    bits.push(world.habSealed ? (getLang() === "ru" ? "герметика" : "sealed") : getLang() === "ru" ? "утечка" : "leak");
+    bits.push(world.powered ? (getLang() === "ru" ? "ток" : "power") : getLang() === "ru" ? "тьма" : "dark");
+    if (still) bits.push(`${getLang() === "ru" ? "вода" : "still"} ${Math.floor(still.water)}`);
+    if (plot?.planted) bits.push(`${getLang() === "ru" ? "рост" : "crop"} ${Math.floor(plot.grow * 100)}%`);
+    base.textContent = bits.join(" · ");
   }
   const list = $("goal-list");
   if (list) {
@@ -216,6 +235,46 @@ export function updateHud({ player, world, journal, scanning, camera }) {
   updatePrompt(player, world);
 }
 
+function timeOfDay(world) {
+  const d = world.daylight;
+  const ru = getLang() === "ru";
+  if (world.storm > 0.45) return ru ? "БУРЯ" : "STORM";
+  if (d < 0.18) return ru ? "НОЧЬ" : "NIGHT";
+  if (d < 0.38) return ru ? "СУМЕРКИ" : "DUSK";
+  if (d > 0.82) return ru ? "ПОЛДЕНЬ" : "NOON";
+  return ru ? "ДЕНЬ" : "DAY";
+}
+
+function renderHotbar(player) {
+  const el = $("hotbar");
+  if (!el) return;
+  const slots = pocketSlots(player);
+  if (!player.heldId && slots[0]) player.heldId = slots[0][0];
+  el.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const slot = document.createElement("div");
+    slot.className = "hb-slot";
+    const pair = slots[i];
+    if (pair) {
+      const [id, n] = pair;
+      if (player.heldId === id) slot.classList.add("held");
+      const hex = (ITEMS[id]?.color ?? 0xcccccc).toString(16).padStart(6, "0");
+      slot.innerHTML = `<i style="background:#${hex}"></i><em>${n}</em><small>${i + 1}</small>`;
+      slot.title = itemName(id);
+    } else {
+      slot.innerHTML = `<small>${i + 1}</small>`;
+    }
+    el.appendChild(slot);
+  }
+  if (player.tools.hammer) {
+    const tool = document.createElement("div");
+    tool.className = "hb-slot tool";
+    tool.innerHTML = `<b>⚒</b>`;
+    tool.title = getLang() === "ru" ? "Молоток" : "Hammer";
+    el.appendChild(tool);
+  }
+}
+
 function colorBar(id, v) {
   $(id).style.background = v < 22 ? "#ff5a3c" : v < 45 ? "#ffb15a" : "#8fd3b0";
 }
@@ -247,14 +306,20 @@ export function findInteract(player, world) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);
     if (d > 4.2) continue;
     if (st.type === "still") {
-      if (st.water >= 1) return { kind: "still-take", station: st, label: t("drinkStill") };
+      if (st.water >= 1) {
+        return { kind: "still-take", station: st, label: `${t("drinkStill")}  ·  ${Math.floor(st.water)}` };
+      }
       if (count(player, "ice") > 0 || count(player, "hydrazine") > 0) {
         return { kind: "still-fuel", station: st, label: t("fuel") };
       }
     }
     if (st.type === "plot") {
       if (!st.planted && count(player, "potato") > 0) return { kind: "plant", station: st, label: t("plant") };
+      if (st.planted && st.grow < 1 && count(player, "water") > 0) {
+        return { kind: "water-plot", station: st, label: `${t("waterPlot")}  ·  ${Math.floor(st.grow * 100)}%` };
+      }
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
+      if (st.planted) return { kind: "wait-plot", station: st, label: `${t("growing")}  ·  ${Math.floor(st.grow * 100)}%` };
     }
   }
 
@@ -309,6 +374,25 @@ function updateScanLabels(player, world, camera, scanning) {
       sub: n.needHammer ? (lang === "ru" ? "молоток" : "needs hammer") : "",
       loot: true,
     });
+  }
+  for (const st of world.stations) {
+    const d = Math.hypot(p.x - st.x, p.z - st.z);
+    if (d > 22 && !scanning) continue;
+    const names = {
+      still: { ru: "Дистиллятор", en: "Still" },
+      plot: { ru: "Грядка", en: "Plot" },
+      seal: { ru: "Заплата", en: "Seal" },
+      solar: { ru: "Панель", en: "Solar" },
+      radio: { ru: "Рация", en: "Radio" },
+    };
+    const title = names[st.type]?.[lang] || st.type;
+    const sub =
+      st.type === "still"
+        ? String(Math.floor(st.water))
+        : st.planted
+          ? `${Math.floor(st.grow * 100)}%`
+          : "";
+    targets.push({ x: st.x, y: st.mesh.position.y + 2.2, z: st.z, title, sub, loot: true });
   }
   const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
   if (lockerD < 18 || scanning) {
