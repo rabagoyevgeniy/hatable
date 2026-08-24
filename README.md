@@ -2,6 +2,8 @@
 
 A survival-crafting game on Mars. You are the botanist left behind after Ares III. The planet is an island of rust. Scavenge wreckage, craft stations, keep yourself alive, and science a way home.
 
+Roadmap (Russian): [PLAN.md](PLAN.md).
+
 Inspired by *The Martian* and the grain of *Stranded Deep* — gather, craft, build, survive. Not a delivery game.
 
 ## How it is arranged
