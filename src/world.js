@@ -48,7 +48,7 @@ export function createWorld(scene) {
     outposts,
     nodes: [],
     stations: [],
-    locker: { x: 5.4, z: 5.2, storage: { ...LOCKER_START } },
+    locker: { x: 7.2, z: 8.4, storage: { ...LOCKER_START } },
     storm: 0,
     stormTarget: 0.05,
     clock: 0.35,

@@ -219,9 +219,13 @@ export function findInteract(player, world) {
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
     }
   }
-  if (best) return best;
+  if (best) {
+    const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
+    if (lockerD < 3.6) return { kind: "locker", label: t("locker") };
+    return best;
+  }
   const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-  if (lockerD < 4.2) return { kind: "locker", label: t("locker") };
+  if (lockerD < 5.2) return { kind: "locker", label: t("locker") };
   if (isInsideHab(player)) return { kind: "sleep", label: t("sleep") };
   return null;
 }
