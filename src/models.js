@@ -9,32 +9,41 @@ const URLS = {
   rover: "/models/rover.glb",
   pathfinder: "/models/pathfinder.glb",
   mav: "/models/mav.glb",
-  watney: "/models/watney.glb",
 };
 
 const cache = {};
-let started = false;
+let pending = null;
 
 export function preloadModels() {
-  if (started) return;
-  started = true;
+  if (pending) return pending;
   const loader = new GLTFLoader();
-  for (const [id, url] of Object.entries(URLS)) {
-    loader.load(
-      url,
-      (gltf) => {
-        gltf.scene.traverse((o) => {
-          if (o.isMesh) {
-            o.castShadow = true;
-            o.receiveShadow = true;
-          }
-        });
-        cache[id] = gltf.scene;
-      },
-      undefined,
-      () => {}
-    );
-  }
+  pending = Promise.all(
+    Object.entries(URLS).map(
+      ([id, url]) =>
+        new Promise((resolve) => {
+          loader.load(
+            url,
+            (gltf) => {
+              gltf.scene.traverse((o) => {
+                if (o.isMesh) {
+                  o.castShadow = true;
+                  o.receiveShadow = true;
+                }
+              });
+              cache[id] = gltf.scene;
+              resolve(id);
+            },
+            undefined,
+            () => resolve(null)
+          );
+        })
+    )
+  );
+  return pending;
+}
+
+export function hasModel(id) {
+  return !!cache[id];
 }
 
 export function takeModel(id, fit = 2.4) {

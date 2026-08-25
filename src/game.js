@@ -39,7 +39,7 @@ import {
   renderInv,
 } from "./ui.js";
 
-export function boot() {
+export async function boot() {
   applyDom();
 
   const canvas = document.getElementById("scene");
@@ -56,7 +56,7 @@ export function boot() {
   const camera = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.1, 900);
   camera.position.set(14, 7.6, 34);
 
-  preloadModels();
+  await preloadModels();
   const world = createWorld(scene);
   const player = createPlayer(scene);
   const journal = createJournal();

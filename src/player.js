@@ -5,41 +5,26 @@ import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
 import { advanceSol } from "./world.js";
 import { maps, std } from "./gfx.js";
-import { takeModel } from "./models.js";
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
-  const ready = takeModel("watney", 1.95);
-  let armL;
-  let armR;
-  let legL;
-  let legR;
+  const tex = maps();
+  const suit = std({ color: 0xe07030, map: tex.eva, roughness: 0.55, metalness: 0.08 });
+  const suitDark = std({ color: 0xb84818, map: tex.eva, roughness: 0.68, metalness: 0.06 });
+  const white = std({ color: 0xeee8de, map: tex.hull, roughness: 0.4, metalness: 0.2 });
+  const visor = new THREE.MeshPhysicalMaterial({
+    color: 0xc9a227,
+    roughness: 0.06,
+    metalness: 0.92,
+    emissive: 0x3a2208,
+    emissiveIntensity: 0.18,
+    envMapIntensity: 1.6,
+  });
+  const packMat = std({ color: 0xd8d2c6, map: tex.metal, roughness: 0.45, metalness: 0.32 });
+  const glove = std({ color: 0x2a2420, roughness: 0.85 });
+  const boot = std({ color: 0x1c1814, roughness: 0.9 });
 
-  if (ready) {
-    root.add(ready);
-    armL = ready.getObjectByName("armL") || new THREE.Group();
-    armR = ready.getObjectByName("armR") || new THREE.Group();
-    legL = ready.getObjectByName("legL") || new THREE.Group();
-    legR = ready.getObjectByName("legR") || new THREE.Group();
-    if (!armR.parent) root.add(armR);
-  } else {
-    const tex = maps();
-    const suit = std({ color: 0xe07030, map: tex.eva, roughness: 0.55, metalness: 0.08 });
-    const suitDark = std({ color: 0xb84818, map: tex.eva, roughness: 0.68, metalness: 0.06 });
-    const white = std({ color: 0xeee8de, map: tex.hull, roughness: 0.4, metalness: 0.2 });
-    const visor = new THREE.MeshPhysicalMaterial({
-      color: 0xc9a227,
-      roughness: 0.06,
-      metalness: 0.92,
-      emissive: 0x3a2208,
-      emissiveIntensity: 0.18,
-      envMapIntensity: 1.6,
-    });
-    const packMat = std({ color: 0xd8d2c6, map: tex.metal, roughness: 0.45, metalness: 0.32 });
-    const glove = std({ color: 0x2a2420, roughness: 0.85 });
-    const boot = std({ color: 0x1c1814, roughness: 0.9 });
-
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.62, 6, 14), suit);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.62, 6, 14), suit);
     torso.position.y = 1.18;
     root.add(torso);
     const chest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.26, 0.2), white);
@@ -82,13 +67,13 @@ export function createPlayer(scene) {
     hose.rotation.y = 0.6;
     root.add(hose);
 
-    armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
     armL.position.set(-0.54, 1.18, 0);
     const handL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
     handL.position.set(0, -0.4, 0);
     armL.add(handL);
     root.add(armL);
-    armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
     armR.position.set(0.54, 1.18, 0);
     const handR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
     handR.position.set(0, -0.4, 0);
@@ -99,19 +84,18 @@ export function createPlayer(scene) {
     wrist.position.set(0, -0.18, 0.08);
     armL.add(wrist);
 
-    legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
     legL.position.set(-0.2, 0.48, 0);
     const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
     bootL.position.set(0, -0.42, 0.05);
     legL.add(bootL);
     root.add(legL);
-    legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    const legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
     legR.position.set(0.2, 0.48, 0);
     const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
     bootR.position.set(0, -0.42, 0.05);
     legR.add(bootR);
     root.add(legR);
-  }
 
   root.traverse((o) => {
     if (o.isMesh) {
