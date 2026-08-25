@@ -17,6 +17,7 @@ import {
   pocketSlots,
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
+import { heightAt } from "./noise.js";
 import { preloadModels } from "./models.js";
 import { bakeEnvironment } from "./gfx.js";
 import {
@@ -453,9 +454,12 @@ export function boot() {
   }
 
   window.addEventListener("resize", () => {
-    camera.aspect = innerWidth / innerHeight;
+    const w = innerWidth;
+    const h = innerHeight;
+    if (w < 8 || h < 8) return;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+    renderer.setSize(w, h);
   });
 
   function frame(now) {
