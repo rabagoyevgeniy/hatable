@@ -6,6 +6,8 @@ import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
+import { SURVIVAL } from "../src/data.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -244,6 +246,23 @@ must(still.water === waterAtFail, "failed pump makes no water");
 must(!stillCanRun(still, gridWorld), "faulted still is offline");
 repairStillPump(still);
 must(stillCanRun(still, gridWorld), "repaired pump runs again");
+
+const ration = createHabitat();
+must(ration.waterTank < 3, "Hab tank is leftover sips, not a still");
+const sips = tankSipsLeft(ration.waterTank);
+must(sips >= 4 && sips <= 6, "about five tank sips then you need ice");
+const leakShift = gutAfterHab(200, 64, 62, { hungerHab: SURVIVAL.hungerHab, thirstHab: SURVIVAL.thirstHab });
+must(leakShift.thirst > 18 && leakShift.hunger > 18, "first leak shift can still sleep");
+const afterSleepThirst = leakShift.thirst - SLEEP_THIRST;
+const afterSleepHunger = leakShift.hunger - SLEEP_HUNGER;
+must(afterSleepThirst < 28, "after first sleep you need a drink");
+must(afterSleepThirst + TANK_SIP_THIRST > 18, "one tank sip unlocks the next sleep");
+must(afterSleepHunger > afterSleepThirst, "thirst kills first");
+must(canEatPotato({ inv: { potato: 2 }, harvestedCrop: false }), "one of two potatoes is lunch");
+must(!canEatPotato({ inv: { potato: 1 }, harvestedCrop: false }), "last potato is seed until harvest");
+must(canEatPotato({ inv: { potato: 1 }, harvestedCrop: true }), "harvested copies can be eaten");
+must(game.includes("seedPotato"), "eating seed potato is blocked in play");
+must(existsSync(resolve(root, "src/systems/survival.js")), "first-sol gut lives in systems/survival");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

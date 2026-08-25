@@ -7,7 +7,7 @@
 ## P1
 
 - Hab-as-home audio polish
-- Water / food pacing now that leak → seal → console is playable
+- First crop as a moment (plot already takes four watered Sols)
 
 ## P2
 

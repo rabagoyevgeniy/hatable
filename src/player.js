@@ -6,6 +6,9 @@ import { footstep } from "./audio.js";
 import { advanceSol, isMobileView } from "./world.js";
 import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
+import { canEatPotato, SLEEP_HUNGER, SLEEP_THIRST } from "./systems/survival.js";
+
+export { canEatPotato };
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
@@ -219,6 +222,7 @@ export function canAfford(player, need) {
 export function consumeItem(player, id) {
   const effect = CONSUME[id];
   if (!effect || count(player, id) < 1) return false;
+  if (id === "potato" && !canEatPotato(player)) return false;
   player.inv[id] -= 1;
   player.hunger = clamp(player.hunger + effect.hunger);
   player.thirst = clamp(player.thirst + effect.thirst);
@@ -364,8 +368,8 @@ export function updatePlayer(player, dt, input, world) {
 export function trySleep(player, world) {
   if (player.hunger < 18 || player.thirst < 18) return "tooWeak";
   advanceSol(world);
-  player.hunger = clamp(player.hunger - 12);
-  player.thirst = clamp(player.thirst - 16);
+  player.hunger = clamp(player.hunger - SLEEP_HUNGER);
+  player.thirst = clamp(player.thirst - SLEEP_THIRST);
   if (world.habSealed) player.oxygen = 100;
   else player.oxygen = clamp(player.oxygen + 12);
   player.warmth = clamp(world.hab?.insideC > 12 ? 86 : player.warmth + 14);

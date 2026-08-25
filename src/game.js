@@ -3,7 +3,8 @@ import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
 import { RECIPES, SURVIVAL, HAB_LEAK } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
-import { repairStillPump } from "./systems/machines.js";
+import { repairStillPump, stillCanRun } from "./systems/machines.js";
+import { TANK_SIP_L, TANK_MIN_L, TANK_SIP_THIRST } from "./systems/survival.js";
 import {
   createPlayer,
   updatePlayer,
@@ -16,6 +17,7 @@ import {
   trySleep,
   attachHammer,
   pocketSlots,
+  canEatPotato,
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
 import { heightAt } from "./noise.js";
@@ -43,7 +45,6 @@ import {
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
 import { noteScan } from "./systems/science.js";
-import { stillCanRun } from "./systems/machines.js";
 
 export async function boot() {
   try {
@@ -138,12 +139,14 @@ async function bootGame() {
     },
     craft: onCraft,
     consume(id) {
-      if (id === "potato" && count(player, "potato") <= 1 && !player.harvestedCrop) {
-        toast(t("warnHunger"));
+      if (id === "potato" && !canEatPotato(player)) {
+        toast(t("seedPotato"));
+        return;
       }
       if (consumeItem(player, id)) {
         pickupTone();
-        toast(id === "water" ? t("drank") : t("ate"));
+        if (id === "potato") toast(t("potatoDry"));
+        else toast(id === "water" ? t("drank") : t("ate"));
         maybeGoal();
         renderInv(player);
       }
@@ -174,12 +177,12 @@ async function bootGame() {
         world.hab.lightsOn = !world.hab.lightsOn;
         toast(world.hab.lightsOn ? t("lightsOn") : t("lightsOff"));
       } else if (act === "drink") {
-        if (world.hab.waterTank < 0.35) {
+        if (world.hab.waterTank < TANK_MIN_L) {
           toast(t("tankEmpty"));
           return;
         }
-        world.hab.waterTank -= 0.4;
-        player.thirst = Math.min(100, player.thirst + 22);
+        world.hab.waterTank -= TANK_SIP_L;
+        player.thirst = Math.min(100, player.thirst + TANK_SIP_THIRST);
         player.drank = true;
         pickupTone("water");
         toast(t("drankTank"));

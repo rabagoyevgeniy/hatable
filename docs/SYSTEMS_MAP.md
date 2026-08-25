@@ -27,8 +27,11 @@ HABITAT (world.hab)
     → player warmth while inside
   still (fueled AND grid live)
     → station.water tap
-    → hab.waterTank
+    → hab.waterTank (starts as ~2 L leftover; still is the real supply)
     → extra load on the battery at night
+  potatoes
+    → eat one; last tuber is seed until harvest
+    → eating dries thirst; tank sip at console, then ice → still
   plot
     → grow = light × temp × moisture × (soil scan bonus)
 

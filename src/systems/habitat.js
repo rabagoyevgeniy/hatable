@@ -22,7 +22,7 @@ export function createHabitat() {
     heaterOn: true,
     lightsOn: true,
     lifeSupportOn: true,
-    waterTank: 5.5,
+    waterTank: 2.2,
     arrayHealth: 0.31,
     gridOn: true,
   };
@@ -140,7 +140,7 @@ export function habAlerts(world, lang = "ru") {
   if (h.battery < 0.2) out.push(ru ? `БАТАРЕЯ ${(h.battery * 100).toFixed(0)}%` : `BATTERY ${(h.battery * 100).toFixed(0)}%`);
   if ((world.daylight || 0) < 0.32 && h.solarKw < 0.08) out.push(ru ? "НОЧЬ · СОЛНЦА НЕТ" : "NIGHT · NO SOLAR");
   if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
-  if (h.waterTank < 1.2) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
+  if (h.waterTank < 1.0) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
   const fueled = (world.stations || []).some((s) => s.type === "still" && s.fuel > 0);
   if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");
   if ((world.stations || []).some((s) => s.type === "still" && s.fault === "pump")) {

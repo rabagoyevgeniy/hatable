@@ -232,7 +232,9 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
 
   const warn = $("vital-warn");
   const alerts = [];
-  if (player.thirst < 22) alerts.push(t("warnThirst"));
+  if (player.thirst < 28 && inside && world.hab && world.hab.waterTank >= 0.35) alerts.push(t("warnTank"));
+  else if (player.thirst < 22) alerts.push(t("warnThirst"));
+  else if (player.hunger < 22 && count(player, "potato") <= 1 && !player.harvestedCrop) alerts.push(t("seedPotato"));
   else if (player.hunger < 22) alerts.push(t("warnHunger"));
   else if (player.oxygen < 22) alerts.push(t("warnO2"));
   else if (player.warmth < 22) alerts.push(t("warnWarmth"));

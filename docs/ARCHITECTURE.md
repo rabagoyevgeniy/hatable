@@ -11,6 +11,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `systems/weather.js` | CLEAR/DUST/STORM → `world.storm` |
 | `systems/science.js` | scan discoveries |
 | `systems/machines.js` | station faults (still pump) and repair helpers |
+| `systems/survival.js` | seed potato + first-Sol thirst/tank pacing |
 | `systems/save.js` | localStorage snapshot `stranded-mars-save-v1` |
 | `ui.js` / `i18n.js` | HUD, menus, language, Hab console |
 | `data.js` | items, recipes, spawns, goals, Hab interact points |

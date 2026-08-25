@@ -67,6 +67,7 @@ export const NODE_SPAWNS = [
   { type: "fabric", x: -7.2, z: 7.4 },
   { type: "tape", x: -5, z: 15 },
   { type: "solar", x: 9.4, z: 6.1, needHammer: true },
+  { type: "ice", x: -6.6, z: 13.9 },
   { type: "ice", x: 7.8, z: 21.6 },
   { type: "ice", x: -3.4, z: 23.2 },
   { type: "ice", x: 18, z: 28 },
@@ -128,7 +129,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { scrap: 2, fabric: 1, ice: 1 },
     title: { en: "Water still", ru: "Дистиллятор" },
-    brief: { en: "2 scrap, canvas, ice. Place on the amber STILL ring west of the airlock.", ru: "2 лома, брезент, лёд. Ставь на янтарное кольцо ДИСТИЛЛЯТОР слева от шлюза." },
+    brief: { en: "2 scrap, canvas, ice (cyan pile by the STILL ring). Place on the amber ring west of the airlock.", ru: "2 лома, брезент, лёд (голубая куча у кольца ДИСТИЛЛЯТОР). Ставь на янтарное кольцо слева от шлюза." },
   },
   {
     id: "plot",
@@ -219,8 +220,8 @@ export const GOALS = [
     sol: 26,
     title: { en: "Make water", ru: "Добудь воду" },
     brief: {
-      en: "Craft a still, fuel it with ice (or hydrazine from the rover), then drink. Thirst kills first.",
-      ru: "Скрафть дистиллятор, заправь льдом (или гидразином с марсохода) и выпей. Жажда убивает первой.",
+      en: "Hab tank is leftover — a few sips at the desk console. Then ice on the still pad west of the hatch, craft the still, fuel it. Thirst kills first. Potatoes dry you out.",
+      ru: "Бак Hab — остаток: несколько глотков с консоли. Потом лёд у кольца ДИСТИЛЛЯТОР слева от шлюза, скрафть дистиллятор, заправь. Жажда убивает первой. Картошка сушит.",
     },
     log: {
       from: "WATNEY",
@@ -233,8 +234,8 @@ export const GOALS = [
     sol: 32,
     title: { en: "Farm potatoes", ru: "Вырасти картошку" },
     brief: {
-      en: "Two potatoes in the Hab locker — last one is seed. Soil flats west. Build a plot, plant, harvest copies.",
-      ru: "В шкафу Hab две картофелины, последняя — семена. Грунт к западу: грядка, посадка, урожай.",
+      en: "Two potatoes in the Hab locker — eat one, plant the last. The last tuber is seed until you harvest a copy.",
+      ru: "В шкафу Hab две картофелины: одну съешь, последнюю посади. Пока нет урожая, последняя — семена, не обед.",
     },
     log: {
       from: "WATNEY",

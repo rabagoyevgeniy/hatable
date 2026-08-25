@@ -75,3 +75,10 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Heater off: load dropped to 0.49 kW, «ПЕЧЬ ВЫКЛ» — night decision is readable
 
 Next: water/food pacing if the first Sol stays readable. Rover still waits.
+
+### Cycle H — leftover tank + seed potato
+
+- Hab tank starts at 2.2 L (~5 sips at the desk), then ice by the STILL pad and the distiller
+- Last uncopied potato cannot be eaten; HUD/toast say it is seed
+- Eating a potato dries thirst (toast). After the first sleep you need a tank sip — thirst kills first
+- Smoke locks: tank sips, first leak shift can still sleep, seed potato gate
