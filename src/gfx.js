@@ -66,9 +66,10 @@ export function marsAlbedo() {
         const g = 0.24 + n * 0.14 + grit * 0.03;
         const b = 0.12 + n * 0.05;
         const i = (y * s + x) * 4;
-        d[i] = Math.min(255, r * 255);
-        d[i + 1] = Math.min(255, g * 255);
-        d[i + 2] = Math.min(255, b * 255);
+        const boost = isMobileView() ? 1.45 : 1;
+        d[i] = Math.min(255, r * 255 * boost);
+        d[i + 1] = Math.min(255, g * 255 * (isMobileView() ? 1.4 : 1));
+        d[i + 2] = Math.min(255, b * 255 * (isMobileView() ? 1.25 : 1));
         d[i + 3] = 255;
       }
     }
@@ -236,7 +237,16 @@ function stripPbr(opts = {}) {
 
 /** Lambert on phones so iOS never renders MeshStandard black without IBL. */
 export function std(opts = {}) {
-  if (isMobileView()) return new THREE.MeshLambertMaterial(stripPbr(opts));
+  if (isMobileView()) {
+    const next = stripPbr(opts);
+    if (next.emissive == null && next.color != null) {
+      next.emissive = next.color;
+      next.emissiveIntensity = 0.42;
+    } else if (next.emissive != null && next.emissiveIntensity == null) {
+      next.emissiveIntensity = 0.28;
+    }
+    return new THREE.MeshLambertMaterial(next);
+  }
   return new THREE.MeshStandardMaterial(opts);
 }
 
@@ -244,6 +254,10 @@ export function phys(opts = {}) {
   if (isMobileView()) {
     const next = stripPbr(opts);
     if (next.opacity != null && next.opacity < 1) next.transparent = true;
+    if (next.emissive == null && next.color != null) {
+      next.emissive = next.color;
+      next.emissiveIntensity = 0.5;
+    }
     return new THREE.MeshLambertMaterial(next);
   }
   return new THREE.MeshPhysicalMaterial(opts);

@@ -1,9 +1,12 @@
+import { isMobileView } from "./device.js";
+
 const strings = {
   en: {
     eyebrow: "ARES III — ACIDALIA PLANITIA",
     tagline: "You were left for dead. Scavenge. Craft. Survive. Science the shit out of it.",
     begin: "WAKE UP",
     clickHint: "WASD walk · mouse look · E gather · C craft · Tab pockets. Cyan rings on the ground are starter loot.",
+    clickHintTouch: "Joystick to walk. Gather picks up loot. Craft makes the hammer. Scan shows labels.",
     firstHint: "1. Cyan rings ahead — walk up, E to pick scrap and rock.  2. C crafts a hammer (1 scrap + 1 rock).  3. White crate by the airlock is the locker.",
     firstHintTouch: "1. Walk to the glowing rings. Tap Gather for scrap and rock.  2. Craft = hammer (1 scrap + 1 rock).  3. White box by the airlock is the locker.",
     installHint: "Phone: Safari/Chrome → Share or menu → Add to Home Screen. Then open the icon like an app.",
@@ -77,6 +80,7 @@ const strings = {
     tagline: "Тебя оставили умирать. Собирай. Крафть. Выживай. Выкручивайся наукой.",
     begin: "ПРОСНУТЬСЯ",
     clickHint: "WASD — шаг · мышь — взгляд · E — собрать · C — крафт · Tab — карманы. Голубые кольца на земле — стартовый лут.",
+    clickHintTouch: "Джойстик — ходить. Сбор — подобрать. Крафт — молоток. Скан — подписи.",
     firstHint: "1. Голубые кольца впереди — подойди, E: лом и камень.  2. C — молоток (1 лом + 1 камень).  3. Белый ящик у шлюза — шкаф с картошкой.",
     firstHintTouch: "1. Иди к светящимся кольцам. Кнопка Сбор — лом и камень.  2. Крафт — молоток (1 лом + 1 камень).  3. Белый ящик у шлюза — шкаф.",
     installHint: "Телефон: Safari/Chrome → Поделиться / меню → На экран «Домой». Потом открывай ярлык как приложение.",
@@ -160,14 +164,20 @@ export function setLang(next) {
 }
 
 export function t(key) {
-  return strings[lang][key] ?? strings.en[key] ?? key;
+  const pack = strings[lang] || strings.en;
+  const touchKey = `${key}Touch`;
+  let s = isMobileView() && pack[touchKey] ? pack[touchKey] : pack[key] ?? strings.en[key] ?? key;
+  if (isMobileView() && typeof s === "string") s = s.replace(/^E\s+/, "");
+  return s;
 }
 
 export function applyDom() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (key && strings[lang][key]) el.textContent = strings[lang][key];
+    if (!key) return;
+    const value = t(key);
+    if (value) el.textContent = value;
   });
 }
 

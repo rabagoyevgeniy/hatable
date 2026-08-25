@@ -425,7 +425,7 @@ function updateScanLabels(player, world, camera, scanning) {
       loot: true,
     });
   }
-  if (Math.hypot(p.x, p.z - 8) < 16) {
+  if (Math.hypot(p.x, p.z - 8) < (mobile ? 7 : 16)) {
     targets.push({
       x: -1.4,
       y: 2.2,

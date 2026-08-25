@@ -1,5 +1,5 @@
-const SHELL = "stranded-shell-v3";
-const MODELS = "stranded-models-v3";
+const SHELL = "stranded-shell-v4";
+const MODELS = "stranded-models-v4";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

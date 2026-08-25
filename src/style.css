@@ -63,6 +63,15 @@ body.mobile #storm-overlay {
   opacity: 0.18 !important;
 }
 
+body.mobile .screen {
+  background: linear-gradient(180deg, rgba(18, 8, 5, 0.04), rgba(8, 4, 3, 0.16));
+}
+
+body.mobile .title-frame {
+  background: rgba(10, 6, 4, 0.55);
+  backdrop-filter: blur(8px);
+}
+
 body.mobile #order-card,
 body.mobile #goal-list,
 body.mobile #log,

@@ -58,9 +58,10 @@ export async function boot() {
   renderer.setClearColor(mobile ? 0xd48958 : 0xc47a4a, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = mobile ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = mobile ? 1.2 : 1.18;
+  renderer.toneMappingExposure = mobile ? 1.35 : 1.18;
   renderer.shadowMap.enabled = !mobile;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  if (mobile) renderer.useLegacyLights = true;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(mobile ? 64 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
@@ -458,8 +459,8 @@ export async function boot() {
   function placeCamera(dt) {
     const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
     const portrait = innerHeight > innerWidth;
-    const dist = inside ? 5.4 : mobile ? (portrait ? 7.6 : 8.4) : 9.2;
-    const height = (inside ? 2.35 : mobile ? (portrait ? 5.6 : 3.8) : 2.55) + player.pitch * (portrait ? 1.4 : 1.15);
+    const dist = inside ? 5.4 : mobile ? (portrait ? 8.6 : 8.8) : 9.2;
+    const height = (inside ? 2.35 : mobile ? (portrait ? 6.6 : 4.2) : 2.55) + player.pitch * (portrait ? 1.1 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
@@ -486,8 +487,8 @@ export async function boot() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    const lookAhead = mobile && !inside ? 2.6 : 0;
-    const lookY = player.root.position.y + (mobile ? (inside ? 1.35 : 1.9) : 1.32);
+    const lookAhead = mobile && !inside ? 5.4 : 0;
+    const lookY = player.root.position.y + (mobile ? (inside ? 1.45 : 2.35) : 1.32);
     camera.lookAt(
       player.root.position.x - Math.sin(player.yaw) * lookAhead,
       lookY,
@@ -499,7 +500,7 @@ export async function boot() {
     const w = Math.round(window.visualViewport?.width || innerWidth);
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
-    camera.fov = mobile ? (h > w ? 70 : 58) : 52;
+    camera.fov = mobile ? (h > w ? 76 : 60) : 52;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();
@@ -541,13 +542,13 @@ export async function boot() {
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });
     } else {
       const drift = now * 0.00007;
-      camera.position.set(8.2 + Math.sin(drift) * 1.8, mobile ? 10.4 : 6.55, 22 + Math.cos(drift) * 1.6);
-      camera.lookAt(0.8, mobile ? 2.8 : 1.7, 14.2);
+      camera.position.set(10.5 + Math.sin(drift) * 1.4, mobile ? 7.2 : 6.55, 26 + Math.cos(drift) * 1.4);
+      camera.lookAt(1.2, mobile ? 4.6 : 1.7, 12.5);
       updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
     if (!mobile) renderer.toneMappingExposure = 0.92 + world.daylight * 0.38 - world.storm * 0.1;
-    else renderer.toneMappingExposure = 1.25;
+    else renderer.toneMappingExposure = 1.4;
     lookX *= 0.6;
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

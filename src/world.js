@@ -33,9 +33,9 @@ export function createWorld(scene) {
   const sky = makeSky();
   scene.add(sky.mesh);
 
-  const hemi = new THREE.HemisphereLight(0xffe0c8, mobile ? 0xa05028 : 0x5a2a18, mobile ? 1.85 : 1.15);
+  const hemi = new THREE.HemisphereLight(0xffe0c8, mobile ? 0xa05028 : 0x5a2a18, mobile ? 2.2 : 1.15);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffe8d0, mobile ? 2.35 : 1.7);
+  const sun = new THREE.DirectionalLight(0xffe8d0, mobile ? 1.65 : 1.7);
   sun.position.set(80, 90, -40);
   sun.castShadow = !mobile;
   sun.shadow.mapSize.set(mobile ? 1024 : 2048);
@@ -52,7 +52,7 @@ export function createWorld(scene) {
   const fill = new THREE.DirectionalLight(0xffc8a0, mobile ? 0.85 : 0.48);
   fill.position.set(-50, 40, 40);
   scene.add(fill);
-  scene.add(new THREE.AmbientLight(0xc47848, mobile ? 0.72 : 0.32));
+  scene.add(new THREE.AmbientLight(0xc47848, mobile ? 0.95 : 0.32));
 
   const sunMesh = new THREE.Mesh(
     new THREE.SphereGeometry(9, 20, 20),
@@ -608,9 +608,9 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     playerPos.z + Math.sin(ang) * 36 - 28
   );
   world.sun.target.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.sun.intensity = Math.max(mobile ? 1.35 : 0.12, world.daylight * (mobile ? 2.2 : 1.7));
-  world.hemi.intensity = (mobile ? 0.9 : 0.32) + world.daylight * (mobile ? 1.0 : 0.85);
-  if (world.fill) world.fill.intensity = (mobile ? 0.45 : 0.22) + world.daylight * 0.28 + night * 0.22;
+  world.sun.intensity = Math.max(mobile ? 0.95 : 0.12, world.daylight * (mobile ? 1.55 : 1.7));
+  world.hemi.intensity = (mobile ? 1.15 : 0.32) + world.daylight * (mobile ? 1.05 : 0.85);
+  if (world.fill) world.fill.intensity = (mobile ? 0.55 : 0.22) + world.daylight * 0.28 + night * 0.22;
   const sunDir = world.sun.position.clone().sub(new THREE.Vector3(playerPos.x, 0, playerPos.z)).normalize();
   if (world.sunMesh) {
     world.sunMesh.position.copy(sunDir).multiplyScalar(380);
@@ -761,6 +761,7 @@ function makeTerrain() {
     const slope = 1 - nrm[1];
     const n = fbm(x * 0.018, z * 0.018);
     color.setRGB(0.58 + n * 0.16, 0.3 + n * 0.08, 0.16 + n * 0.04);
+    if (isMobileView()) color.setRGB(0.82 + n * 0.14, 0.46 + n * 0.1, 0.24 + n * 0.06);
     color.lerp(crest, Math.max(0, y / 14) * 0.45);
     color.lerp(gully, Math.max(0, -y / 6) * 0.4);
     color.lerp(rock, Math.min(1, slope * 1.8));
@@ -775,6 +776,7 @@ function makeTerrain() {
       vertexColors: true,
       roughness: 0.97,
       metalness: 0.03,
+      ...(isMobileView() ? { emissive: 0xb86a38, emissiveIntensity: 0.55 } : {}),
     })
   );
 }
