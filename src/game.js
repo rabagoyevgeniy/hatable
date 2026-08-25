@@ -81,20 +81,11 @@ async function bootGame() {
   const camera = new THREE.PerspectiveCamera(mobile ? 64 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
   camera.position.set(8.5, mobile ? 9.2 : 6.8, 24);
 
-  await preloadModels();
-  const status = document.getElementById("boot-status");
-  if (status) status.textContent = "";
-  const world = createWorld(scene);
-  const player = createPlayer(scene);
-  const journal = createJournal();
-  if (!mobile) {
-    scene.environment = bakeEnvironment(renderer);
-    scene.environmentIntensity = 0.85;
-  } else {
-    scene.environmentIntensity = 0;
-  }
-  if (!mobile) preloadRest().then(() => refreshOutpostModels(world));
-
+  let world;
+  let player;
+  let journal;
+  let systemsReady = false;
+  let queuedStart = null;
   const keys = new Set();
   let playing = false;
   let scanning = false;
@@ -106,34 +97,42 @@ async function bootGame() {
   let saveAcc = 0;
   let scanAcc = 0;
 
+  function beginPlay(load) {
+    if (load) {
+      const data = readSave();
+      if (data) {
+        applySave(data, { player, world, journal, placeStation, updatePlotVisual });
+        if (player.tools.hammer) attachHammer(player);
+      }
+    } else {
+      clearSave();
+    }
+    playing = true;
+    showHud();
+    startAudio();
+    const g = currentGoal(journal);
+    if (g) pushLog(goalText(g).from, goalText(g).log);
+    const touchUi = document.getElementById("touch-ui");
+    if (coarse && touchUi) touchUi.classList.remove("hidden");
+    try {
+      if (!coarse) canvas.requestPointerLock?.();
+    } catch {
+      /* pointer lock is optional */
+    }
+    persist();
+  }
+
   bindUi({
     start(load) {
-      if (load) {
-        const data = readSave();
-        if (data) {
-          applySave(data, { player, world, journal, placeStation, updatePlotVisual });
-          if (player.tools.hammer) attachHammer(player);
-        }
-      } else {
-        clearSave();
+      if (!systemsReady) {
+        queuedStart = !!load;
+        return;
       }
-      playing = true;
-      showHud();
-      startAudio();
-      const g = currentGoal(journal);
-      if (g) pushLog(goalText(g).from, goalText(g).log);
-      const touchUi = document.getElementById("touch-ui");
-      if (coarse && touchUi) touchUi.classList.remove("hidden");
-      try {
-        if (!coarse) canvas.requestPointerLock?.();
-      } catch {
-        /* pointer lock is optional */
-      }
-      persist();
+      beginPlay(load);
     },
     lang() {
       toggleLang();
-      renderCraft(player);
+      if (player) renderCraft(player);
     },
     craft: onCraft,
     consume(id) {
@@ -186,7 +185,23 @@ async function bootGame() {
       }
     },
   });
+
+  await preloadModels();
+  const status = document.getElementById("boot-status");
+  if (status) status.textContent = "";
+  world = createWorld(scene);
+  player = createPlayer(scene);
+  journal = createJournal();
+  if (!mobile) {
+    scene.environment = bakeEnvironment(renderer);
+    scene.environmentIntensity = 0.85;
+  } else {
+    scene.environmentIntensity = 0;
+  }
+  if (!mobile) preloadRest().then(() => refreshOutpostModels(world));
+  systemsReady = true;
   document.body.dataset.booted = "1";
+  if (queuedStart !== null) beginPlay(queuedStart);
 
   canvas.addEventListener("click", () => {
     if (playing && !menusOpen()) canvas.requestPointerLock?.();
