@@ -428,16 +428,22 @@ export function findInteract(player, world) {
   const bunkD = Math.hypot(p.x - HAB_BUNK.x, p.z - HAB_BUNK.z);
   const arrayD = Math.hypot(p.x - HAB_ARRAY.x, p.z - HAB_ARRAY.z);
 
-  if (gather && gatherD < 3.2 && gatherD <= lockerD) return gather;
-  if (inside && deskD < 1.85) return { kind: "console", label: t("console") };
+  if (gather && gatherD < 2.15) return gather;
+
+  if (inside) {
+    const habHits = [];
+    if (deskD < 3.2) habHits.push({ d: deskD, kind: "console", label: t("console") });
+    if (bunkD < 3.0) habHits.push({ d: bunkD, kind: "sleep", label: t("sleep") });
+    if (lockerD < 2.8) habHits.push({ d: lockerD, kind: "locker", label: t("locker") });
+    habHits.sort((a, b) => a.d - b.d);
+    if (habHits[0]) return habHits[0];
+  }
+
   if (arrayD < 3.4 && count(player, "solar") > 0 && (world.hab?.arrayHealth ?? 1) < 0.97) {
     return { kind: "repair-array", label: `${t("repairArray")}  ·  ${Math.round((world.hab?.arrayHealth || 0) * 100)}%` };
   }
-  if (inside && bunkD < 2.15) return { kind: "sleep", label: t("sleep") };
-  if (lockerD < 4.0) return { kind: "locker", label: t("locker") };
+  if (lockerD < 3.6) return { kind: "locker", label: t("locker") };
   if (gather) return gather;
-  if (inside && deskD < 2.6) return { kind: "console", label: t("console") };
-  if (inside && bunkD < 3.4) return { kind: "sleep", label: t("sleep") };
   return null;
 }
 

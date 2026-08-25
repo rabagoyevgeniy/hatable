@@ -30,4 +30,13 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 
 - Browser playtest: WAKE UP, HUD «УТЕЧКА · ДАВЛЕНИЕ ПАДАЕТ», walk on Mars, no JS errors after restoring `motion.js` import
 
-Next: Hab console reachability (tester did not find the desk), first-night battery feel, then deeper water/food if the loop holds.
+### Cycle C — Hab console findable + first-night pacing
+
+- Inside Hab, E picks the nearest of desk / bunk / locker (airlock locker no longer swallows the room)
+- Camera moves closer inside so furniture is readable
+- First entry toast: desk right / bunk left
+- Console screen pulses while leaking
+- Weather waits ~280s so the leak emergency is not also a storm
+- Start battery 58%; leaking life-support load slightly lower (heater still the night decision)
+
+Next: playtest walk-in → console → heater toggle.

@@ -95,6 +95,7 @@ const strings = {
     drankTank: "DRANK — Hab tank",
     tankEmpty: "Hab tank empty",
     scanned: "SCAN",
+    enterHab: "Desk on the right — Hab systems. Bunk on the left — sleep.",
   },
   ru: {
     eyebrow: "АРИС III — РАВНИНА АЦИДАЛИЯ",
@@ -190,6 +191,7 @@ const strings = {
     drankTank: "ВЫПИЛ — бак Hab",
     tankEmpty: "Бак Hab пуст",
     scanned: "СКАН",
+    enterHab: "Стол справа — системы Hab. Койка слева — сон.",
   },
 };
 

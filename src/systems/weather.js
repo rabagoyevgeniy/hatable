@@ -9,7 +9,7 @@ export function tickWeather(world, dt) {
   const w = world.weather;
   const t = world.playTime || 0;
 
-  if (t < 150) {
+  if (t < 280) {
     w.state = "clear";
     w.warn = 0;
     w.hold = 40;

@@ -48,7 +48,7 @@ must(world.includes("from \"./motion.js\""), "Hab flag/leak steam import");
 
 const ui = readFileSync(resolve(root, "src/ui.js"), "utf8");
 must(ui.includes("kind: \"console\""), "desk opens console not whole-hab sleep");
-must(ui.includes("HAB_BUNK"), "sleep is bunk-scoped");
+must(ui.includes("deskD < 3.2"), "desk console reachable from Hab center");
 
 /* Live sim: leak, seal, day/night battery. */
 const worldSim = {
@@ -85,7 +85,13 @@ worldSim.hab.battery = 0.4;
 for (let i = 0; i < 30; i++) tickHabitat(worldSim, 1);
 must(worldSim.hab.battery > nightBat, "day solar charges more than night");
 
-worldSim.playTime = 200;
+worldSim.playTime = 100;
+worldSim.weather.state = "clear";
+worldSim.weather.hold = 0;
+tickWeather(worldSim, 1);
+must(worldSim.weather.state === "clear", "no storm during the first emergency minutes");
+
+worldSim.playTime = 300;
 worldSim.weather.hold = 0;
 worldSim.weather.state = "clear";
 tickWeather(worldSim, 1);

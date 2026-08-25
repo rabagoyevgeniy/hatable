@@ -13,7 +13,7 @@ export function createHabitat() {
     pressure: 0.58,
     leakRate: 0.00115,
     oxygenTank: 36,
-    battery: 0.52,
+    battery: 0.58,
     capacityKwh: 7.5,
     solarKw: 0,
     loadKw: 0,
@@ -55,7 +55,7 @@ export function tickHabitat(world, dt) {
   h.solarKw = roof + extra;
 
   let load = 0;
-  if (h.lifeSupportOn) load += world.habSealed ? 0.38 : 0.7;
+  if (h.lifeSupportOn) load += world.habSealed ? 0.38 : 0.58;
   if (h.heaterOn && (night > 0.5 || h.insideC < 16)) load += 0.5;
   if (h.lightsOn) load += 0.11;
   const stills = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0);

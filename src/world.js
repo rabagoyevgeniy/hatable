@@ -713,7 +713,8 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   }
   const consoleGlow = hab?.group.getObjectByName("habConsole");
   if (consoleGlow?.material) {
-    consoleGlow.material.emissiveIntensity = live ? (isMobileView() ? 1.1 : 0.55) : 0.08;
+    const pulse = !world.habSealed ? 0.85 + 0.45 * Math.sin(performance.now() / 220) : live ? (isMobileView() ? 1.1 : 0.55) : 0.08;
+    consoleGlow.material.emissiveIntensity = pulse;
   }
   for (let i = 0; i < 3; i++) {
     const cell = hab?.group.getObjectByName(`roofCell${i}`);

@@ -168,6 +168,8 @@ export function createPlayer(scene) {
     gathered: 0,
     drank: false,
     harvestedCrop: false,
+    enteredHab: false,
+    usedConsole: false,
     placing: null,
     heldId: null,
     hammerMesh: null,

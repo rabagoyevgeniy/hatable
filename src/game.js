@@ -327,6 +327,7 @@ async function bootGame() {
       return;
     }
     if (hit.kind === "console") {
+      player.usedConsole = true;
       const open = toggleHabConsole(world);
       if (open) document.exitPointerLock?.();
       else canvas.requestPointerLock?.();
@@ -559,8 +560,8 @@ async function bootGame() {
   function placeCamera(dt) {
     const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
     const portrait = innerHeight > innerWidth;
-    const dist = inside ? (mobile ? 3.7 : 5.4) : mobile ? (portrait ? 6.35 : 7.2) : 9.2;
-    const height = (inside ? 1.78 : mobile ? (portrait ? 3.05 : 2.75) : 2.55) + player.pitch * (portrait ? 0.85 : 1.15);
+    const dist = inside ? (mobile ? 3.35 : 3.85) : mobile ? (portrait ? 6.35 : 7.2) : 9.2;
+    const height = (inside ? 1.62 : mobile ? (portrait ? 3.05 : 2.75) : 2.55) + player.pitch * (portrait ? 0.85 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
@@ -629,6 +630,10 @@ async function bootGame() {
     if (playing) {
       const result = updatePlayer(player, dt, inputState(), world);
       if (result.blackout) toast(t("warnO2"));
+      if (result.inside && !player.enteredHab) {
+        player.enteredHab = true;
+        toast(t("enterHab"));
+      }
       updateWorld(world, dt, player.root.position, scanning, true);
       tickStill(
         dt,
