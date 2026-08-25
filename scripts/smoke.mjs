@@ -15,7 +15,7 @@ const game = readFileSync(resolve(root, "src/game.js"), "utf8");
 must(game.includes("const result = trySleep(player, world)"), "sleep must call trySleep");
 must(game.includes("preloadRest()"), "far Meshy models load in background");
 must(game.includes("btn-scan-touch"), "phone scan button wired");
-must(game.includes("toggleHabConsole"), "Hab console interaction");
+must(game.includes("queuedStart"), "WAKE UP during load must queue");
 must(game.includes("applySave"), "continue applies save");
 must(game.includes("repair-array"), "roof array repair");
 
