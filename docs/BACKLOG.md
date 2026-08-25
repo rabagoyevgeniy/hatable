@@ -6,7 +6,7 @@
 
 ## P1
 
-- First crop as a moment (plot already takes four watered Sols)
+- Keep leak / power / water / first harvest stable — no rover until that holds
 
 ## P2
 

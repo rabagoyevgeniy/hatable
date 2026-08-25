@@ -138,7 +138,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { soil: 2, scrap: 1 },
     title: { en: "Farm plot", ru: "Грядка" },
-    brief: { en: "2 soil west of Hab + scrap. Place on a PLOT ring. Plant, sleep or water, harvest three.", ru: "2 грунта к западу от Hab + лом. Ставь на кольцо ГРЯДКА. Посадка, сон или полив, урожай — три." },
+    brief: { en: "2 soil west of Hab + scrap. Place on a PLOT ring. Plant the seed potato, water, sleep four Sols. Harvest is three copies — not a bottle mash.", ru: "2 грунта к западу от Hab + лом. Ставь на кольцо ГРЯДКА. Посади семена, поливай, спи четыре сола. Урожай — три копии, не десяток бутылок." },
   },
   {
     id: "solar",

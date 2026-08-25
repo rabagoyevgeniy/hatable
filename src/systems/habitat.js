@@ -1,6 +1,10 @@
 /** Lightweight Hab machine: pressure, solar, battery, temperature, water. */
 
 export const SOL_SECONDS = 220;
+/** Sleep jump toward harvest. Four watered Sols can finish. */
+export const CROP_SLEEP = 0.52;
+/** Realtime trickle — standing a Sol is not a harvest. */
+export const CROP_LIVE = 0.002;
 /** One Sol compresses this many hours of energy accounting. Night should matter. */
 const ENERGY_HOURS = 4.2;
 

@@ -13,7 +13,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Sleep advances Sol and ticks habitat/weather/crops
 - Versioned localStorage save: Continue / New Game / autosave
 - Still (ice/hydrazine → water **if grid is live**, pipes into Hab tank)
-- Plot with persistent moisture / light / temperature; ~4 watered Sols to harvest
+- Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest (watering is not a click)
 - Seal patch visual
 - Journal 8-step (guidance only)
 - RU/EN, mobile touch, PWA

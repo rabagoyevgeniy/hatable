@@ -426,7 +426,7 @@ export function findInteract(player, world) {
       if (st.planted && st.grow < 1 && count(player, "water") > 0) {
         return { kind: "water-plot", station: st, label: `${t("waterPlot")}  ·  ${Math.floor(st.grow * 100)}%` };
       }
-      if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
+      if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvestReady") };
       if (st.planted) {
         const f = cropFactors(world);
         const wet = st.moisture ?? 0;

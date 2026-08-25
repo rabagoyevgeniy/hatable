@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, dist } from "../src/systems/interact.js";
@@ -230,11 +230,18 @@ must(readFileSync(resolve(root, "src/i18n.js"), "utf8").includes("enterHab"), "f
 let grow = 0;
 let moist = 1;
 for (let i = 0; i < 4; i++) {
-  grow = Math.min(1, grow + 0.52 * 0.85 * 0.7 * Math.max(0.22, moist));
+  grow = Math.min(1, grow + CROP_SLEEP * 0.85 * 0.7 * Math.max(0.22, moist));
   moist = Math.max(0.08, moist * 0.72);
   moist = 1;
 }
 must(grow >= 1, "four watered sols can finish a first crop");
+let bottleGrow = 0;
+for (let i = 0; i < 12; i++) bottleGrow = Math.min(1, bottleGrow); // watering sets moisture only
+must(bottleGrow < 0.05, "watering bottles do not click a harvest");
+must(!game.includes("grow + 0.1"), "water-plot must not add grow");
+const afk = CROP_LIVE * SOL_SECONDS * 0.85 * 0.7 * 1;
+must(afk < 0.45, "standing one Sol is not a harvest");
+must(game.includes("firstHarvest"), "first harvest is a named moment");
 
 const still = { type: "still", fuel: 80, water: 0, runtime: 0, fault: null, repaired: false };
 const gridWorld = { hab: { gridOn: true }, science: { known: {} } };

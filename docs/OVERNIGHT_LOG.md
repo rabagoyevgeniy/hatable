@@ -98,3 +98,9 @@ Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
 - Dead grid silences hum and heater. Sealed walls cut Mars wind
 - Console heater/lights click (`switchTone`)
 - Smoke locks leak hiss > hum, home hum > hiss, heater off vs grid dead
+
+### Cycle J — first crop is a harvest, not a bottle mash
+
+- Watering a plot only restores moisture; it no longer adds 10% grow
+- Realtime growth is a trickle (a standing Sol is not a harvest); four watered sleeps still finish
+- Ripe plot shows three tubers and prompt «УРОЖАЙ · 3 КАРТОФЕЛИНЫ»; first pick is a named toast and saves

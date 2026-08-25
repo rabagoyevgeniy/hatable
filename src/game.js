@@ -428,10 +428,10 @@ async function bootGame() {
     if (hit.kind === "water-plot") {
       takeItems(player, { water: 1 });
       hit.station.moisture = 1;
-      hit.station.grow = Math.min(1, hit.station.grow + 0.1);
       updatePlotVisual(hit.station);
       pickupTone("water");
       toast(t("watered"));
+      persist();
       return;
     }
     if (hit.kind === "harvest-plot") {
@@ -441,13 +441,17 @@ async function bootGame() {
         toast(t("pocketsFull"));
         return;
       }
+      const first = !player.harvestedCrop;
       player.harvestedCrop = true;
       hit.station.planted = false;
       hit.station.grow = 0;
       hit.station.moisture = 0.2;
       updatePlotVisual(hit.station);
       deliverTone();
+      toast(first ? t("firstHarvest") : `${t("harvested")} · ×${n}`);
       maybeGoal();
+      persist();
+      return;
     }
   }
 

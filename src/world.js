@@ -4,7 +4,7 @@ import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS, HAB_LEAK, HAB_PO
 import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors } from "./systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors, CROP_SLEEP, CROP_LIVE } from "./systems/habitat.js";
 import { tickStillMachine, stillCanRun, STILL_PUMP_FAIL } from "./systems/machines.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience } from "./systems/science.js";
@@ -576,10 +576,36 @@ function buildStation(type) {
     plant2.visible = false;
     plant2.name = "plant2";
     g.add(plant2);
-    const tuber = mesh(new THREE.SphereGeometry(0.13, 10, 8), std({ color: 0xc4a05a }), 0.1, 0.55, -0.15);
+    const tuber = mesh(
+      new THREE.SphereGeometry(0.16, 10, 8),
+      std({ color: 0xc4a05a, emissive: 0x6a4010, emissiveIntensity: 0.15 }),
+      0.12,
+      0.58,
+      -0.18
+    );
     tuber.visible = false;
     tuber.name = "tuber";
     g.add(tuber);
+    const tuber2 = mesh(
+      new THREE.SphereGeometry(0.13, 8, 8),
+      std({ color: 0xb89048, emissive: 0x6a4010, emissiveIntensity: 0.12 }),
+      -0.22,
+      0.52,
+      0.12
+    );
+    tuber2.visible = false;
+    tuber2.name = "tuber2";
+    g.add(tuber2);
+    const tuber3 = mesh(
+      new THREE.SphereGeometry(0.11, 8, 8),
+      std({ color: 0xd4b060, emissive: 0x6a4010, emissiveIntensity: 0.12 }),
+      0.28,
+      0.5,
+      0.2
+    );
+    tuber3.visible = false;
+    tuber3.name = "tuber3";
+    g.add(tuber3);
   } else if (type === "solar") {
     const panel = mesh(new THREE.BoxGeometry(2.5, 0.07, 1.35), dark, 0, 1.15, 0);
     panel.rotation.x = -0.48;
@@ -760,7 +786,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       const f = cropFactors(world);
       st.moisture = Math.max(0, (st.moisture ?? 0.4) - dt * 0.007);
       const soil = world.science?.known?.soil ? 1.12 : 1;
-      st.grow += dt * 0.014 * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
+      st.grow += dt * CROP_LIVE * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
       updatePlotVisual(st);
     }
   }
@@ -771,6 +797,8 @@ export function updatePlotVisual(st) {
   const plant = st.mesh.getObjectByName("plant");
   const plant2 = st.mesh.getObjectByName("plant2");
   const tuber = st.mesh.getObjectByName("tuber");
+  const tuber2 = st.mesh.getObjectByName("tuber2");
+  const tuber3 = st.mesh.getObjectByName("tuber3");
   if (plant) {
     plant.visible = st.planted;
     plant.scale.setScalar(0.35 + st.grow * 1.1);
@@ -779,7 +807,10 @@ export function updatePlotVisual(st) {
     plant2.visible = st.planted && st.grow > 0.35;
     plant2.scale.setScalar(0.3 + st.grow * 0.9);
   }
-  if (tuber) tuber.visible = st.grow >= 1;
+  const ripe = st.planted && st.grow >= 1;
+  if (tuber) tuber.visible = ripe;
+  if (tuber2) tuber2.visible = ripe;
+  if (tuber3) tuber3.visible = ripe;
 }
 
 export function advanceSol(world) {
@@ -788,7 +819,7 @@ export function advanceSol(world) {
   const soil = world.science?.known?.soil ? 1.12 : 1;
   for (const st of world.stations) {
     if (st.type === "plot" && st.planted) {
-      st.grow = Math.min(1, st.grow + 0.52 * f.light * f.temp * Math.max(0.22, st.moisture) * soil);
+      st.grow = Math.min(1, st.grow + CROP_SLEEP * f.light * f.temp * Math.max(0.22, st.moisture) * soil);
       st.moisture = Math.max(0.08, (st.moisture ?? 0.4) * 0.72);
       updatePlotVisual(st);
     }
