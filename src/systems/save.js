@@ -70,6 +70,9 @@ export function collectSave(player, world, journal) {
         planted: s.planted,
         grow: s.grow,
         moisture: s.moisture,
+        runtime: s.runtime,
+        fault: s.fault,
+        repaired: s.repaired,
       })),
     },
     journal: { index: journal.index, finished: journal.finished, sols: journal.sols },
@@ -147,6 +150,9 @@ export function applySave(data, { player, world, journal, placeStation, updatePl
     st.planted = !!s.planted;
     st.grow = s.grow || 0;
     st.moisture = s.moisture ?? (st.planted ? 0.4 : 0.2);
+    st.runtime = s.runtime || 0;
+    st.fault = s.fault || null;
+    st.repaired = !!s.repaired;
     if (st.type === "plot") updatePlotVisual(st);
   }
 

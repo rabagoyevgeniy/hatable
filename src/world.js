@@ -5,6 +5,7 @@ import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors } from "./systems/habitat.js";
+import { tickStillMachine, stillCanRun, STILL_PUMP_FAIL } from "./systems/machines.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience } from "./systems/science.js";
 import { isMobileView } from "./device.js";
@@ -475,6 +476,10 @@ export function placeStation(world, station, x, z) {
     planted: false,
     grow: 0,
     moisture: 0.2,
+    runtime: 0,
+    fault: null,
+    repaired: false,
+    condition: 1,
   };
   world.stations.push(st);
   if (station === "solar") {
@@ -725,13 +730,12 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   }
 
   for (const st of world.stations) {
-    if (st.type === "still" && st.fuel > 0 && world.hab?.gridOn) {
-      st.fuel -= dt;
-      st.water += dt * 0.045 * (world.science?.known?.ice ? 1.12 : 1);
+    if (st.type === "still") {
+      tickStillMachine(st, dt, world);
       const globe = st.mesh.getObjectByName("stillGlobe");
-      if (globe) globe.material.emissiveIntensity = 0.55 + Math.sin(performance.now() / 280) * 0.25;
+      if (globe) globe.material.emissiveIntensity = stillCanRun(st, world) ? 0.55 + Math.sin(performance.now() / 280) * 0.25 : 0.08;
       const stillGlow = st.mesh.getObjectByName("stillGlow");
-      if (stillGlow) stillGlow.intensity = 0.55 + Math.sin(performance.now() / 280) * 0.35;
+      if (stillGlow) stillGlow.intensity = stillCanRun(st, world) ? 0.55 + Math.sin(performance.now() / 280) * 0.35 : 0.05;
       const gauge = st.mesh.getObjectByName("waterGauge");
       if (gauge) gauge.scale.set(1, 1 + Math.min(6, st.water * 0.4), 1);
     }
@@ -771,10 +775,12 @@ export function advanceSol(world) {
       st.moisture = Math.max(0.08, (st.moisture ?? 0.4) * 0.72);
       updatePlotVisual(st);
     }
-    if (st.type === "still" && st.fuel > 0 && world.hab?.gridOn) {
+    if (st.type === "still" && stillCanRun(st, world)) {
       st.water += 5;
       st.fuel = Math.max(0, st.fuel - 10);
-      if (world.hab) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);
+      st.runtime = (st.runtime || 0) + 40;
+      if (!st.repaired && st.runtime >= STILL_PUMP_FAIL) st.fault = "pump";
+      if (world.hab && !st.fault) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);
     }
   }
 }

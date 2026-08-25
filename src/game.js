@@ -42,6 +42,7 @@ import {
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
 import { noteScan } from "./systems/science.js";
+import { stillCanRun } from "./systems/machines.js";
 
 export async function boot() {
   try {
@@ -359,6 +360,22 @@ async function bootGame() {
       }
       return;
     }
+    if (hit.kind === "still-diag") {
+      toast(t("pumpFailHint"));
+      return;
+    }
+    if (hit.kind === "still-repair") {
+      if (!player.tools.hammer || !takeItems(player, { wire: 1, scrap: 1 })) {
+        toast(t("needPumpParts"));
+        return;
+      }
+      hit.station.fault = null;
+      hit.station.repaired = true;
+      deliverTone();
+      toast(t("pumpFixed"));
+      persist();
+      return;
+    }
     if (hit.kind === "still-fuel") {
       const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
       takeItems(player, { [fuel]: 1 });
@@ -639,7 +656,7 @@ async function bootGame() {
       updateWorld(world, dt, player.root.position, scanning, true);
       tickStill(
         dt,
-        world.stations.some((s) => s.type === "still" && s.fuel > 0 && world.hab?.gridOn)
+        world.stations.some((s) => stillCanRun(s, world))
       );
       setAmbience({
         storm: world.storm,

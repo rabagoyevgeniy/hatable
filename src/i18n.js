@@ -96,6 +96,11 @@ const strings = {
     tankEmpty: "Hab tank empty",
     scanned: "SCAN",
     stillNoPower: "STILL OFFLINE — no Hab power",
+    pumpFail: "E  PUMP FAILED · needs wire + scrap + hammer",
+    pumpFailHint: "PUMP FAILURE — salvage wire (solar wreck) and scrap",
+    repairPump: "E  REPAIR PUMP (wire + scrap)",
+    pumpFixed: "PUMP LIVE — still dripping",
+    needPumpParts: "Need hammer, 1 wire, 1 scrap",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -193,6 +198,11 @@ const strings = {
     tankEmpty: "Бак Hab пуст",
     scanned: "СКАН",
     stillNoPower: "ДИСТИЛЛЯТОР СТОИТ — нет сети Hab",
+    pumpFail: "E  НАСОС МЁРТВ · провод + лом + молоток",
+    pumpFailHint: "ОТКАЗ НАСОСА — провод на кладбище панелей, лом рядом",
+    repairPump: "E  ПОЧИНИТЬ НАСОС (провод + лом)",
+    pumpFixed: "НАСОС ЖИВ — дистиллятор капает",
+    needPumpParts: "Нужны молоток, 1 провод, 1 лом",
     consoleDeeper: "глубже — голубой экран",
   },
 };

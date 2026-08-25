@@ -58,7 +58,7 @@ export function tickHabitat(world, dt) {
   if (h.lifeSupportOn) load += world.habSealed ? 0.38 : 0.58;
   if (h.heaterOn && (night > 0.5 || h.insideC < 16)) load += 0.5;
   if (h.lightsOn) load += 0.11;
-  const stillsFueled = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0);
+  const stillsFueled = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0 && !s.fault);
   const stillMayRun = h.gridOn || h.battery > 0.06 || day > 0.48;
   if (stillMayRun) load += stillsFueled.length * 0.32;
   h.loadKw = load;
@@ -143,6 +143,9 @@ export function habAlerts(world, lang = "ru") {
   if (h.waterTank < 1.2) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
   const fueled = (world.stations || []).some((s) => s.type === "still" && s.fuel > 0);
   if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");
+  if ((world.stations || []).some((s) => s.type === "still" && s.fault === "pump")) {
+    out.push(ru ? "НАСОС ДИСТИЛЛЯТОРА" : "STILL PUMP FAILED");
+  }
   return out;
 }
 

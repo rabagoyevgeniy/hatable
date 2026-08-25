@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { std } from "./gfx.js";
+import { stillCanRun } from "./systems/machines.js";
 
 /** Subtle live motion for Hab, Meshy props, stations, and the leak. */
 export function tickMotion(world, dt) {
@@ -55,7 +56,7 @@ export function tickMotion(world, dt) {
   for (const st of world.stations || []) {
     if (!st.mesh) continue;
     if (st.type === "still") {
-      const spinning = st.fuel > 0 && world.hab?.gridOn;
+      const spinning = stillCanRun(st, world);
       st.mesh.rotation.y += dt * (spinning ? 0.7 : 0.12);
       const globe = st.mesh.getObjectByName("stillGlobe");
       if (globe) globe.rotation.y += dt * 1.4;

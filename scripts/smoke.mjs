@@ -5,6 +5,7 @@ import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK } from "../src/data.js";
+import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -19,7 +20,7 @@ must(game.includes("preloadRest()"), "far Meshy models load in background");
 must(game.includes("btn-scan-touch"), "phone scan button wired");
 must(game.includes("queuedStart"), "WAKE UP during load must queue");
 must(game.includes("applySave"), "continue applies save");
-must(game.includes("repair-array"), "roof array repair");
+must(game.includes("still-repair"), "pump repair interaction");
 
 const models = readFileSync(resolve(root, "src/models.js"), "utf8");
 must(models.includes("import.meta.env.BASE_URL"), "GLB URLs must respect Vite base for GitHub Pages");
@@ -162,6 +163,18 @@ for (let i = 0; i < 4; i++) {
   moist = 1;
 }
 must(grow >= 1, "four watered sols can finish a first crop");
+
+const still = { type: "still", fuel: 80, water: 0, runtime: 0, fault: null, repaired: false };
+const gridWorld = { hab: { gridOn: true }, science: { known: {} } };
+for (let i = 0; i < STILL_PUMP_FAIL + 2; i++) tickStillMachine(still, 1, gridWorld);
+must(still.fault === "pump", "still pump fails after a short run");
+must(still.water > 1, "still made water before the pump died");
+const waterAtFail = still.water;
+tickStillMachine(still, 5, gridWorld);
+must(still.water === waterAtFail, "failed pump makes no water");
+must(!stillCanRun(still, gridWorld), "faulted still is offline");
+repairStillPump(still);
+must(stillCanRun(still, gridWorld), "repaired pump runs again");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

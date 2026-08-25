@@ -403,6 +403,12 @@ export function findInteract(player, world) {
       if (st.water >= 1) {
         return { kind: "still-take", station: st, label: `${t("drinkStill")}  ·  ${Math.floor(st.water)}` };
       }
+      if (st.fault === "pump") {
+        if (player.tools.hammer && count(player, "wire") > 0 && count(player, "scrap") > 0) {
+          return { kind: "still-repair", station: st, label: t("repairPump") };
+        }
+        return { kind: "still-diag", station: st, label: t("pumpFail") };
+      }
       if (st.fuel > 0 && !world.hab?.gridOn) {
         return { kind: "still-wait", station: st, label: t("stillNoPower") };
       }
