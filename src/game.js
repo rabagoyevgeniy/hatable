@@ -44,6 +44,16 @@ import { applySave, collectSave, writeSave, readSave, clearSave } from "./system
 import { noteScan } from "./systems/science.js";
 
 export async function boot() {
+  try {
+    await bootGame();
+  } catch (err) {
+    console.error(err);
+    const status = document.getElementById("boot-status");
+    if (status) status.textContent = String(err?.stack || err?.message || err);
+  }
+}
+
+async function bootGame() {
   applyDom();
   const mobile = isMobileView();
   if (mobile) document.body.classList.add("mobile");
@@ -98,7 +108,6 @@ export async function boot() {
 
   bindUi({
     start(load) {
-      startAudio();
       if (load) {
         const data = readSave();
         if (data) {
@@ -110,11 +119,16 @@ export async function boot() {
       }
       playing = true;
       showHud();
+      startAudio();
       const g = currentGoal(journal);
       if (g) pushLog(goalText(g).from, goalText(g).log);
       const touchUi = document.getElementById("touch-ui");
       if (coarse && touchUi) touchUi.classList.remove("hidden");
-      if (!coarse) canvas.requestPointerLock?.();
+      try {
+        if (!coarse) canvas.requestPointerLock?.();
+      } catch {
+        /* pointer lock is optional */
+      }
       persist();
     },
     lang() {
@@ -172,6 +186,7 @@ export async function boot() {
       }
     },
   });
+  document.body.dataset.booted = "1";
 
   canvas.addEventListener("click", () => {
     if (playing && !menusOpen()) canvas.requestPointerLock?.();
@@ -186,7 +201,12 @@ export async function boot() {
 
   document.addEventListener("keydown", (e) => {
     keys.add(e.code);
-    if (!playing) return;
+    if (!playing) {
+      if (e.code === "Enter" || e.code === "NumpadEnter") {
+        document.getElementById("btn-start")?.click();
+      }
+      return;
+    }
     if (e.code === "Tab") {
       e.preventDefault();
       const open = toggleInv(player);

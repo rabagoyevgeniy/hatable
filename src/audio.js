@@ -8,76 +8,80 @@ let master;
 let dripTimer = 0;
 
 export function startAudio() {
-  if (ctx) {
-    if (ctx.state === "suspended") ctx.resume();
-    return;
+  try {
+    if (ctx) {
+      if (ctx.state === "suspended") ctx.resume();
+      return;
+    }
+    ctx = new AudioContext();
+    master = ctx.createGain();
+    master.gain.value = 0.24;
+    master.connect(ctx.destination);
+
+    const drone = ctx.createOscillator();
+    drone.type = "sawtooth";
+    drone.frequency.value = 44;
+    const droneFilter = ctx.createBiquadFilter();
+    droneFilter.type = "lowpass";
+    droneFilter.frequency.value = 160;
+    droneGain = ctx.createGain();
+    droneGain.gain.value = 0.14;
+    drone.connect(droneFilter);
+    droneFilter.connect(droneGain);
+    droneGain.connect(master);
+    drone.start();
+
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const wind = ctx.createBufferSource();
+    wind.buffer = noiseBuffer;
+    wind.loop = true;
+    const windFilter = ctx.createBiquadFilter();
+    windFilter.type = "bandpass";
+    windFilter.frequency.value = 620;
+    windGain = ctx.createGain();
+    windGain.gain.value = 0.045;
+    wind.connect(windFilter);
+    windFilter.connect(windGain);
+    windGain.connect(master);
+    wind.start();
+
+    const hum = ctx.createOscillator();
+    hum.type = "sine";
+    hum.frequency.value = 118;
+    humGain = ctx.createGain();
+    humGain.gain.value = 0;
+    hum.connect(humGain);
+    humGain.connect(master);
+    hum.start();
+
+    const hissFilter = ctx.createBiquadFilter();
+    hissFilter.type = "bandpass";
+    hissFilter.frequency.value = 2400;
+    hissFilter.Q.value = 0.7;
+    hissGain = ctx.createGain();
+    hissGain.gain.value = 0;
+    const hiss = ctx.createBufferSource();
+    hiss.buffer = noiseBuffer;
+    hiss.loop = true;
+    hiss.connect(hissFilter);
+    hissFilter.connect(hissGain);
+    hissGain.connect(master);
+    hiss.start();
+
+    const breath = ctx.createOscillator();
+    breath.type = "sine";
+    breath.frequency.value = 9;
+    breathGain = ctx.createGain();
+    breathGain.gain.value = 0;
+    breath.connect(breathGain);
+    breathGain.connect(master);
+    breath.start();
+  } catch {
+    ctx = null;
   }
-  ctx = new AudioContext();
-  master = ctx.createGain();
-  master.gain.value = 0.24;
-  master.connect(ctx.destination);
-
-  const drone = ctx.createOscillator();
-  drone.type = "sawtooth";
-  drone.frequency.value = 44;
-  const droneFilter = ctx.createBiquadFilter();
-  droneFilter.type = "lowpass";
-  droneFilter.frequency.value = 160;
-  droneGain = ctx.createGain();
-  droneGain.gain.value = 0.14;
-  drone.connect(droneFilter);
-  droneFilter.connect(droneGain);
-  droneGain.connect(master);
-  drone.start();
-
-  const bufferSize = 2 * ctx.sampleRate;
-  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-  const wind = ctx.createBufferSource();
-  wind.buffer = noiseBuffer;
-  wind.loop = true;
-  const windFilter = ctx.createBiquadFilter();
-  windFilter.type = "bandpass";
-  windFilter.frequency.value = 620;
-  windGain = ctx.createGain();
-  windGain.gain.value = 0.045;
-  wind.connect(windFilter);
-  windFilter.connect(windGain);
-  windGain.connect(master);
-  wind.start();
-
-  const hum = ctx.createOscillator();
-  hum.type = "sine";
-  hum.frequency.value = 118;
-  humGain = ctx.createGain();
-  humGain.gain.value = 0;
-  hum.connect(humGain);
-  humGain.connect(master);
-  hum.start();
-
-  const hissFilter = ctx.createBiquadFilter();
-  hissFilter.type = "bandpass";
-  hissFilter.frequency.value = 2400;
-  hissFilter.Q.value = 0.7;
-  hissGain = ctx.createGain();
-  hissGain.gain.value = 0;
-  const hiss = ctx.createBufferSource();
-  hiss.buffer = noiseBuffer;
-  hiss.loop = true;
-  hiss.connect(hissFilter);
-  hissFilter.connect(hissGain);
-  hissGain.connect(master);
-  hiss.start();
-
-  const breath = ctx.createOscillator();
-  breath.type = "sine";
-  breath.frequency.value = 9;
-  breathGain = ctx.createGain();
-  breathGain.gain.value = 0;
-  breath.connect(breathGain);
-  breathGain.connect(master);
-  breath.start();
 }
 
 export function setAmbience({ storm = 0, inside = false, sealed = false, night = false, leak = false, o2 = 100, grid = true } = {}) {
