@@ -55,3 +55,21 @@ EN / RU toggle is on the title card.
 npm install
 npm run dev
 ```
+
+Opens at http://localhost:5173.
+
+## Visuals / Meshy (Mesh AI)
+
+The game looks like Acidalia without any extra service: sky, dust, lighting, and Hab are procedural in Three.js.
+
+If you have a **Meshy** subscription, connect it as a Cloud Agent **secret** named `MESHY_API_KEY` (meshy.ai → Settings → API). Do not paste the key into chat or commit it.
+
+Then generate GLBs once and commit them:
+
+```bash
+export MESHY_API_KEY=msy_...
+npm run meshy
+# or one asset: node scripts/meshy-generate.mjs still
+```
+
+Files land in `public/models/`. The game loads them if present and falls back to the procedural meshes if a file is missing. Meshy is never called from the browser (that would leak the key and spend credits every load).

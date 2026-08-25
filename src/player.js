@@ -4,78 +4,114 @@ import { ITEMS, CONSUME, SURVIVAL, SPAWN } from "./data.js";
 import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
 import { advanceSol } from "./world.js";
+import { maps, std } from "./gfx.js";
+import { takeModel } from "./models.js";
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
-  const suit = new THREE.MeshStandardMaterial({ color: 0xe07030, roughness: 0.58, metalness: 0.12 });
-  const suitDark = new THREE.MeshStandardMaterial({ color: 0xb84818, roughness: 0.7, metalness: 0.08 });
-  const white = new THREE.MeshStandardMaterial({ color: 0xeee8de, roughness: 0.42, metalness: 0.18 });
-  const visor = new THREE.MeshStandardMaterial({
-    color: 0xc9a227,
-    roughness: 0.08,
-    metalness: 0.88,
-    emissive: 0x3a2208,
-    emissiveIntensity: 0.22,
-  });
-  const packMat = new THREE.MeshStandardMaterial({ color: 0xd8d2c6, roughness: 0.5, metalness: 0.28 });
-  const glove = new THREE.MeshStandardMaterial({ color: 0x2a2420, roughness: 0.85 });
-  const boot = new THREE.MeshStandardMaterial({ color: 0x1c1814, roughness: 0.9 });
+  const ready = takeModel("watney", 1.95);
+  let armL;
+  let armR;
+  let legL;
+  let legR;
 
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.62, 6, 12), suit);
-  torso.position.y = 1.18;
-  root.add(torso);
-  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.26, 0.2), white);
-  chest.position.set(0, 1.34, 0.3);
-  root.add(chest);
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.5), white);
-  stripe.position.y = 1.04;
-  root.add(stripe);
+  if (ready) {
+    root.add(ready);
+    armL = ready.getObjectByName("armL") || new THREE.Group();
+    armR = ready.getObjectByName("armR") || new THREE.Group();
+    legL = ready.getObjectByName("legL") || new THREE.Group();
+    legR = ready.getObjectByName("legR") || new THREE.Group();
+    if (!armR.parent) root.add(armR);
+  } else {
+    const tex = maps();
+    const suit = std({ color: 0xe07030, map: tex.eva, roughness: 0.55, metalness: 0.08 });
+    const suitDark = std({ color: 0xb84818, map: tex.eva, roughness: 0.68, metalness: 0.06 });
+    const white = std({ color: 0xeee8de, map: tex.hull, roughness: 0.4, metalness: 0.2 });
+    const visor = new THREE.MeshPhysicalMaterial({
+      color: 0xc9a227,
+      roughness: 0.06,
+      metalness: 0.92,
+      emissive: 0x3a2208,
+      emissiveIntensity: 0.18,
+      envMapIntensity: 1.6,
+    });
+    const packMat = std({ color: 0xd8d2c6, map: tex.metal, roughness: 0.45, metalness: 0.32 });
+    const glove = std({ color: 0x2a2420, roughness: 0.85 });
+    const boot = std({ color: 0x1c1814, roughness: 0.9 });
 
-  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.36, 18, 14), white);
-  helmet.position.y = 1.86;
-  root.add(helmet);
-  const glass = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10, 0, Math.PI), visor);
-  glass.position.set(0, 1.84, 0.14);
-  root.add(glass);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 18), white);
-  rim.position.set(0, 1.84, 0.16);
-  root.add(rim);
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.62, 6, 14), suit);
+    torso.position.y = 1.18;
+    root.add(torso);
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.26, 0.2), white);
+    chest.position.set(0, 1.34, 0.3);
+    root.add(chest);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.02), std({ color: 0x2a4a8a, emissive: 0x1a3060, emissiveIntensity: 0.2 }));
+    flag.position.set(0.22, 1.36, 0.41);
+    root.add(flag);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.5), white);
+    stripe.position.y = 1.04;
+    root.add(stripe);
 
-  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.8, 0.36), packMat);
-  pack.position.set(0, 1.28, -0.44);
-  root.add(pack);
-  const tankL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.72, 8), white);
-  tankL.position.set(-0.16, 1.3, -0.66);
-  root.add(tankL);
-  const tankR = tankL.clone();
-  tankR.position.x = 0.16;
-  root.add(tankR);
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), white);
+    helmet.position.y = 1.86;
+    root.add(helmet);
+    const glass = new THREE.Mesh(new THREE.SphereGeometry(0.29, 18, 12, 0, Math.PI), visor);
+    glass.position.set(0, 1.84, 0.14);
+    root.add(glass);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 22), white);
+    rim.position.set(0, 1.84, 0.16);
+    root.add(rim);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.16, 12), white);
+    neck.position.y = 1.62;
+    root.add(neck);
 
-  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 8), suit);
-  armL.position.set(-0.54, 1.18, 0);
-  const handL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), glove);
-  handL.position.set(0, -0.4, 0);
-  armL.add(handL);
-  root.add(armL);
-  const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 8), suit);
-  armR.position.set(0.54, 1.18, 0);
-  const handR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), glove);
-  handR.position.set(0, -0.4, 0);
-  armR.add(handR);
-  root.add(armR);
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.8, 0.36), packMat);
+    pack.position.set(0, 1.28, -0.44);
+    root.add(pack);
+    const tankL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.72, 10), white);
+    tankL.position.set(-0.16, 1.3, -0.66);
+    root.add(tankL);
+    const tankR = tankL.clone();
+    tankR.position.x = 0.16;
+    root.add(tankR);
+    const hose = new THREE.Mesh(
+      new THREE.TorusGeometry(0.22, 0.03, 6, 10, Math.PI),
+      std({ color: 0x3a342e, roughness: 0.8 })
+    );
+    hose.position.set(0.28, 1.55, -0.2);
+    hose.rotation.y = 0.6;
+    root.add(hose);
 
-  const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 8), suitDark);
-  legL.position.set(-0.2, 0.48, 0);
-  const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
-  bootL.position.set(0, -0.42, 0.05);
-  legL.add(bootL);
-  root.add(legL);
-  const legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 8), suitDark);
-  legR.position.set(0.2, 0.48, 0);
-  const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
-  bootR.position.set(0, -0.42, 0.05);
-  legR.add(bootR);
-  root.add(legR);
+    armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    armL.position.set(-0.54, 1.18, 0);
+    const handL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
+    handL.position.set(0, -0.4, 0);
+    armL.add(handL);
+    root.add(armL);
+    armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    armR.position.set(0.54, 1.18, 0);
+    const handR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
+    handR.position.set(0, -0.4, 0);
+    armR.add(handR);
+    root.add(armR);
+
+    const wrist = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.1), std({ color: 0x1a1814, emissive: 0x3a80c8, emissiveIntensity: 0.45 }));
+    wrist.position.set(0, -0.18, 0.08);
+    armL.add(wrist);
+
+    legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    legL.position.set(-0.2, 0.48, 0);
+    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
+    bootL.position.set(0, -0.42, 0.05);
+    legL.add(bootL);
+    root.add(legL);
+    legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    legR.position.set(0.2, 0.48, 0);
+    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
+    bootR.position.set(0, -0.42, 0.05);
+    legR.add(bootR);
+    root.add(legR);
+  }
 
   root.traverse((o) => {
     if (o.isMesh) {

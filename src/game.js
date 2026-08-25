@@ -17,7 +17,8 @@ import {
   pocketSlots,
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
-import { heightAt } from "./noise.js";
+import { preloadModels } from "./models.js";
+import { bakeEnvironment } from "./gfx.js";
 import {
   bindUi,
   showHud,
@@ -46,17 +47,20 @@ export function boot() {
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 1.12;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 700);
-  camera.position.set(6, 8, 32);
+  const camera = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.1, 900);
+  camera.position.set(14, 7.6, 34);
 
+  preloadModels();
   const world = createWorld(scene);
   const player = createPlayer(scene);
   const journal = createJournal();
+  scene.environment = bakeEnvironment(renderer);
+  scene.environmentIntensity = 0.55;
 
   const keys = new Set();
   let playing = false;
@@ -484,11 +488,13 @@ export function boot() {
       if (currentGoal(journal)?.id === "escape") maybeGoal();
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });
     } else {
-      camera.position.set(8, 10, 34);
-      camera.lookAt(0, 2.2, 12);
+      const t = now * 0.00007;
+      camera.position.set(13 + Math.sin(t) * 3.2, 7.4 + Math.sin(t * 0.6) * 0.4, 33 + Math.cos(t) * 2.4);
+      camera.lookAt(0.4, 2.15, 11);
       updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
+    renderer.toneMappingExposure = 0.78 + world.daylight * 0.42 - world.storm * 0.12;
     lookX *= 0.6;
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

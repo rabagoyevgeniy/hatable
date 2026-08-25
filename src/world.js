@@ -1,43 +1,58 @@
 import * as THREE from "three";
-import { heightAt, fbm } from "./noise.js";
+import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
+import { maps, makeSky, makeSunHalo, packedYard, std } from "./gfx.js";
+import { takeModel } from "./models.js";
 
 const TERRAIN_SIZE = 620;
-const SEGMENTS = 140;
+const SEGMENTS = 168;
 
 export function createWorld(scene) {
-  scene.background = new THREE.Color(0xb56a45);
-  scene.fog = new THREE.FogExp2(0xb56a45, 0.011);
+  scene.background = new THREE.Color(0xc47a4a);
+  scene.fog = new THREE.FogExp2(0xc47a4a, 0.0085);
 
-  const hemi = new THREE.HemisphereLight(0xf0c8a0, 0x5a2a18, 0.85);
+  const sky = makeSky();
+  scene.add(sky.mesh);
+
+  const hemi = new THREE.HemisphereLight(0xffd2b0, 0x5a2a18, 0.95);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd2a8, 1.35);
+  const sun = new THREE.DirectionalLight(0xffe0c0, 1.55);
   sun.position.set(80, 70, -40);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.near = 4;
-  sun.shadow.camera.far = 240;
-  sun.shadow.camera.left = -55;
-  sun.shadow.camera.right = 55;
-  sun.shadow.camera.top = 55;
-  sun.shadow.camera.bottom = -55;
-  sun.shadow.bias = -0.0007;
+  sun.shadow.camera.near = 2;
+  sun.shadow.camera.far = 180;
+  sun.shadow.camera.left = -42;
+  sun.shadow.camera.right = 42;
+  sun.shadow.camera.top = 42;
+  sun.shadow.camera.bottom = -42;
+  sun.shadow.bias = -0.0006;
+  sun.shadow.normalBias = 0.035;
   scene.add(sun);
   scene.add(sun.target);
-  scene.add(new THREE.AmbientLight(0x6a3a18, 0.22));
+  const fill = new THREE.DirectionalLight(0x9bb8d8, 0.32);
+  fill.position.set(-50, 28, 40);
+  scene.add(fill);
+  scene.add(new THREE.AmbientLight(0x6a3a18, 0.18));
 
   const sunMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(7.5, 18, 18),
-    new THREE.MeshBasicMaterial({ color: 0xffe6b0 })
+    new THREE.SphereGeometry(9, 20, 20),
+    new THREE.MeshBasicMaterial({ color: 0xfff1c8, fog: false })
   );
   scene.add(sunMesh);
+  const sunHalo = makeSunHalo();
+  scene.add(sunHalo);
   const stars = makeStars();
   scene.add(stars);
 
   const terrain = makeTerrain();
   terrain.receiveShadow = true;
   scene.add(terrain);
+  const yard = packedYard();
+  yard.position.set(0, heightAt(0, 8) + 0.03, 8);
+  scene.add(yard);
   scene.add(makeRocks());
+  scene.add(makePebbles());
   scene.add(makeMountains());
   scene.add(makeDebris());
   const dust = makeDust();
@@ -74,10 +89,14 @@ export function createWorld(scene) {
     scene,
     sun,
     sunMesh,
+    sunHalo,
+    skyUniforms: sky.uniforms,
+    fill,
     hemi,
     stars,
     dust,
     scanRing,
+    clock: 0.12,
     ghost,
     pads,
     outposts,
@@ -155,13 +174,15 @@ export function spawnNode(world, type, x, z, extra = {}) {
 }
 
 function lootMesh(type, color, wreck) {
-  const mat = new THREE.MeshStandardMaterial({
+  const tex = maps();
+  const mat = std({
     color,
+    map: type === "scrap" || type === "wire" ? tex.metal : type === "rock" ? tex.rock : null,
     emissive: color,
-    emissiveIntensity: wreck ? 0.2 : 0.58,
+    emissiveIntensity: wreck ? 0.12 : 0.42,
     roughness: 0.52,
-    metalness: type === "scrap" || type === "wire" ? 0.48 : 0.08,
-    flatShading: true,
+    metalness: type === "scrap" || type === "wire" ? 0.55 : 0.06,
+    flatShading: type !== "ice",
   });
   if (wreck || type === "scrap") {
     const g = new THREE.Group();
@@ -169,62 +190,89 @@ function lootMesh(type, color, wreck) {
     a.rotation.y = 0.4;
     g.add(a);
     g.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.38, 0.85), mat));
+    const shard = new THREE.Mesh(new THREE.TetrahedronGeometry(wreck ? 0.45 : 0.22), mat);
+    shard.position.set(0.4, 0.35, 0.2);
+    g.add(shard);
     return g;
   }
   if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.62, 0), mat);
   if (type === "ice") {
     return new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.48),
-      new THREE.MeshStandardMaterial({
+      new THREE.OctahedronGeometry(0.5, 1),
+      new THREE.MeshPhysicalMaterial({
         color: 0xd4f0ff,
         emissive: 0x7ec8e8,
-        emissiveIntensity: 0.45,
-        roughness: 0.18,
-        metalness: 0.12,
+        emissiveIntensity: 0.35,
+        roughness: 0.12,
+        metalness: 0.08,
+        transmission: 0.35,
+        thickness: 0.4,
         transparent: true,
-        opacity: 0.82,
+        opacity: 0.88,
       })
     );
   }
   if (type === "fabric") {
     const g = new THREE.Group();
-    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.8, 3, 2), mat);
+    const cloth = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.15, 0.8, 6, 4),
+      std({ color: 0xf4ead8, map: tex.hull, roughness: 0.85, side: THREE.DoubleSide })
+    );
     cloth.rotation.set(-0.9, 0.2, 0.35);
     cloth.position.y = 0.15;
     g.add(cloth);
     return g;
   }
-  if (type === "tape") return new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 8, 12), mat);
-  if (type === "potato") return new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat);
-  if (type === "soil") return new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.4, 5), mat);
+  if (type === "tape") return new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 10, 16), mat);
+  if (type === "potato") {
+    const p = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mat);
+    p.scale.set(1, 0.82, 1.12);
+    return p;
+  }
+  if (type === "soil") return new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.4, 7), mat);
   if (type === "solar") {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.6), mat);
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.06, 0.6),
+      std({ color: 0x1a2838, map: tex.solar, roughness: 0.25, metalness: 0.45 })
+    );
     m.rotation.x = -0.4;
     return m;
   }
-  if (type === "wire") return new THREE.Mesh(new THREE.TorusKnotGeometry(0.18, 0.04, 40, 6), mat);
+  if (type === "wire") return new THREE.Mesh(new THREE.TorusKnotGeometry(0.18, 0.04, 48, 8), mat);
   if (type === "comms") return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.22, 0.7), mat);
-  if (type === "hydrazine") return new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 10), mat);
+  if (type === "hydrazine") {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 12), mat));
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.12, 8), std({ color: 0xc8c0b4, metalness: 0.6, roughness: 0.3 }));
+    cap.position.y = 0.4;
+    g.add(cap);
+    return g;
+  }
   return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), mat);
 }
 
 function makeLocker(x, z) {
   const g = new THREE.Group();
-  const white = new THREE.MeshStandardMaterial({
+  const tex = maps();
+  const white = std({
     color: 0xf7f1e8,
+    map: tex.hull,
     emissive: 0xfff6e8,
-    emissiveIntensity: 0.35,
+    emissiveIntensity: 0.28,
     roughness: 0.38,
-    metalness: 0.14,
+    metalness: 0.16,
   });
-  const amber = new THREE.MeshStandardMaterial({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.7 });
+  const amber = std({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.85 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.75, 0.82), white);
   body.position.y = 0.95;
   g.add(body);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.35, 0.06), std({ color: 0xddd4c8, metalness: 0.22, roughness: 0.4 }));
+  door.position.set(-0.32, 0.92, 0.42);
+  g.add(door);
   const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), amber);
   lamp.position.set(0, 1.95, 0.28);
   g.add(lamp);
-  const light = new THREE.PointLight(0xffc878, 1.1, 10);
+  const light = new THREE.PointLight(0xffc878, 1.25, 11);
   light.position.set(0, 2.1, 0.4);
   g.add(light);
   const plate = makePlate("LOCKER", 1.1, 0.28);
@@ -372,61 +420,88 @@ export function placeStation(world, station, x, z) {
 }
 
 function buildStation(type) {
+  const ready = takeModel(type);
+  if (ready) return ready;
   const g = new THREE.Group();
-  const scrap = new THREE.MeshStandardMaterial({ color: 0xc2bbb0, roughness: 0.55, metalness: 0.2 });
-  const rust = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.9 });
-  const soil = new THREE.MeshStandardMaterial({ color: 0x5a3318, roughness: 1 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x1c2430, roughness: 0.35, metalness: 0.4 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.3, metalness: 0.5 });
+  const tex = maps();
+  const scrap = std({ color: 0xc2bbb0, map: tex.metal, roughness: 0.45, metalness: 0.38 });
+  const rust = std({ color: 0x8a4a2a, map: tex.rock, roughness: 0.88 });
+  const soil = std({ color: 0x5a3318, map: tex.mars, roughness: 1 });
+  const dark = std({ color: 0x1c2430, map: tex.solar, roughness: 0.28, metalness: 0.48 });
+  const gold = std({ color: 0xc9a227, roughness: 0.28, metalness: 0.62 });
   if (type === "still") {
-    g.add(mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.4, 10), scrap, 0, 0.8, 0));
-    g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.1, 8), rust, 0.55, 1.4, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.4, 14), scrap, 0, 0.8, 0));
+    g.add(mesh(new THREE.TorusGeometry(0.58, 0.05, 8, 16), rust, 0, 1.35, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.2, 10), rust, 0.55, 1.45, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8), scrap, -0.4, 1.1, 0.2));
     const globe = mesh(
-      new THREE.SphereGeometry(0.28, 10, 10),
-      new THREE.MeshStandardMaterial({
-        color: 0x4aa0c8,
+      new THREE.SphereGeometry(0.3, 14, 12),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x6ec4e0,
         emissive: 0x1a6088,
-        emissiveIntensity: 0.35,
+        emissiveIntensity: 0.4,
+        roughness: 0.12,
+        transmission: 0.45,
+        thickness: 0.3,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.88,
       }),
       0.55,
-      2,
+      2.08,
       0
     );
     globe.name = "stillGlobe";
     g.add(globe);
-    const gauge = mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 10), new THREE.MeshStandardMaterial({ color: 0x4ec4e8, emissive: 0x4ec4e8, emissiveIntensity: 0.4 }), -0.35, 0.55, 0.5);
+    const gauge = mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12),
+      std({ color: 0x4ec4e8, emissive: 0x4ec4e8, emissiveIntensity: 0.5 }),
+      -0.35,
+      0.55,
+      0.5
+    );
     gauge.name = "waterGauge";
     g.add(gauge);
+    g.add(mesh(new THREE.SphereGeometry(0.05, 8, 8), std({ color: 0x7ed8f0, emissive: 0x4ec4e8, emissiveIntensity: 0.8 }), 0.55, 1.72, 0));
   } else if (type === "plot") {
-    g.add(mesh(new THREE.BoxGeometry(2.2, 0.35, 2.2), rust, 0, 0.2, 0));
-    g.add(mesh(new THREE.BoxGeometry(1.9, 0.2, 1.9), soil, 0, 0.4, 0));
-    const plant = mesh(new THREE.ConeGeometry(0.18, 0.7, 5), new THREE.MeshStandardMaterial({ color: 0x5d8a4a }), 0, 0.85, 0);
+    g.add(mesh(new THREE.BoxGeometry(2.25, 0.38, 2.25), rust, 0, 0.2, 0));
+    g.add(mesh(new THREE.BoxGeometry(1.95, 0.22, 1.95), soil, 0, 0.42, 0));
+    const leaf = std({ color: 0x5d8a4a, roughness: 0.7 });
+    const plant = mesh(new THREE.ConeGeometry(0.2, 0.75, 6), leaf, 0, 0.88, 0);
     plant.visible = false;
     plant.name = "plant";
     g.add(plant);
-    const plant2 = mesh(new THREE.ConeGeometry(0.14, 0.55, 5), new THREE.MeshStandardMaterial({ color: 0x6a9a4a }), 0.35, 0.75, 0.2);
+    const plant2 = mesh(new THREE.ConeGeometry(0.16, 0.58, 6), std({ color: 0x6a9a4a, roughness: 0.7 }), 0.35, 0.78, 0.2);
     plant2.visible = false;
     plant2.name = "plant2";
     g.add(plant2);
-    const tuber = mesh(new THREE.SphereGeometry(0.12, 8, 6), new THREE.MeshStandardMaterial({ color: 0xc4a05a }), 0.1, 0.55, -0.15);
+    const tuber = mesh(new THREE.SphereGeometry(0.13, 10, 8), std({ color: 0xc4a05a }), 0.1, 0.55, -0.15);
     tuber.visible = false;
     tuber.name = "tuber";
     g.add(tuber);
   } else if (type === "solar") {
-    const panel = mesh(new THREE.BoxGeometry(2.4, 0.08, 1.3), dark, 0, 1.1, 0);
-    panel.rotation.x = -0.45;
+    const panel = mesh(new THREE.BoxGeometry(2.5, 0.07, 1.35), dark, 0, 1.15, 0);
+    panel.rotation.x = -0.48;
     g.add(panel);
-    g.add(mesh(new THREE.BoxGeometry(0.12, 1.1, 0.12), scrap, 0, 0.55, 0.4));
+    g.add(mesh(new THREE.BoxGeometry(2.6, 0.04, 1.45), scrap, 0, 1.12, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.07, 0.1, 1.15, 8), scrap, 0, 0.55, 0.42));
+    g.add(mesh(new THREE.BoxGeometry(0.45, 0.08, 0.45), rust, 0, 0.08, 0.42));
   } else if (type === "seal") {
-    g.add(mesh(new THREE.BoxGeometry(1.8, 1.4, 0.12), new THREE.MeshStandardMaterial({ color: 0xe8dcc8 }), 0, 1.1, 0));
+    g.add(mesh(new THREE.BoxGeometry(1.8, 1.4, 0.12), std({ color: 0xe8dcc8, map: tex.hull }), 0, 1.1, 0));
     g.add(mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), gold, 0.6, 1.4, 0.08));
   } else if (type === "radio") {
-    g.add(mesh(new THREE.BoxGeometry(0.8, 0.5, 0.6), scrap, 0, 0.4, 0));
-    g.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), gold, 0, 2.1, 0));
-    g.add(mesh(new THREE.TetrahedronGeometry(0.45), gold, 0, 3.8, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.85, 0.48, 0.65), scrap, 0, 0.4, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.3, 10), gold, 0, 2.15, 0));
+    const dish = mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.06, 16), gold, 0, 3.7, 0);
+    dish.rotation.x = 0.7;
+    g.add(dish);
+    g.add(mesh(new THREE.TetrahedronGeometry(0.28), gold, 0, 3.95, 0));
   }
+  g.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
   return g;
 }
 
@@ -450,25 +525,42 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
   const night = 1 - world.daylight;
   const ang = world.clock * Math.PI * 2;
-  world.sun.position.set(Math.cos(ang) * 110, 12 + Math.max(4, Math.sin(ang) * 85), -40);
-  world.sun.target.position.set(playerPos.x, 0, playerPos.z);
-  world.sun.intensity = Math.max(0.04, world.daylight * 1.35);
-  world.hemi.intensity = 0.16 + world.daylight * 0.72;
+  world.sun.position.set(
+    playerPos.x + Math.cos(ang) * 70,
+    14 + Math.max(6, Math.sin(ang) * 88),
+    playerPos.z + Math.sin(ang) * 36 - 28
+  );
+  world.sun.target.position.set(playerPos.x, playerPos.y, playerPos.z);
+  world.sun.intensity = Math.max(0.05, world.daylight * 1.55);
+  world.hemi.intensity = 0.18 + world.daylight * 0.78;
+  if (world.fill) world.fill.intensity = 0.12 + world.daylight * 0.22 + night * 0.18;
+  const sunDir = world.sun.position.clone().sub(new THREE.Vector3(playerPos.x, 0, playerPos.z)).normalize();
   if (world.sunMesh) {
-    world.sunMesh.position.copy(world.sun.position).setLength(320);
-    world.sunMesh.visible = world.daylight > 0.12;
+    world.sunMesh.position.copy(sunDir).multiplyScalar(380);
+    world.sunMesh.visible = world.daylight > 0.1;
   }
-  if (world.stars) world.stars.material.opacity = Math.max(0, night * 0.9 - 0.15);
+  if (world.sunHalo) {
+    world.sunHalo.position.copy(sunDir).multiplyScalar(360);
+    world.sunHalo.visible = world.daylight > 0.08;
+    world.sunHalo.material.opacity = Math.max(0.15, world.daylight);
+  }
+  if (world.stars) world.stars.material.opacity = Math.max(0, night * 0.95 - 0.12);
+  const dusk = Math.max(0, 1 - Math.abs(world.daylight - 0.42) * 2.8);
+  if (world.skyUniforms) {
+    world.skyUniforms.sunDir.value.copy(sunDir);
+    world.skyUniforms.night.value = night;
+    world.skyUniforms.storm.value = world.storm;
+    world.skyUniforms.dusk.value = dusk;
+  }
 
-  const dusk = Math.max(0, 1 - Math.abs(world.daylight - 0.45) * 3);
   const fogCol = new THREE.Color().setRGB(
-    0.08 + 0.5 * world.daylight + 0.18 * dusk,
-    0.04 + 0.24 * world.daylight + 0.04 * dusk,
-    0.1 + 0.08 * world.daylight + 0.12 * night
+    0.1 + 0.55 * world.daylight + 0.16 * dusk,
+    0.05 + 0.28 * world.daylight + 0.05 * dusk,
+    0.08 + 0.1 * world.daylight + 0.1 * night
   );
   world.scene.background.copy(fogCol);
   world.scene.fog.color.copy(fogCol);
-  world.scene.fog.density = 0.009 + night * 0.007 + world.storm * 0.022;
+  world.scene.fog.density = 0.0078 + night * 0.006 + world.storm * 0.02;
 
   world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.35);
   if (!playing || (world.playTime || 0) < 160) {
@@ -563,104 +655,163 @@ function makeTerrain() {
   const pos = geo.attributes.position;
   const colors = [];
   const color = new THREE.Color();
+  const crest = new THREE.Color(0xd4a078);
+  const rock = new THREE.Color(0x5a2e1c);
+  const gully = new THREE.Color(0x6a3318);
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
     const y = heightAt(x, z);
     pos.setY(i, y);
-    const n = fbm(x * 0.02, z * 0.02);
-    color.setRGB(0.55 + n * 0.12, 0.28 + n * 0.06, 0.16 + n * 0.03);
-    if (y > 6) color.lerp(new THREE.Color(0x8a5a40), 0.35);
-    if (y < -1) color.lerp(new THREE.Color(0x6a3318), 0.25);
+    const nrm = normalAt(x, z);
+    const slope = 1 - nrm[1];
+    const n = fbm(x * 0.018, z * 0.018);
+    color.setRGB(0.58 + n * 0.16, 0.3 + n * 0.08, 0.16 + n * 0.04);
+    color.lerp(crest, Math.max(0, y / 14) * 0.45);
+    color.lerp(gully, Math.max(0, -y / 6) * 0.4);
+    color.lerp(rock, Math.min(1, slope * 1.8));
     colors.push(color.r, color.g, color.b);
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geo.computeVertexNormals();
   return new THREE.Mesh(
     geo,
-    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0.04 })
+    std({
+      map: maps().mars,
+      vertexColors: true,
+      roughness: 0.97,
+      metalness: 0.03,
+    })
   );
 }
 
 function makeRocks() {
-  const geo = new THREE.DodecahedronGeometry(1.1, 0);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x6b3b28, roughness: 1, flatShading: true });
-  const count = 220;
+  const geo = new THREE.DodecahedronGeometry(1.15, 0);
+  const mat = std({ color: 0xffffff, map: maps().rock, roughness: 0.95, flatShading: true });
+  const count = 240;
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
+  meshInst.castShadow = true;
+  meshInst.receiveShadow = true;
   const dummy = new THREE.Object3D();
+  const tint = new THREE.Color();
   let placed = 0;
   let guard = 0;
-  while (placed < count && guard < 4000) {
+  while (placed < count && guard < 5000) {
     guard++;
     const x = (Math.random() - 0.5) * 540;
     const z = (Math.random() - 0.5) * 540;
-    if (OUTPOSTS.some((o) => Math.hypot(x - o.x, z - o.z) < 24)) continue;
-    dummy.position.set(x, heightAt(x, z) + 0.2, z);
+    if (OUTPOSTS.some((o) => Math.hypot(x - o.x, z - o.z) < 22)) continue;
+    dummy.position.set(x, heightAt(x, z) + 0.18, z);
     dummy.rotation.set(Math.random(), Math.random(), Math.random());
-    const s = 0.6 + Math.random() * 2.4;
-    dummy.scale.set(s, s * (0.5 + Math.random()), s);
+    const s = 0.55 + Math.random() * 2.6;
+    dummy.scale.set(s, s * (0.45 + Math.random() * 0.7), s);
     dummy.updateMatrix();
     meshInst.setMatrixAt(placed, dummy.matrix);
+    tint.setHSL(0.045, 0.42 + Math.random() * 0.22, 0.22 + Math.random() * 0.16);
+    meshInst.setColorAt(placed, tint);
     placed++;
+  }
+  if (meshInst.instanceColor) meshInst.instanceColor.needsUpdate = true;
+  return meshInst;
+}
+
+function makePebbles() {
+  const geo = new THREE.TetrahedronGeometry(0.28);
+  const mat = std({ color: 0x8a4a2c, map: maps().rock, roughness: 1, flatShading: true });
+  const count = 420;
+  const meshInst = new THREE.InstancedMesh(geo, mat, count);
+  meshInst.receiveShadow = true;
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < count; i++) {
+    const x = (Math.random() - 0.5) * 70;
+    const z = 8 + (Math.random() - 0.5) * 70;
+    dummy.position.set(x, heightAt(x, z) + 0.04, z);
+    dummy.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+    dummy.scale.setScalar(0.4 + Math.random() * 1.4);
+    dummy.updateMatrix();
+    meshInst.setMatrixAt(i, dummy.matrix);
   }
   return meshInst;
 }
 
 function makeMountains() {
   const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x7a4028, roughness: 1, flatShading: true });
-  for (let i = 0; i < 18; i++) {
-    const ang = (i / 18) * Math.PI * 2;
-    const r = 290 + (i % 3) * 18;
-    const m = new THREE.Mesh(new THREE.ConeGeometry(28 + (i % 5) * 6, 22 + (i % 4) * 10, 5), mat);
-    m.position.set(Math.cos(ang) * r, 8, Math.sin(ang) * r);
+  const mat = std({ color: 0x7a4028, map: maps().rock, roughness: 1, flatShading: true });
+  const dark = std({ color: 0x4a2416, map: maps().rock, roughness: 1, flatShading: true });
+  for (let i = 0; i < 26; i++) {
+    const ang = (i / 26) * Math.PI * 2;
+    const r = 285 + (i % 5) * 16;
+    const m = new THREE.Mesh(new THREE.ConeGeometry(22 + (i % 6) * 8, 18 + (i % 5) * 12, 6), i % 2 ? mat : dark);
+    m.position.set(Math.cos(ang) * r, 6, Math.sin(ang) * r);
+    m.rotation.y = ang;
+    m.scale.z = 1.6 + (i % 3) * 0.4;
     group.add(m);
   }
   return group;
 }
 
 function makeDust() {
-  const n = 1600;
+  const n = 2200;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
+  const colors = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 220;
-    positions[i * 3 + 1] = Math.random() * 14;
+    positions[i * 3 + 1] = Math.random() * 16;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 220;
+    const k = 0.75 + Math.random() * 0.25;
+    colors[i * 3] = k;
+    colors[i * 3 + 1] = k * 0.72;
+    colors[i * 3 + 2] = k * 0.48;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   const points = new THREE.Points(
     geo,
-    new THREE.PointsMaterial({ color: 0xe2b089, size: 0.28, transparent: true, opacity: 0.35, depthWrite: false })
+    new THREE.PointsMaterial({
+      vertexColors: true,
+      size: 0.32,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false,
+      sizeAttenuation: true,
+    })
   );
   points.userData.n = n;
   return points;
 }
 
 function makeStars() {
-  const n = 1400;
+  const n = 1800;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
-    const r = 420;
+    const r = 470;
     const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(0.08 + Math.random() * 0.72);
+    const phi = Math.acos(0.05 + Math.random() * 0.78);
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
     positions[i * 3 + 1] = r * Math.cos(phi);
     positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
   }
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const stars = new THREE.Points(
+  return new THREE.Points(
     geo,
-    new THREE.PointsMaterial({ color: 0xfff4e8, size: 1.4, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: false })
+    new THREE.PointsMaterial({
+      color: 0xfff6ea,
+      size: 1.55,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      sizeAttenuation: false,
+      fog: false,
+    })
   );
-  return stars;
 }
 
 function makeDebris() {
   const g = new THREE.Group();
-  const rust = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.92, flatShading: true });
-  const pale = new THREE.MeshStandardMaterial({ color: 0xd8cfc4, roughness: 0.6, metalness: 0.2, flatShading: true });
+  const rust = std({ color: 0x8a4a2a, map: maps().rock, roughness: 0.9, flatShading: true });
+  const pale = std({ color: 0xd8cfc4, map: maps().metal, roughness: 0.5, metalness: 0.28, flatShading: true });
   const spots = [
     [6.5, 6.2, 1.4, 0.35, rust],
     [-7.2, 4.8, 1.1, 0.5, pale],
@@ -694,52 +845,51 @@ function makeScanRing() {
 
 function buildOutpost(data) {
   const g = new THREE.Group();
-  const white = new THREE.MeshStandardMaterial({ color: 0xe8e2d8, roughness: 0.55, metalness: 0.12 });
-  const rust = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.9 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x222830, roughness: 0.4, metalness: 0.3 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.35, metalness: 0.55 });
+  const tex = maps();
+  const white = std({ color: 0xe8e2d8, map: tex.hull, roughness: 0.48, metalness: 0.16 });
+  const rust = std({ color: 0x8a4a2a, map: tex.rock, roughness: 0.9 });
+  const dark = std({ color: 0x222830, map: tex.solar, roughness: 0.32, metalness: 0.42 });
+  const gold = std({ color: 0xc9a227, roughness: 0.28, metalness: 0.62 });
 
   if (data.kind === "hab") {
-    const hull = new THREE.MeshStandardMaterial({
+    const hull = std({
       color: 0xece6dc,
+      map: tex.hull,
       roughness: 0.46,
       metalness: 0.18,
       side: THREE.DoubleSide,
     });
-    const ribMat = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, roughness: 0.85 });
-    const glassMat = new THREE.MeshStandardMaterial({
+    const ribMat = std({ color: 0x8a4a2a, map: tex.rock, roughness: 0.82 });
+    const glassMat = std({
       color: 0x1c2228,
-      roughness: 0.2,
-      metalness: 0.55,
+      roughness: 0.12,
+      metalness: 0.72,
       emissive: 0x142028,
-      emissiveIntensity: 0.35,
+      emissiveIntensity: 0.4,
     });
-    const orange = new THREE.MeshStandardMaterial({
+    const orange = std({
       color: 0xe07030,
-      roughness: 0.45,
+      roughness: 0.42,
       emissive: 0xe07030,
-      emissiveIntensity: 0.35,
+      emissiveIntensity: 0.4,
     });
-    const bunkMat = new THREE.MeshStandardMaterial({ color: 0x6a3a22, roughness: 0.8 });
-    const sheet = new THREE.MeshStandardMaterial({ color: 0xd8c8b0, roughness: 0.7 });
+    const bunkMat = std({ color: 0x6a3a22, roughness: 0.8 });
+    const sheet = std({ color: 0xd8c8b0, roughness: 0.7 });
 
     const wall = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 4.2, 3.15, 28, 1, true, Math.PI * 0.18, Math.PI * 1.64),
+      new THREE.CylinderGeometry(4.2, 4.2, 3.15, 36, 1, true, Math.PI * 0.18, Math.PI * 1.64),
       hull
     );
     wall.position.y = 1.55;
     g.add(wall);
     const dome = new THREE.Mesh(
-      new THREE.SphereGeometry(4.2, 24, 12, Math.PI * 0.18, Math.PI * 1.64, 0, Math.PI / 2),
+      new THREE.SphereGeometry(4.2, 32, 16, Math.PI * 0.18, Math.PI * 1.64, 0, Math.PI / 2),
       hull
     );
     dome.position.y = 3.12;
     g.add(dome);
     for (const y of [0.5, 1.55, 2.6]) {
-      const rib = new THREE.Mesh(
-        new THREE.TorusGeometry(4.22, 0.08, 8, 28, Math.PI * 1.64),
-        ribMat
-      );
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(4.22, 0.09, 8, 36, Math.PI * 1.64), ribMat);
       rib.rotation.set(Math.PI / 2, 0, Math.PI * 0.18);
       rib.position.y = y;
       g.add(rib);
@@ -758,35 +908,43 @@ function buildOutpost(data) {
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.2), orange);
     lamp.position.set(0, 2.28, 6.52);
     g.add(lamp);
-    const airLight = new THREE.PointLight(0xffb15a, 1.55, 18);
+    const airLight = new THREE.PointLight(0xffb15a, 1.7, 20);
     airLight.position.set(0, 2.3, 6.2);
     g.add(airLight);
-    const inner = new THREE.PointLight(0xffe0b0, 0.8, 12);
+    const inner = new THREE.PointLight(0xffe0b0, 0.9, 13);
     inner.position.set(0, 2.1, 0.4);
     inner.name = "innerLight";
     g.add(inner);
-    const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(4.05, 28),
-      new THREE.MeshStandardMaterial({ color: 0xc8b8a4, roughness: 0.85 })
-    );
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(4.05, 36), std({ color: 0xc8b8a4, map: tex.floor, roughness: 0.82 }));
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.05;
     g.add(floor);
     g.add(box(bunkMat, 2.1, 0.35, 0.95, -1.6, 0.38, -1.6));
     g.add(box(sheet, 1.9, 0.12, 0.8, -1.6, 0.58, -1.6));
+    g.add(box(std({ color: 0x3a2a22, roughness: 0.85 }), 0.45, 0.18, 0.55, -2.2, 0.78, -1.55));
     g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
     g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
     g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
-    const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), orange);
+    const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), orange);
     deskLamp.position.set(1.7, 1.05, -1.35);
     g.add(deskLamp);
-    g.add(box(new THREE.MeshStandardMaterial({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
+    const deskGlow = new THREE.PointLight(0xffc070, 0.55, 5);
+    deskGlow.position.set(1.7, 1.1, -1.35);
+    g.add(deskGlow);
+    g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
+    g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
+    const flag = box(orange, 0.08, 0.55, 0.9, -3.95, 1.7, 0.4);
+    g.add(flag);
+    g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 1.8));
+    g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 2.5));
+    const antenna = cyl(std({ color: 0xc8c0b4, metalness: 0.5, roughness: 0.3 }), 0.04, 2.4, -2.8, 4.4, -1.2);
+    g.add(antenna);
     const plate = makePlate("ARES III", 2.3, 0.55);
     plate.position.set(0, 2.55, 6.55);
     g.add(plate);
     const hole = new THREE.Mesh(
-      new THREE.CircleGeometry(0.58, 14),
-      new THREE.MeshStandardMaterial({
+      new THREE.CircleGeometry(0.58, 16),
+      std({
         color: 0x1a0c08,
         emissive: 0x501808,
         emissiveIntensity: 0.45,
@@ -797,37 +955,37 @@ function buildOutpost(data) {
     hole.rotation.y = Math.PI;
     hole.name = "leak";
     g.add(hole);
-    const patch = new THREE.Mesh(
-      new THREE.CircleGeometry(0.72, 14),
-      new THREE.MeshStandardMaterial({ color: 0xe8dcc8, roughness: 0.7 })
-    );
+    const patch = new THREE.Mesh(new THREE.CircleGeometry(0.72, 16), std({ color: 0xe8dcc8, map: tex.hull, roughness: 0.7 }));
     patch.position.set(0, 1.65, -4.12);
     patch.rotation.y = Math.PI;
     patch.name = "patch";
     patch.visible = false;
     g.add(patch);
   } else if (data.kind === "rover") {
-    g.add(box(white, 4.2, 1.15, 2.4, 0.2, 1.15, 0));
-    g.add(box(dark, 1.6, 0.9, 1.8, -1.7, 1.85, 0));
-    g.add(box(rust, 0.9, 0.4, 1.1, 1.8, 1.5, 0.4));
-    const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.08, 12), gold);
-    dish.position.set(-1.5, 2.55, 0);
-    dish.rotation.x = 0.6;
-    g.add(dish);
-    for (const wx of [-1.4, 0.3, 1.6]) {
-      for (const wz of [-1.35, 1.35]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.32, 12), dark);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(wx, 0.52, wz);
-        g.add(wheel);
+    const ready = takeModel("rover", 5.5);
+    if (ready) g.add(ready);
+    else {
+      g.add(box(white, 4.2, 1.15, 2.4, 0.2, 1.15, 0));
+      g.add(box(dark, 1.6, 0.9, 1.8, -1.7, 1.85, 0));
+      g.add(box(rust, 0.9, 0.4, 1.1, 1.8, 1.5, 0.4));
+      const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.08, 14), gold);
+      dish.position.set(-1.5, 2.55, 0);
+      dish.rotation.x = 0.6;
+      g.add(dish);
+      const mast = cyl(white, 0.06, 1.4, -1.6, 2.4, 0);
+      g.add(mast);
+      for (const wx of [-1.4, 0.3, 1.6]) {
+        for (const wz of [-1.35, 1.35]) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.32, 14), dark);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(wx, 0.52, wz);
+          g.add(wheel);
+        }
       }
+      g.add(box(rust, 1.2, 0.35, 0.8, 2.6, 0.3, 1.4));
     }
-    g.add(box(rust, 1.2, 0.35, 0.8, 2.6, 0.3, 1.4));
   } else if (data.kind === "farm") {
-    const hoop = new THREE.Mesh(
-      new THREE.TorusGeometry(4.2, 0.08, 6, 20, Math.PI),
-      white
-    );
+    const hoop = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.08, 8, 24, Math.PI), white);
     hoop.rotation.z = Math.PI / 2;
     hoop.position.y = 0.2;
     g.add(hoop);
@@ -835,16 +993,22 @@ function buildOutpost(data) {
     hoop2.position.z = 2.2;
     g.add(hoop2);
     const plastic = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 4.2, 6, 12, 1, true, 0, Math.PI),
-      new THREE.MeshStandardMaterial({ color: 0x7ec98a, transparent: true, opacity: 0.22, roughness: 0.15, side: THREE.DoubleSide })
+      new THREE.CylinderGeometry(4.2, 4.2, 6, 16, 1, true, 0, Math.PI),
+      std({ color: 0x7ec98a, transparent: true, opacity: 0.22, roughness: 0.12, side: THREE.DoubleSide })
     );
     plastic.rotation.z = Math.PI / 2;
     plastic.position.y = 2;
     g.add(plastic);
-    const dirt = new THREE.MeshStandardMaterial({ color: 0x5a3318, roughness: 1 });
+    const dirt = std({ color: 0x5a3318, map: tex.mars, roughness: 1 });
     g.add(box(dirt, 2.4, 0.25, 6.5, 0, 0.2, 0));
     g.add(box(dirt, 2.4, 0.25, 6.5, 2.8, 0.2, 0));
     g.add(box(dirt, 2.4, 0.25, 6.5, -2.8, 0.2, 0));
+    const leaf = std({ color: 0x4a7a38, roughness: 0.7 });
+    for (const x of [-2.2, 0, 2.2]) {
+      for (const z of [-2, 0, 2]) {
+        g.add(mesh(new THREE.ConeGeometry(0.18, 0.55, 5), leaf, x, 0.55, z));
+      }
+    }
   } else if (data.kind === "solar") {
     for (let i = -3; i <= 3; i++) {
       const broken = i === -1 || i === 2;
@@ -855,34 +1019,44 @@ function buildOutpost(data) {
       g.add(box(white, 0.08, 1.2, 0.08, i * 1.05, 0.6, 0.5));
     }
   } else if (data.kind === "pathfinder") {
-    const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(1.35), gold);
-    tetra.position.y = 2.1;
-    g.add(tetra);
-    g.add(cyl(white, 0.16, 2.0, 0, 1.0, 0));
-    for (const a of [0, 2.1, 4.2]) {
-      const petal = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 1.1), dark);
-      petal.position.set(Math.cos(a) * 1.3, 0.55, Math.sin(a) * 1.3);
-      petal.rotation.set(-0.7, a, 0);
-      g.add(petal);
+    const ready = takeModel("pathfinder", 4.2);
+    if (ready) g.add(ready);
+    else {
+      const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(1.35), gold);
+      tetra.position.y = 2.1;
+      g.add(tetra);
+      g.add(cyl(white, 0.16, 2.0, 0, 1.0, 0));
+      for (const a of [0, 2.1, 4.2]) {
+        const petal = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 1.1), gold);
+        petal.position.set(Math.cos(a) * 1.3, 0.55, Math.sin(a) * 1.3);
+        petal.rotation.set(-0.7, a, 0);
+        g.add(petal);
+      }
+      g.add(box(dark, 0.7, 0.28, 0.5, 1.6, 0.22, 0.8));
     }
   } else if (data.kind === "mav") {
-    g.add(cyl(white, 1.35, 12, 0, 6.4, 0));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.35, 3.4, 12), white);
-    nose.position.y = 14.1;
-    g.add(nose);
-    const bell = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.8, 10), dark);
-    bell.position.y = 0.4;
-    g.add(bell);
-    for (const a of [0, 2.1, 4.2]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 5.2, 6), rust);
-      leg.position.set(Math.cos(a) * 2.4, 1.4, Math.sin(a) * 2.4);
-      leg.rotation.z = Math.cos(a) * 0.45;
-      leg.rotation.x = Math.sin(a) * 0.45;
-      g.add(leg);
+    const ready = takeModel("mav", 16);
+    if (ready) g.add(ready);
+    else {
+      g.add(cyl(white, 1.35, 12, 0, 6.4, 0));
+      g.add(box(orangeStripe(), 2.72, 0.35, 0.12, 0, 8.2, 1.35));
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(1.35, 3.4, 16), white);
+      nose.position.y = 14.1;
+      g.add(nose);
+      const bell = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.8, 12), dark);
+      bell.position.y = 0.4;
+      g.add(bell);
+      for (const a of [0, 2.1, 4.2]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 5.2, 8), rust);
+        leg.position.set(Math.cos(a) * 2.4, 1.4, Math.sin(a) * 2.4);
+        leg.rotation.z = Math.cos(a) * 0.45;
+        leg.rotation.x = Math.sin(a) * 0.45;
+        g.add(leg);
+      }
     }
   }
 
-  const beacon = new THREE.PointLight(0xffb15a, 0.45, 18);
+  const beacon = new THREE.PointLight(0xffb15a, 0.5, 20);
   beacon.position.y = 5;
   g.add(beacon);
   g.userData.beacon = beacon;
@@ -893,6 +1067,10 @@ function buildOutpost(data) {
     }
   });
   return g;
+}
+
+function orangeStripe() {
+  return std({ color: 0xe07030, emissive: 0xe07030, emissiveIntensity: 0.25, roughness: 0.45 });
 }
 
 function cyl(mat, r, h, x, y, z) {
