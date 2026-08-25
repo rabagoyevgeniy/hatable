@@ -41,21 +41,30 @@ import {
 
 export async function boot() {
   applyDom();
+  const mobile = isMobileView();
+  if (mobile) document.body.classList.add("mobile");
 
   const canvas = document.getElementById("scene");
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !window.matchMedia("(pointer: coarse)").matches });
-  const dprCap = window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, dprCap));
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !mobile,
+    alpha: false,
+    powerPreference: "high-performance",
+    stencil: false,
+    failIfMajorPerformanceCaveat: false,
+  });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 2));
   renderer.setSize(innerWidth, innerHeight);
+  renderer.setClearColor(mobile ? 0xd48958 : 0xc47a4a, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.18;
-  renderer.shadowMap.enabled = true;
+  renderer.toneMapping = mobile ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = mobile ? 1.2 : 1.18;
+  renderer.shadowMap.enabled = !mobile;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 900);
-  camera.position.set(12.5, 6.8, 31.5);
+  const camera = new THREE.PerspectiveCamera(mobile ? 64 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
+  camera.position.set(8.5, mobile ? 9.2 : 6.8, 24);
 
   await preloadModels();
   const status = document.getElementById("boot-status");
@@ -63,9 +72,13 @@ export async function boot() {
   const world = createWorld(scene);
   const player = createPlayer(scene);
   const journal = createJournal();
-  scene.environment = bakeEnvironment(renderer);
-  scene.environmentIntensity = 0.85;
-  preloadRest().then(() => refreshOutpostModels(world));
+  if (!mobile) {
+    scene.environment = bakeEnvironment(renderer);
+    scene.environmentIntensity = 0.85;
+  } else {
+    scene.environmentIntensity = 0;
+  }
+  if (!mobile) preloadRest().then(() => refreshOutpostModels(world));
 
   const keys = new Set();
   let playing = false;
@@ -444,15 +457,16 @@ export async function boot() {
 
   function placeCamera(dt) {
     const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
-    const dist = inside ? 6.3 : 9.2;
-    const height = (inside ? 2.2 : 2.55) + player.pitch * 1.15;
+    const portrait = innerHeight > innerWidth;
+    const dist = inside ? 5.4 : mobile ? (portrait ? 7.6 : 8.4) : 9.2;
+    const height = (inside ? 2.35 : mobile ? (portrait ? 5.6 : 3.8) : 2.55) + player.pitch * (portrait ? 1.4 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
       player.root.position.z + Math.cos(player.yaw) * dist
     );
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
-    const minY = heightAt(camera.position.x, camera.position.z) + 1.55;
+    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 2.4 : 1.55);
     if (camera.position.y < minY) camera.position.y = minY;
     if (!inside) {
       const habDx = camera.position.x;
@@ -472,14 +486,22 @@ export async function boot() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    camera.lookAt(player.root.position.x, player.root.position.y + 1.32, player.root.position.z);
+    const lookAhead = mobile && !inside ? 2.6 : 0;
+    const lookY = player.root.position.y + (mobile ? (inside ? 1.35 : 1.9) : 1.32);
+    camera.lookAt(
+      player.root.position.x - Math.sin(player.yaw) * lookAhead,
+      lookY,
+      player.root.position.z - Math.cos(player.yaw) * lookAhead
+    );
   }
 
   function fitCanvas() {
     const w = Math.round(window.visualViewport?.width || innerWidth);
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
+    camera.fov = mobile ? (h > w ? 70 : 58) : 52;
     camera.aspect = w / h;
+    camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
@@ -519,12 +541,13 @@ export async function boot() {
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });
     } else {
       const drift = now * 0.00007;
-      camera.position.set(12.4 + Math.sin(drift) * 2.6, 6.55 + Math.sin(drift * 0.6) * 0.35, 30.5 + Math.cos(drift) * 2.1);
-      camera.lookAt(0.6, 1.85, 13.2);
+      camera.position.set(8.2 + Math.sin(drift) * 1.8, mobile ? 10.4 : 6.55, 22 + Math.cos(drift) * 1.6);
+      camera.lookAt(0.8, mobile ? 2.8 : 1.7, 14.2);
       updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
-    renderer.toneMappingExposure = 0.92 + world.daylight * 0.38 - world.storm * 0.1;
+    if (!mobile) renderer.toneMappingExposure = 0.92 + world.daylight * 0.38 - world.storm * 0.1;
+    else renderer.toneMappingExposure = 1.25;
     lookX *= 0.6;
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
-import { maps, makeSky, makeSunHalo, packedYard, std, makeHaze, dustSprite } from "./gfx.js";
+import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
+import { isMobileView } from "./device.js";
+
+export { isMobileView };
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 168;
@@ -22,23 +25,19 @@ const LOOT_FIT = {
   solarcell: 0.7,
 };
 
-export function isMobileView() {
-  return window.matchMedia("(pointer: coarse)").matches || innerWidth < 720;
-}
-
 export function createWorld(scene) {
   const mobile = isMobileView();
-  scene.background = new THREE.Color(0xc47a4a);
-  scene.fog = new THREE.FogExp2(0xc47a4a, 0.0085);
+  scene.background = new THREE.Color(mobile ? 0xd48958 : 0xc47a4a);
+  scene.fog = new THREE.FogExp2(mobile ? 0xd48958 : 0xc47a4a, mobile ? 0.0065 : 0.0085);
 
   const sky = makeSky();
   scene.add(sky.mesh);
 
-  const hemi = new THREE.HemisphereLight(0xffd2b0, 0x5a2a18, 1.15);
+  const hemi = new THREE.HemisphereLight(0xffe0c8, mobile ? 0xa05028 : 0x5a2a18, mobile ? 1.85 : 1.15);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffe0c0, 1.7);
-  sun.position.set(80, 70, -40);
-  sun.castShadow = true;
+  const sun = new THREE.DirectionalLight(0xffe8d0, mobile ? 2.35 : 1.7);
+  sun.position.set(80, 90, -40);
+  sun.castShadow = !mobile;
   sun.shadow.mapSize.set(mobile ? 1024 : 2048);
   sun.shadow.camera.near = 2;
   sun.shadow.camera.far = 160;
@@ -50,10 +49,10 @@ export function createWorld(scene) {
   sun.shadow.normalBias = 0.035;
   scene.add(sun);
   scene.add(sun.target);
-  const fill = new THREE.DirectionalLight(0x9bb8d8, 0.48);
-  fill.position.set(-50, 28, 40);
+  const fill = new THREE.DirectionalLight(0xffc8a0, mobile ? 0.85 : 0.48);
+  fill.position.set(-50, 40, 40);
   scene.add(fill);
-  scene.add(new THREE.AmbientLight(0x6a3a18, 0.32));
+  scene.add(new THREE.AmbientLight(0xc47848, mobile ? 0.72 : 0.32));
 
   const sunMesh = new THREE.Mesh(
     new THREE.SphereGeometry(9, 20, 20),
@@ -77,8 +76,8 @@ export function createWorld(scene) {
   scene.add(makeDebris());
   const dust = makeDust();
   scene.add(dust);
-  const haze = makeHaze();
-  scene.add(haze);
+  const haze = mobile ? null : makeHaze();
+  if (haze) scene.add(haze);
   const scanRing = makeScanRing();
   scene.add(scanRing);
 
@@ -114,13 +113,14 @@ export function createWorld(scene) {
     sunMesh,
     sunHalo,
     skyUniforms: sky.uniforms,
+    sky: sky.mesh,
     fill,
     hemi,
     stars,
     dust,
     haze,
     scanRing,
-    clock: 0.22,
+    clock: mobile ? 0.25 : 0.22,
     ghost,
     pads,
     outposts,
@@ -231,7 +231,7 @@ function lootMesh(type, color, wreck) {
   if (type === "ice") {
     const ice = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.5, 1),
-      new THREE.MeshPhysicalMaterial({
+      phys({
         color: 0xd4f0ff,
         emissive: 0x7ec8e8,
         emissiveIntensity: 0.35,
@@ -364,7 +364,7 @@ function makePlate(text, w, h) {
   const tex = new THREE.CanvasTexture(c);
   return new THREE.Mesh(
     new THREE.PlaneGeometry(w, h),
-    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55 })
+    std({ map: tex, roughness: 0.55 })
   );
 }
 
@@ -512,7 +512,7 @@ function buildStation(type) {
     g.add(mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8), scrap, -0.4, 1.1, 0.2));
     const globe = mesh(
       new THREE.SphereGeometry(0.3, 14, 12),
-      new THREE.MeshPhysicalMaterial({
+      phys({
         color: 0x6ec4e0,
         emissive: 0x1a6088,
         emissiveIntensity: 0.4,
@@ -594,6 +594,7 @@ export function placementSpot(player) {
 }
 
 export function updateWorld(world, dt, playerPos, scanning, playing = true) {
+  const mobile = isMobileView();
   if (playing) {
     world.clock = (world.clock + dt / 220) % 1;
     world.playTime = (world.playTime || 0) + dt;
@@ -607,9 +608,9 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     playerPos.z + Math.sin(ang) * 36 - 28
   );
   world.sun.target.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.sun.intensity = Math.max(0.12, world.daylight * 1.7);
-  world.hemi.intensity = 0.32 + world.daylight * 0.85;
-  if (world.fill) world.fill.intensity = 0.22 + world.daylight * 0.28 + night * 0.22;
+  world.sun.intensity = Math.max(mobile ? 1.35 : 0.12, world.daylight * (mobile ? 2.2 : 1.7));
+  world.hemi.intensity = (mobile ? 0.9 : 0.32) + world.daylight * (mobile ? 1.0 : 0.85);
+  if (world.fill) world.fill.intensity = (mobile ? 0.45 : 0.22) + world.daylight * 0.28 + night * 0.22;
   const sunDir = world.sun.position.clone().sub(new THREE.Vector3(playerPos.x, 0, playerPos.z)).normalize();
   if (world.sunMesh) {
     world.sunMesh.position.copy(sunDir).multiplyScalar(380);
@@ -634,9 +635,17 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     0.05 + 0.28 * world.daylight + 0.05 * dusk,
     0.08 + 0.1 * world.daylight + 0.1 * night
   );
-  world.scene.background.copy(fogCol);
-  world.scene.fog.color.copy(fogCol);
-  world.scene.fog.density = 0.0074 + night * 0.006 + world.storm * 0.022;
+  if (mobile) {
+    const warm = new THREE.Color(0xd48958);
+    fogCol.copy(warm).lerp(new THREE.Color(0x6a3a28), Math.min(0.42, night * 0.5 + world.storm * 0.25));
+    world.scene.background.copy(fogCol);
+    world.scene.fog.color.copy(fogCol);
+    world.scene.fog.density = 0.0055 + world.storm * 0.01;
+  } else {
+    world.scene.background.copy(fogCol);
+    world.scene.fog.color.copy(fogCol);
+    world.scene.fog.density = 0.0074 + night * 0.006 + world.storm * 0.022;
+  }
   if (world.haze?.material) {
     world.haze.material.color.copy(fogCol);
     world.haze.material.opacity = 0.22 + world.storm * 0.28 + night * 0.12;
@@ -734,7 +743,8 @@ export function advanceSol(world) {
 }
 
 function makeTerrain() {
-  const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, SEGMENTS, SEGMENTS);
+  const segs = isMobileView() ? 48 : 168;
+  const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, segs, segs);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   const colors = [];
@@ -772,7 +782,7 @@ function makeTerrain() {
 function makeRocks() {
   const geo = new THREE.DodecahedronGeometry(1.15, 0);
   const mat = std({ color: 0xffffff, map: maps().rock, roughness: 0.95, flatShading: true });
-  const count = isMobileView() ? 90 : 240;
+  const count = isMobileView() ? 22 : 240;
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
   meshInst.castShadow = true;
   meshInst.receiveShadow = true;
@@ -802,7 +812,7 @@ function makeRocks() {
 function makePebbles() {
   const geo = new THREE.TetrahedronGeometry(0.28);
   const mat = std({ color: 0x8a4a2c, map: maps().rock, roughness: 1, flatShading: true });
-  const count = isMobileView() ? 180 : 420;
+  const count = isMobileView() ? 48 : 420;
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
   meshInst.receiveShadow = true;
   const dummy = new THREE.Object3D();
@@ -822,8 +832,9 @@ function makeMountains() {
   const group = new THREE.Group();
   const mat = std({ color: 0x7a4028, map: maps().rock, roughness: 1, flatShading: true });
   const dark = std({ color: 0x4a2416, map: maps().rock, roughness: 1, flatShading: true });
-  for (let i = 0; i < 26; i++) {
-    const ang = (i / 26) * Math.PI * 2;
+  const peaks = isMobileView() ? 10 : 26;
+  for (let i = 0; i < peaks; i++) {
+    const ang = (i / peaks) * Math.PI * 2;
     const r = 285 + (i % 5) * 16;
     const m = new THREE.Mesh(new THREE.ConeGeometry(22 + (i % 6) * 8, 18 + (i % 5) * 12, 6), i % 2 ? mat : dark);
     m.position.set(Math.cos(ang) * r, 6, Math.sin(ang) * r);
@@ -835,7 +846,7 @@ function makeMountains() {
 }
 
 function makeDust() {
-  const n = isMobileView() ? 900 : 2800;
+  const n = isMobileView() ? 120 : 2800;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
@@ -909,7 +920,8 @@ function makeDebris() {
     ["ice", 0.55, 8.4, 20.2, 0.3],
   ];
   let used = 0;
-  for (const [id, fit, x, z, rot] of meshySpots) {
+  const spots = isMobileView() ? meshySpots.slice(0, 4) : meshySpots;
+  for (const [id, fit, x, z, rot] of spots) {
     const m = takeModel(id, fit);
     if (!m) continue;
     m.position.set(x, heightAt(x, z), z);
@@ -959,6 +971,7 @@ function buildOutpost(data) {
   const gold = std({ color: 0xc9a227, roughness: 0.28, metalness: 0.62 });
 
   if (data.kind === "hab") {
+    const habSegs = isMobileView() ? 18 : 36;
     const hull = std({
       color: 0xece6dc,
       map: tex.hull,
@@ -984,19 +997,19 @@ function buildOutpost(data) {
     const sheet = std({ color: 0xd8c8b0, roughness: 0.7 });
 
     const wall = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 4.2, 3.15, 36, 1, true, Math.PI * 0.18, Math.PI * 1.64),
+      new THREE.CylinderGeometry(4.2, 4.2, 3.15, habSegs, 1, true, Math.PI * 0.18, Math.PI * 1.64),
       hull
     );
     wall.position.y = 1.55;
     g.add(wall);
     const dome = new THREE.Mesh(
-      new THREE.SphereGeometry(4.2, 32, 16, Math.PI * 0.18, Math.PI * 1.64, 0, Math.PI / 2),
+      new THREE.SphereGeometry(4.2, isMobileView() ? 16 : 32, isMobileView() ? 10 : 16, Math.PI * 0.18, Math.PI * 1.64, 0, Math.PI / 2),
       hull
     );
     dome.position.y = 3.12;
     g.add(dome);
     for (const y of [0.5, 1.55, 2.6]) {
-      const rib = new THREE.Mesh(new THREE.TorusGeometry(4.22, 0.09, 8, 36, Math.PI * 1.64), ribMat);
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(4.22, 0.09, 8, habSegs, Math.PI * 1.64), ribMat);
       rib.rotation.set(Math.PI / 2, 0, Math.PI * 0.18);
       rib.position.y = y;
       g.add(rib);
@@ -1022,7 +1035,7 @@ function buildOutpost(data) {
     inner.position.set(0, 2.1, 0.4);
     inner.name = "innerLight";
     g.add(inner);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(4.05, 36), std({ color: 0xc8b8a4, map: tex.floor, roughness: 0.82 }));
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(4.05, habSegs), std({ color: 0xc8b8a4, map: tex.floor, roughness: 0.82 }));
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.05;
     g.add(floor);

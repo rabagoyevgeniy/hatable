@@ -1,4 +1,7 @@
 import * as THREE from "three";
+import { isMobileView } from "./device.js";
+
+const PBR_KEYS = ["roughness", "metalness", "envMapIntensity", "transmission", "thickness", "ior", "clearcoat", "sheen"];
 
 function hash2(x, y) {
   let n = x * 374761393 + y * 668265263;
@@ -32,6 +35,10 @@ function fbm2(x, y, oct = 5) {
   return v;
 }
 
+function texSize(full) {
+  return isMobileView() ? Math.min(full, 128) : full;
+}
+
 export function canvasTex(size, draw) {
   const c = document.createElement("canvas");
   c.width = c.height = size;
@@ -39,13 +46,13 @@ export function canvasTex(size, draw) {
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = isMobileView() ? 1 : 8;
   t.needsUpdate = true;
   return t;
 }
 
 export function marsAlbedo() {
-  return canvasTex(512, (ctx, s) => {
+  return canvasTex(texSize(512), (ctx, s) => {
     const img = ctx.createImageData(s, s);
     const d = img.data;
     for (let y = 0; y < s; y++) {
@@ -70,7 +77,7 @@ export function marsAlbedo() {
 }
 
 export function rockAlbedo() {
-  return canvasTex(256, (ctx, s) => {
+  return canvasTex(texSize(256), (ctx, s) => {
     const img = ctx.createImageData(s, s);
     const d = img.data;
     for (let y = 0; y < s; y++) {
@@ -88,7 +95,7 @@ export function rockAlbedo() {
 }
 
 export function hullAlbedo() {
-  return canvasTex(512, (ctx, s) => {
+  return canvasTex(texSize(512), (ctx, s) => {
     ctx.fillStyle = "#e8e0d4";
     ctx.fillRect(0, 0, s, s);
     for (let y = 0; y < s; y++) {
@@ -121,7 +128,7 @@ export function hullAlbedo() {
 }
 
 export function metalAlbedo() {
-  return canvasTex(256, (ctx, s) => {
+  return canvasTex(texSize(256), (ctx, s) => {
     ctx.fillStyle = "#c4beb4";
     ctx.fillRect(0, 0, s, s);
     for (let y = 0; y < s; y += 8) {
@@ -137,7 +144,7 @@ export function metalAlbedo() {
 }
 
 export function evaAlbedo() {
-  return canvasTex(256, (ctx, s) => {
+  return canvasTex(texSize(256), (ctx, s) => {
     ctx.fillStyle = "#e07030";
     ctx.fillRect(0, 0, s, s);
     for (let y = 0; y < s; y++) {
@@ -156,7 +163,7 @@ export function evaAlbedo() {
 }
 
 export function floorAlbedo() {
-  return canvasTex(256, (ctx, s) => {
+  return canvasTex(texSize(256), (ctx, s) => {
     ctx.fillStyle = "#cbb79a";
     ctx.fillRect(0, 0, s, s);
     ctx.strokeStyle = "rgba(70, 50, 36, 0.28)";
@@ -177,7 +184,7 @@ export function floorAlbedo() {
 }
 
 export function solarAlbedo() {
-  return canvasTex(256, (ctx, s) => {
+  return canvasTex(texSize(256), (ctx, s) => {
     ctx.fillStyle = "#152033";
     ctx.fillRect(0, 0, s, s);
     ctx.strokeStyle = "rgba(80, 140, 200, 0.35)";
@@ -204,7 +211,7 @@ let _maps;
 export function maps() {
   if (_maps) return _maps;
   const mars = marsAlbedo();
-  mars.repeat.set(72, 72);
+  mars.repeat.set(isMobileView() ? 24 : 72, isMobileView() ? 24 : 72);
   const hull = hullAlbedo();
   hull.repeat.set(2, 2);
   const eva = evaAlbedo();
@@ -221,8 +228,25 @@ export function maps() {
   return _maps;
 }
 
-export function std(opts) {
+function stripPbr(opts = {}) {
+  const next = { ...opts };
+  for (const key of PBR_KEYS) delete next[key];
+  return next;
+}
+
+/** Lambert on phones so iOS never renders MeshStandard black without IBL. */
+export function std(opts = {}) {
+  if (isMobileView()) return new THREE.MeshLambertMaterial(stripPbr(opts));
   return new THREE.MeshStandardMaterial(opts);
+}
+
+export function phys(opts = {}) {
+  if (isMobileView()) {
+    const next = stripPbr(opts);
+    if (next.opacity != null && next.opacity < 1) next.transparent = true;
+    return new THREE.MeshLambertMaterial(next);
+  }
+  return new THREE.MeshPhysicalMaterial(opts);
 }
 
 const SKY_VERT = /* glsl */ `
@@ -281,8 +305,10 @@ export function makeSky() {
     side: THREE.BackSide,
     depthWrite: false,
     fog: false,
+    toneMapped: false,
   });
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(520, 40, 24), mat);
+  const mobile = isMobileView();
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(mobile ? 480 : 520, mobile ? 20 : 40, mobile ? 12 : 24), mat);
   mesh.frustumCulled = false;
   mesh.renderOrder = -10;
   mesh.name = "sky";

@@ -21,8 +21,9 @@ body,
 #app {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
-  background: #140b08;
+  background: #d48958;
   color: var(--paper);
   font-family: "Rajdhani", sans-serif;
   touch-action: manipulation;
@@ -38,12 +39,6 @@ canvas#scene {
   touch-action: none;
 }
 
-canvas#scene {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 .hidden {
   display: none !important;
 }
@@ -55,8 +50,48 @@ canvas#scene {
   z-index: 2;
 }
 
-body:not(.inside-hab) #vignette {
+body:not(.inside-hab):not(.mobile) #vignette {
   background: radial-gradient(ellipse at center, transparent 38%, rgba(8, 3, 2, 0.72) 100%);
+}
+
+body.mobile #vignette,
+body.mobile #night-overlay {
+  display: none !important;
+}
+
+body.mobile #storm-overlay {
+  opacity: 0.18 !important;
+}
+
+body.mobile #order-card,
+body.mobile #goal-list,
+body.mobile #log,
+body.mobile #help {
+  display: none !important;
+}
+
+body.mobile #compass {
+  top: 52px;
+  right: 10px;
+  transform: none;
+  left: auto;
+}
+
+body.mobile #prompt {
+  bottom: 168px;
+  width: min(280px, 62vw);
+  font-size: 15px;
+  padding: 8px 12px;
+}
+
+body.mobile .scan-tag {
+  font-size: 10px;
+}
+
+body.mobile #first-hint:not(.hidden) {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.3;
 }
 
 body.inside-hab #vignette {
@@ -721,13 +756,14 @@ li.ready .recipe {
 }
 
 #touch-actions button {
-  width: 62px;
-  height: 62px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  padding: 0;
-  letter-spacing: 0.08em;
-  font-size: 13px;
-  background: rgba(12, 7, 5, 0.7);
+  padding: 0 4px;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(12, 7, 5, 0.78);
 }
 
 #touch-actions button.held {

@@ -30,6 +30,8 @@ export function bindUi(handlers) {
 export function showHud() {
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
+  const hint = $("first-hint");
+  if (hint && document.body.classList.contains("mobile")) hint.textContent = t("firstHintTouch");
 }
 
 export function menusOpen() {
@@ -232,7 +234,9 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   $("compass-deg").textContent = `${Math.round(deg)}°`;
 
   $("storm-overlay").style.opacity = String(world.storm * 0.85);
-  $("night-overlay").style.opacity = String(Math.max(0, 0.55 - world.daylight));
+  $("night-overlay").style.opacity = document.body.classList.contains("mobile")
+    ? "0"
+    : String(Math.max(0, 0.55 - world.daylight));
   $("scan-overlay").style.opacity = scanning ? "1" : "0";
   document.body.classList.toggle("inside-hab", !!inside);
 
@@ -355,15 +359,18 @@ function updatePrompt(player, world) {
 }
 
 function updateScanLabels(player, world, camera, scanning) {
+  const mobile = document.body.classList.contains("mobile");
   const root = $("scan-labels");
   root.innerHTML = "";
   if (!camera) return;
   const lang = getLang();
   const p = player.root.position;
+  const lootRange = mobile ? 7.2 : 18;
+  const outpostRange = mobile ? 14 : 42;
   const targets = [];
   for (const o of world.outposts) {
     const d = Math.hypot(p.x - o.x, p.z - o.z);
-    if (scanning || d < 42) {
+    if (scanning || d < outpostRange) {
       targets.push({
         x: o.x,
         y: o.group.position.y + 4.6,
@@ -377,7 +384,7 @@ function updateScanLabels(player, world, camera, scanning) {
   for (const n of world.nodes) {
     if (n.taken) continue;
     const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
-    if (d > 18 && !scanning) continue;
+    if (d > lootRange && !scanning) continue;
     if (d > 48) continue;
     targets.push({
       x: n.mesh.position.x,
@@ -390,7 +397,7 @@ function updateScanLabels(player, world, camera, scanning) {
   }
   for (const st of world.stations) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);
-    if (d > 22 && !scanning) continue;
+    if (d > (mobile ? 8 : 22) && !scanning) continue;
     const names = {
       still: { ru: "Дистиллятор", en: "Still" },
       plot: { ru: "Грядка", en: "Plot" },
@@ -408,7 +415,7 @@ function updateScanLabels(player, world, camera, scanning) {
     targets.push({ x: st.x, y: st.mesh.position.y + 2.2, z: st.z, title, sub, loot: true });
   }
   const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-  if (lockerD < 18 || scanning) {
+  if (lockerD < (mobile ? 8 : 18) || scanning) {
     targets.push({
       x: world.locker.x,
       y: world.locker.mesh.position.y + 2.4,
@@ -432,7 +439,7 @@ function updateScanLabels(player, world, camera, scanning) {
     const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
     if (occupied) continue;
     const d = Math.hypot(p.x - pad.x, p.z - pad.z);
-    if (d > 26 && !scanning) continue;
+    if (d > (mobile ? 8 : 26) && !scanning) continue;
     targets.push({
       x: pad.x,
       y: 1.8,

@@ -19,7 +19,14 @@ must(models.includes("import.meta.env.BASE_URL"), "GLB URLs must respect Vite ba
 must(existsSync(resolve(root, "public/manifest.webmanifest")), "PWA manifest");
 must(existsSync(resolve(root, "public/sw.js")), "service worker");
 must(existsSync(resolve(root, "public/icons/icon-192.png")), "192 icon");
+must(existsSync(resolve(root, "src/device.js")), "shared mobile detector");
 must(existsSync(resolve(root, ".github/workflows/pages.yml")), "Pages workflow");
+must(game.includes("NoToneMapping"), "phones skip ACES so the desert does not crush to black");
+must(game.includes("failIfMajorPerformanceCaveat: false"), "iOS must not abort WebGL");
+
+const gfx = readFileSync(resolve(root, "src/gfx.js"), "utf8");
+must(gfx.includes("MeshLambertMaterial"), "phones use Lambert, not PBR");
+must(gfx.includes("isMobileView"), "gfx reads phone flag without importing world");
 
 const html = readFileSync(resolve(root, "index.html"), "utf8");
 must(html.includes('rel="manifest"'), "html links manifest");

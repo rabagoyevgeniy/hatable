@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { std } from "./gfx.js";
 
 /** Subtle live motion for Hab, Meshy props, stations, and the leak. */
 export function tickMotion(world, dt) {
@@ -114,7 +115,7 @@ export function makeLeakSteam() {
 
 export function makeClothFlag() {
   const geo = new THREE.PlaneGeometry(1.15, 0.7, 8, 4);
-  const mat = new THREE.MeshStandardMaterial({
+  const mat = std({
     color: 0xe07030,
     side: THREE.DoubleSide,
     roughness: 0.7,

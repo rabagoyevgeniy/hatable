@@ -3,8 +3,8 @@ import { heightAt, normalAt } from "./noise.js";
 import { ITEMS, CONSUME, SURVIVAL, SPAWN } from "./data.js";
 import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
-import { advanceSol } from "./world.js";
-import { maps, std } from "./gfx.js";
+import { advanceSol, isMobileView } from "./world.js";
+import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
 
 export function createPlayer(scene) {
@@ -40,7 +40,7 @@ export function createPlayer(scene) {
   const suit = std({ color: 0xe07030, map: tex.eva, roughness: 0.55, metalness: 0.08 });
   const suitDark = std({ color: 0xb84818, map: tex.eva, roughness: 0.68, metalness: 0.06 });
   const white = std({ color: 0xeee8de, map: tex.hull, roughness: 0.4, metalness: 0.2 });
-  const visor = new THREE.MeshPhysicalMaterial({
+  const visor = phys({
     color: 0xc9a227,
     roughness: 0.06,
     metalness: 0.92,
@@ -128,8 +128,8 @@ export function createPlayer(scene) {
 
   root.traverse((o) => {
     if (o.isMesh) {
-      o.castShadow = true;
-      o.receiveShadow = true;
+      o.castShadow = !isMobileView();
+      o.receiveShadow = !isMobileView();
     }
   });
 
@@ -146,7 +146,7 @@ export function createPlayer(scene) {
     legL,
     legR,
     yaw: 0,
-    pitch: 0.18,
+    pitch: isMobileView() ? 0.02 : 0.18,
     vel: new THREE.Vector3(),
     inv,
     tools: { hammer: false },
@@ -362,8 +362,8 @@ export function attachHammer(player) {
     return;
   }
   const g = new THREE.Group();
-  const wood = new THREE.MeshStandardMaterial({ color: 0x6a4428, roughness: 0.8 });
-  const iron = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, metalness: 0.45, roughness: 0.4 });
+  const wood = std({ color: 0x6a4428, roughness: 0.8 });
+  const iron = std({ color: 0xc8c0b4, metalness: 0.45, roughness: 0.4 });
   const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.55, 6), wood);
   handle.rotation.z = 0.35;
   g.add(handle);
