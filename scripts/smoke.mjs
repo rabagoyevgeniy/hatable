@@ -48,7 +48,7 @@ must(world.includes("from \"./motion.js\""), "Hab flag/leak steam import");
 
 const ui = readFileSync(resolve(root, "src/ui.js"), "utf8");
 must(ui.includes("kind: \"console\""), "desk opens console not whole-hab sleep");
-must(ui.includes("deskD < 3.2"), "desk console reachable from Hab center");
+must(ui.includes("deskD < 3.6"), "desk console reachable from Hab center");
 
 /* Live sim: leak, seal, day/night battery. */
 const worldSim = {

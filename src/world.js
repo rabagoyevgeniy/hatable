@@ -1085,27 +1085,27 @@ function dressHabRoom(g, { hull, orange, bunkMat, sheet, tex }) {
   bunkTag.position.set(-1.55, 0.95, -1.0);
   g.add(bunkTag);
 
-  g.add(box(hull, 1.35, 0.08, 0.72, 1.55, 0.78, -1.35));
-  g.add(box(hull, 0.08, 0.72, 0.08, 1.05, 0.4, -1.1));
-  g.add(box(hull, 0.08, 0.72, 0.08, 2.05, 0.4, -1.6));
-  const screen = std({ color: 0x1a2830, emissive: 0x4ec4e8, emissiveIntensity: mobile ? 1.1 : 0.55 });
-  const consoleMesh = box(screen, 0.42, 0.28, 0.04, 1.55, 1.08, -1.55);
+  g.add(box(hull, 1.45, 0.08, 0.78, 1.55, 0.78, 1.2));
+  g.add(box(hull, 0.08, 0.72, 0.08, 1.05, 0.4, 1.45));
+  g.add(box(hull, 0.08, 0.72, 0.08, 2.05, 0.4, 0.95));
+  const screen = std({ color: 0x1a2830, emissive: 0x4ec4e8, emissiveIntensity: mobile ? 1.35 : 0.7 });
+  const consoleMesh = box(screen, 0.72, 0.42, 0.06, 1.55, 1.22, 0.82);
   consoleMesh.name = "habConsole";
   g.add(consoleMesh);
-  const consoleTag = makePlate(mobile ? "SYS" : "CONSOLE", 0.7, 0.16);
-  consoleTag.position.set(1.55, 0.95, -0.95);
+  const consoleTag = makePlate(mobile ? "SYS" : "CONSOLE", 0.9, 0.2);
+  consoleTag.position.set(1.55, 1.42, 2.05);
   g.add(consoleTag);
   const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), orange);
-  deskLamp.position.set(1.95, 1.02, -1.2);
+  deskLamp.position.set(1.95, 1.02, 1.35);
   g.add(deskLamp);
   const deskGlow = new THREE.PointLight(0xffc070, mobile ? 1.15 : 0.55, 6);
-  deskGlow.position.set(1.7, 1.1, -1.25);
+  deskGlow.position.set(1.7, 1.15, 1.15);
   g.add(deskGlow);
 
   const crateMat = std({ color: 0x8a6a40, map: tex.hull, roughness: 0.7, emissive: 0x4a3010, emissiveIntensity: 0.16 });
-  g.add(box(crateMat, 0.72, 0.58, 0.52, 1.6, 0.38, 1.15));
+  g.add(box(crateMat, 0.72, 0.58, 0.52, 1.6, 0.38, -1.45));
   g.add(box(crateMat, 0.55, 0.42, 0.42, -0.2, 0.28, 1.7));
-  g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.14, 0.16, 1.55, 0.74, 1.05));
+  g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.14, 0.16, 1.55, 0.74, 1.35));
 
   const strip = std({ color: 0xffe8c0, emissive: 0xffd090, emissiveIntensity: mobile ? 1.35 : 0.7 });
   g.add(box(strip, 2.4, 0.06, 0.12, 0, 2.72, 0.2));

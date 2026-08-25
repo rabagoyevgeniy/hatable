@@ -13,7 +13,7 @@ export const SPAWN = { x: 1.2, z: 18.5 };
 
 /** Hab origin and interior interact points (world XZ). */
 export const HAB_POS = { x: 0, z: 8 };
-export const HAB_DESK = { x: 1.55, z: 6.65 };
+export const HAB_DESK = { x: 1.55, z: 9.2 };
 export const HAB_BUNK = { x: -1.55, z: 6.45 };
 export const HAB_ARRAY = { x: 0, z: 3.9 };
 

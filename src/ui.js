@@ -432,9 +432,13 @@ export function findInteract(player, world) {
 
   if (inside) {
     const habHits = [];
-    if (deskD < 3.2) habHits.push({ d: deskD, kind: "console", label: t("console") });
+    if (deskD < 3.6) habHits.push({ d: deskD, kind: "console", label: t("console") });
     if (bunkD < 3.0) habHits.push({ d: bunkD, kind: "sleep", label: t("sleep") });
-    if (lockerD < 2.8) habHits.push({ d: lockerD, kind: "locker", label: t("locker") });
+    if (lockerD < 2.8) {
+      const lockerLabel =
+        !player.usedConsole && deskD < 5.5 ? `${t("locker")}  ·  ${t("consoleDeeper")}` : t("locker");
+      habHits.push({ d: lockerD, kind: "locker", label: lockerLabel });
+    }
     habHits.sort((a, b) => a.d - b.d);
     if (habHits[0]) return habHits[0];
   }
