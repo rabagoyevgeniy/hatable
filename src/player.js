@@ -5,10 +5,38 @@ import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
 import { advanceSol } from "./world.js";
 import { maps, std } from "./gfx.js";
+import { takeCharacter } from "./models.js";
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
-  const tex = maps();
+  const animated = takeCharacter(1.92);
+  let armL;
+  let armR;
+  let legL;
+  let legR;
+  let mixer = null;
+  let walkAction = null;
+  let idleAction = null;
+  let runAction = null;
+
+  if (animated) {
+    root.add(animated.root);
+    mixer = animated.mixer;
+    walkAction = animated.walkAction;
+    idleAction = animated.idleAction;
+    runAction = animated.runAction;
+    armL = new THREE.Group();
+    armL.position.set(-0.45, 1.2, 0.1);
+    armR = new THREE.Group();
+    armR.position.set(0.45, 1.2, 0.15);
+    legL = new THREE.Group();
+    legR = new THREE.Group();
+    root.add(armL);
+    root.add(armR);
+    root.add(legL);
+    root.add(legR);
+  } else {
+    const tex = maps();
   const suit = std({ color: 0xe07030, map: tex.eva, roughness: 0.55, metalness: 0.08 });
   const suitDark = std({ color: 0xb84818, map: tex.eva, roughness: 0.68, metalness: 0.06 });
   const white = std({ color: 0xeee8de, map: tex.hull, roughness: 0.4, metalness: 0.2 });
@@ -67,13 +95,13 @@ export function createPlayer(scene) {
     hose.rotation.y = 0.6;
     root.add(hose);
 
-    const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
     armL.position.set(-0.54, 1.18, 0);
     const handL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
     handL.position.set(0, -0.4, 0);
     armL.add(handL);
     root.add(armL);
-    const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
+    armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), suit);
     armR.position.set(0.54, 1.18, 0);
     const handR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), glove);
     handR.position.set(0, -0.4, 0);
@@ -84,18 +112,19 @@ export function createPlayer(scene) {
     wrist.position.set(0, -0.18, 0.08);
     armL.add(wrist);
 
-    const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
     legL.position.set(-0.2, 0.48, 0);
     const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
     bootL.position.set(0, -0.42, 0.05);
     legL.add(bootL);
     root.add(legL);
-    const legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
+    legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.52, 4, 10), suitDark);
     legR.position.set(0.2, 0.48, 0);
     const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), boot);
     bootR.position.set(0, -0.42, 0.05);
     legR.add(bootR);
     root.add(legR);
+  }
 
   root.traverse((o) => {
     if (o.isMesh) {
@@ -134,6 +163,10 @@ export function createPlayer(scene) {
     placing: null,
     heldId: null,
     hammerMesh: null,
+    mixer,
+    walkAction,
+    idleAction,
+    runAction,
   };
 }
 
@@ -228,6 +261,7 @@ export function updatePlayer(player, dt, input, world) {
     pos.z *= 270 / r;
   }
   pos.y = heightAt(pos.x, pos.z);
+  if (moving) pos.y += Math.abs(Math.sin(player.walkPhase || 0)) * 0.04;
   player.distance += Math.hypot(pos.x - prevX, pos.z - prevZ);
   const inside = isInsideHab(player);
   if (world.storm > 0.4 && !inside) {
@@ -235,7 +269,21 @@ export function updatePlayer(player, dt, input, world) {
     pos.z += dt * world.storm * 0.35;
   }
 
-  if (moving) {
+  if (player.mixer) {
+    player.walkPhase += moving ? dt * (8 + speed) : 0;
+    const spd = player.vel.length();
+    const walkW = spd > 0.45 && spd < 6.2 ? 1 : 0;
+    const runW = spd >= 6.2 ? 1 : 0;
+    const idleW = spd <= 0.45 ? 1 : 0;
+    if (player.idleAction) player.idleAction.setEffectiveWeight(THREE.MathUtils.lerp(player.idleAction.getEffectiveWeight(), idleW, 1 - Math.pow(0.02, dt)));
+    if (player.walkAction) player.walkAction.setEffectiveWeight(THREE.MathUtils.lerp(player.walkAction.getEffectiveWeight(), walkW, 1 - Math.pow(0.02, dt)));
+    if (player.runAction) player.runAction.setEffectiveWeight(THREE.MathUtils.lerp(player.runAction.getEffectiveWeight(), runW, 1 - Math.pow(0.02, dt)));
+    player.mixer.update(dt);
+    if (moving && player.walkPhase - player.lastStep > 1.6) {
+      player.lastStep = player.walkPhase;
+      footstep(inside);
+    }
+  } else if (moving) {
     player.walkPhase += dt * (8 + speed);
     const swing = Math.sin(player.walkPhase) * 0.45;
     player.legL.rotation.x = swing;

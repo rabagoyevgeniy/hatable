@@ -3,6 +3,7 @@ import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
 import { maps, makeSky, makeSunHalo, packedYard, std } from "./gfx.js";
 import { takeModel } from "./models.js";
+import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 168;
@@ -80,9 +81,10 @@ export function createWorld(scene) {
 
   const outposts = OUTPOSTS.map((data) => {
     const group = buildOutpost(data);
-    group.position.set(data.x, heightAt(data.x, data.z), data.z);
+    const y = heightAt(data.x, data.z);
+    group.position.set(data.x, y, data.z);
     scene.add(group);
-    return { ...data, group, beacon: group.userData.beacon };
+    return { ...data, group, beacon: group.userData.beacon, baseY: y };
   });
 
   const world = {
@@ -421,7 +423,10 @@ export function placeStation(world, station, x, z) {
 
 function buildStation(type) {
   const ready = takeModel(type);
-  if (ready) return ready;
+  if (ready) {
+    ready.userData.motion = type;
+    return ready;
+  }
   const g = new THREE.Group();
   const tex = maps();
   const scrap = std({ color: 0xc2bbb0, map: tex.metal, roughness: 0.45, metalness: 0.38 });
@@ -618,6 +623,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       updatePlotVisual(st);
     }
   }
+  tickMotion(world, dt);
 }
 
 export function updatePlotVisual(st) {
@@ -933,11 +939,13 @@ function buildOutpost(data) {
     g.add(deskGlow);
     g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
     g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
-    const flag = box(orange, 0.08, 0.55, 0.9, -3.95, 1.7, 0.4);
+    const flag = makeClothFlag();
+    flag.position.set(-4.15, 2.05, 0.55);
     g.add(flag);
     g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 1.8));
     g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 2.5));
     const antenna = cyl(std({ color: 0xc8c0b4, metalness: 0.5, roughness: 0.3 }), 0.04, 2.4, -2.8, 4.4, -1.2);
+    antenna.name = "habAntenna";
     g.add(antenna);
     const plate = makePlate("ARES III", 2.3, 0.55);
     plate.position.set(0, 2.55, 6.55);
@@ -955,6 +963,7 @@ function buildOutpost(data) {
     hole.rotation.y = Math.PI;
     hole.name = "leak";
     g.add(hole);
+    g.add(makeLeakSteam());
     const patch = new THREE.Mesh(new THREE.CircleGeometry(0.72, 16), std({ color: 0xe8dcc8, map: tex.hull, roughness: 0.7 }));
     patch.position.set(0, 1.65, -4.12);
     patch.rotation.y = Math.PI;
