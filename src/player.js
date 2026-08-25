@@ -154,7 +154,7 @@ export function createPlayer(scene) {
     legL,
     legR,
     yaw: 0,
-    pitch: isMobileView() ? 0.02 : 0.18,
+    pitch: isMobileView() ? 0.08 : 0.18,
     vel: new THREE.Vector3(),
     inv,
     tools: { hammer: false },

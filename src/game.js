@@ -459,15 +459,15 @@ export async function boot() {
   function placeCamera(dt) {
     const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
     const portrait = innerHeight > innerWidth;
-    const dist = inside ? 5.4 : mobile ? (portrait ? 8.6 : 8.8) : 9.2;
-    const height = (inside ? 2.35 : mobile ? (portrait ? 6.6 : 4.2) : 2.55) + player.pitch * (portrait ? 1.1 : 1.15);
+    const dist = inside ? (mobile ? 3.7 : 5.4) : mobile ? (portrait ? 6.35 : 7.2) : 9.2;
+    const height = (inside ? 1.78 : mobile ? (portrait ? 3.05 : 2.75) : 2.55) + player.pitch * (portrait ? 0.85 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
       player.root.position.z + Math.cos(player.yaw) * dist
     );
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
-    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 2.4 : 1.55);
+    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 1.32 : 1.55);
     if (camera.position.y < minY) camera.position.y = minY;
     if (!inside) {
       const habDx = camera.position.x;
@@ -487,8 +487,8 @@ export async function boot() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    const lookAhead = mobile && !inside ? 5.4 : 0;
-    const lookY = player.root.position.y + (mobile ? (inside ? 1.45 : 2.35) : 1.32);
+    const lookAhead = mobile && !inside ? 1.55 : 0;
+    const lookY = player.root.position.y + (mobile ? 1.38 : 1.32);
     camera.lookAt(
       player.root.position.x - Math.sin(player.yaw) * lookAhead,
       lookY,
@@ -500,7 +500,7 @@ export async function boot() {
     const w = Math.round(window.visualViewport?.width || innerWidth);
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
-    camera.fov = mobile ? (h > w ? 76 : 60) : 52;
+    camera.fov = mobile ? (h > w ? 62 : 55) : 52;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();

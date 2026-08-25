@@ -30,7 +30,11 @@ must(gfx.includes("isMobileView"), "gfx reads phone flag without importing world
 
 const html = readFileSync(resolve(root, "index.html"), "utf8");
 must(html.includes('rel="manifest"'), "html links manifest");
+must(html.includes("apple-mobile-web-app-capable"), "iOS web app meta");
 must(html.includes("menu-scrim"), "mobile menus close via scrim");
+
+const world = readFileSync(resolve(root, "src/world.js"), "utf8");
+must(world.includes("function dressHabRoom"), "Hab interior is a dressed room");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

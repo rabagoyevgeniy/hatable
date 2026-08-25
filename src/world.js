@@ -1017,6 +1017,70 @@ function makeScanRing() {
   );
 }
 
+function dressHabRoom(g, { hull, orange, bunkMat, sheet, tex }) {
+  const mobile = isMobileView();
+  const pad = std({ color: 0x5a3a22, map: tex.floor, roughness: 0.9, emissive: 0x3a2010, emissiveIntensity: 0.18 });
+  g.add(box(pad, 2.4, 0.04, 2.4, 0, 0.08, 0.2));
+
+  const insulation = std({
+    color: 0xc45c2a,
+    map: tex.eva,
+    roughness: 0.7,
+    emissive: 0x6a2a10,
+    emissiveIntensity: mobile ? 0.35 : 0.12,
+  });
+  for (const a of [-1.15, 0, 1.15]) {
+    const panel = box(insulation, 1.15, 1.35, 0.06, Math.sin(a) * 3.55, 1.35, Math.cos(a) * 3.55 - 0.4);
+    panel.lookAt(0, 1.35, 0);
+    g.add(panel);
+  }
+
+  const metal = std({ color: 0xd0c8bc, map: tex.metal, roughness: 0.45, metalness: 0.28 });
+  const blanket = std({
+    color: 0xe07030,
+    map: tex.eva,
+    roughness: 0.55,
+    emissive: 0x802010,
+    emissiveIntensity: mobile ? 0.4 : 0.12,
+  });
+  const pillow = std({ color: 0xf4ead8, roughness: 0.85, emissive: 0x8a7050, emissiveIntensity: 0.2 });
+  g.add(box(metal, 2.25, 0.42, 1.05, -1.55, 0.32, -1.55));
+  g.add(box(sheet, 2.05, 0.16, 0.92, -1.55, 0.58, -1.55));
+  g.add(box(blanket, 1.55, 0.1, 0.88, -1.35, 0.68, -1.55));
+  g.add(box(pillow, 0.42, 0.16, 0.55, -2.35, 0.72, -1.55));
+  g.add(box(metal, 0.08, 0.55, 1.05, -2.62, 0.55, -1.55));
+  const bunkTag = makePlate(mobile ? "СОН" : "BUNK", 0.7, 0.18);
+  bunkTag.position.set(-1.55, 0.95, -1.0);
+  g.add(bunkTag);
+
+  g.add(box(hull, 1.35, 0.08, 0.72, 1.55, 0.78, -1.35));
+  g.add(box(hull, 0.08, 0.72, 0.08, 1.05, 0.4, -1.1));
+  g.add(box(hull, 0.08, 0.72, 0.08, 2.05, 0.4, -1.6));
+  const screen = std({ color: 0x1a2830, emissive: 0x4ec4e8, emissiveIntensity: mobile ? 1.1 : 0.55 });
+  g.add(box(screen, 0.42, 0.28, 0.04, 1.55, 1.08, -1.55));
+  const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), orange);
+  deskLamp.position.set(1.95, 1.02, -1.2);
+  g.add(deskLamp);
+  const deskGlow = new THREE.PointLight(0xffc070, mobile ? 1.15 : 0.55, 6);
+  deskGlow.position.set(1.7, 1.1, -1.25);
+  g.add(deskGlow);
+
+  const crateMat = std({ color: 0x8a6a40, map: tex.hull, roughness: 0.7, emissive: 0x4a3010, emissiveIntensity: 0.16 });
+  g.add(box(crateMat, 0.72, 0.58, 0.52, 1.6, 0.38, 1.15));
+  g.add(box(crateMat, 0.55, 0.42, 0.42, -0.2, 0.28, 1.7));
+  g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.14, 0.16, 1.55, 0.74, 1.05));
+
+  const strip = std({ color: 0xffe8c0, emissive: 0xffd090, emissiveIntensity: mobile ? 1.35 : 0.7 });
+  g.add(box(strip, 2.4, 0.06, 0.12, 0, 2.72, 0.2));
+  g.add(box(strip, 0.12, 0.06, 1.8, -1.4, 2.72, -0.4));
+  g.add(box(strip, 0.12, 0.06, 1.8, 1.4, 2.72, -0.4));
+
+  const frame = std({ color: 0xd8d0c4, map: tex.hull, roughness: 0.5 });
+  g.add(box(frame, 0.16, 2.35, 0.16, -1.15, 1.2, 3.95));
+  g.add(box(frame, 0.16, 2.35, 0.16, 1.15, 1.2, 3.95));
+  g.add(box(frame, 2.46, 0.16, 0.16, 0, 2.38, 3.95));
+}
+
 function buildOutpost(data) {
   const g = new THREE.Group();
   const tex = maps();
@@ -1039,8 +1103,8 @@ function buildOutpost(data) {
       color: 0x1c2228,
       roughness: 0.12,
       metalness: 0.72,
-      emissive: 0x142028,
-      emissiveIntensity: 0.4,
+      emissive: 0xffc070,
+      emissiveIntensity: isMobileView() ? 0.85 : 0.4,
     });
     const orange = std({
       color: 0xe07030,
@@ -1086,58 +1150,24 @@ function buildOutpost(data) {
     const airLight = new THREE.PointLight(0xffb15a, 1.7, 20);
     airLight.position.set(0, 2.3, 6.2);
     g.add(airLight);
-    const inner = new THREE.PointLight(0xffe0b0, 0.9, 13);
+    const inner = new THREE.PointLight(0xffe0b0, isMobileView() ? 2.35 : 0.9, isMobileView() ? 16 : 13);
     inner.position.set(0, 2.1, 0.4);
     inner.name = "innerLight";
     g.add(inner);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(4.05, habSegs), std({ color: 0xc8b8a4, map: tex.floor, roughness: 0.82 }));
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(4.05, habSegs),
+      std({
+        color: isMobileView() ? 0xe2d2bc : 0xc8b8a4,
+        map: tex.floor,
+        roughness: 0.82,
+        emissive: 0x6a4a28,
+        emissiveIntensity: isMobileView() ? 0.28 : 0.08,
+      })
+    );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0.05;
+    floor.position.y = 0.06;
     g.add(floor);
-    const bunk = takeModel("bunk", 2.2);
-    if (bunk) {
-      bunk.position.set(-1.55, 0, -1.55);
-      g.add(bunk);
-    } else {
-      g.add(box(bunkMat, 2.1, 0.35, 0.95, -1.6, 0.38, -1.6));
-      g.add(box(sheet, 1.9, 0.12, 0.8, -1.6, 0.58, -1.6));
-      g.add(box(std({ color: 0x3a2a22, roughness: 0.85 }), 0.45, 0.18, 0.55, -2.2, 0.78, -1.55));
-    }
-    const crate = takeModel("crate", 0.72);
-    if (crate) {
-      crate.position.set(1.55, 0, 1.05);
-      g.add(crate);
-    } else {
-      g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
-      g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
-    }
-    const desk = takeModel("desk", 1.35);
-    if (desk) {
-      desk.position.set(1.55, 0, -1.45);
-      desk.rotation.y = -0.4;
-      g.add(desk);
-    } else {
-      g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
-      g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
-      g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
-    }
-    const spud = takeModel("potato", 0.16);
-    if (spud) {
-      spud.position.set(1.45, 0.58, 1.05);
-      g.add(spud);
-    }
-    const extraCrate = takeModel("crate", 0.55);
-    if (extraCrate) {
-      extraCrate.position.set(-0.35, 0, 1.65);
-      extraCrate.rotation.y = 0.7;
-      g.add(extraCrate);
-    }
-    const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), orange);
-    deskLamp.position.set(1.7, 1.05, -1.35);
-    g.add(deskLamp);
-    const deskGlow = new THREE.PointLight(0xffc070, 0.55, 5);
-    deskGlow.position.set(1.7, 1.1, -1.35);
-    g.add(deskGlow);
+    dressHabRoom(g, { hull, orange, bunkMat, sheet, tex });
     const flag = makeClothFlag();
     flag.position.set(2.05, 2.55, 6.48);
     flag.rotation.y = 0.35;
