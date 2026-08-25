@@ -45,4 +45,11 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Sleep grows crops from current moisture first, then soil dries — four watered Sols can finish a plant
 - Watering still not an instant harvest
 
-Next: heater toggle in a clean Hab run if a human is on the stick; otherwise still-pump diagnostics.
+### Cycle E — still needs the grid (night decision)
+
+- Distiller produces and fills the Hab tank only while `gridOn`
+- Dead battery drops still load so dawn can recover
+- Prompt: «ДИСТИЛЛЯТОР СТОИТ — нет сети Hab»; console alert STILL OFFLINE
+- Smoke: heater off saves night battery and lets the Hab go cold; still does not fill the tank without grid
+
+Next: pump/filter repair as a scavenger reason, not more items.

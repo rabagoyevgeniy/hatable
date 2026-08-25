@@ -25,9 +25,10 @@ HABITAT (world.hab)
     → load kW
     → inside temperature
     → player warmth while inside
-  still (existing + piped)
+  still (fueled AND grid live)
     → station.water tap
     → hab.waterTank
+    → extra load on the battery at night
   plot
     → grow = light × temp × moisture × (soil scan bonus)
 

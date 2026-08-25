@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, dist } from "../src/systems/interact.js";
@@ -86,6 +86,30 @@ tickTime(worldSim, 0);
 worldSim.hab.battery = 0.4;
 for (let i = 0; i < 30; i++) tickHabitat(worldSim, 1);
 must(worldSim.hab.battery > nightBat, "day solar charges more than night");
+
+worldSim.habSealed = true;
+worldSim.clock = 0.75;
+tickTime(worldSim, 0);
+worldSim.hab.battery = 0.4;
+worldSim.hab.heaterOn = true;
+worldSim.hab.insideC = 10;
+for (let i = 0; i < 50; i++) tickHabitat(worldSim, 1);
+const heatOnBat = worldSim.hab.battery;
+const heatOnC = worldSim.hab.insideC;
+worldSim.hab.battery = 0.4;
+worldSim.hab.heaterOn = false;
+worldSim.hab.insideC = 10;
+for (let i = 0; i < 50; i++) tickHabitat(worldSim, 1);
+must(worldSim.hab.battery > heatOnBat, "heater off saves night battery");
+must(heatOnC > worldSim.hab.insideC, "heater off lets Hab go cold");
+
+worldSim.hab.gridOn = false;
+worldSim.hab.battery = 0;
+worldSim.stations = [{ type: "still", fuel: 20 }];
+const tank0 = worldSim.hab.waterTank;
+tickHabitat(worldSim, 5);
+must(worldSim.hab.waterTank <= tank0 + 0.01, "still does not fill tank without grid");
+must(!stillOnline(worldSim), "stillOnline follows grid");
 
 worldSim.playTime = 100;
 worldSim.weather.state = "clear";

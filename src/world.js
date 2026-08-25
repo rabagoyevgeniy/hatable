@@ -725,7 +725,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   }
 
   for (const st of world.stations) {
-    if (st.type === "still" && st.fuel > 0) {
+    if (st.type === "still" && st.fuel > 0 && world.hab?.gridOn) {
       st.fuel -= dt;
       st.water += dt * 0.045 * (world.science?.known?.ice ? 1.12 : 1);
       const globe = st.mesh.getObjectByName("stillGlobe");
@@ -771,7 +771,7 @@ export function advanceSol(world) {
       st.moisture = Math.max(0.08, (st.moisture ?? 0.4) * 0.72);
       updatePlotVisual(st);
     }
-    if (st.type === "still" && st.fuel > 0) {
+    if (st.type === "still" && st.fuel > 0 && world.hab?.gridOn) {
       st.water += 5;
       st.fuel = Math.max(0, st.fuel - 10);
       if (world.hab) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);

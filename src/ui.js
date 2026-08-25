@@ -403,6 +403,9 @@ export function findInteract(player, world) {
       if (st.water >= 1) {
         return { kind: "still-take", station: st, label: `${t("drinkStill")}  ·  ${Math.floor(st.water)}` };
       }
+      if (st.fuel > 0 && !world.hab?.gridOn) {
+        return { kind: "still-wait", station: st, label: t("stillNoPower") };
+      }
       if (count(player, "ice") > 0 || count(player, "hydrazine") > 0) {
         return { kind: "still-fuel", station: st, label: t("fuel") };
       }

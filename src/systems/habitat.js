@@ -58,8 +58,9 @@ export function tickHabitat(world, dt) {
   if (h.lifeSupportOn) load += world.habSealed ? 0.38 : 0.58;
   if (h.heaterOn && (night > 0.5 || h.insideC < 16)) load += 0.5;
   if (h.lightsOn) load += 0.11;
-  const stills = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0);
-  load += stills.length * 0.32;
+  const stillsFueled = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0);
+  const stillMayRun = h.gridOn || h.battery > 0.06 || day > 0.48;
+  if (stillMayRun) load += stillsFueled.length * 0.32;
   h.loadKw = load;
 
   if (!h.gridOn) {
@@ -88,8 +89,8 @@ export function tickHabitat(world, dt) {
   if (world.habSealed && h.lifeSupportOn && h.gridOn) {
     h.waterTank = Math.max(0, h.waterTank - 0.0028 * dt);
   }
-  for (const st of stills) {
-    h.waterTank = Math.min(40, h.waterTank + dt * 0.028 * iceBonus);
+  for (const st of stillsFueled) {
+    if (h.gridOn) h.waterTank = Math.min(40, h.waterTank + dt * 0.028 * iceBonus);
   }
 }
 
@@ -124,6 +125,7 @@ export function habReadout(world, lang = "ru") {
     `${ru ? "ВНУТРИ" : "INSIDE"}    ${h.insideC.toFixed(0)}°C`,
     `${ru ? "МАССИВ" : "ARRAY"}     ${(h.arrayHealth * 100).toFixed(0)}%`,
     `${ru ? "ПЕЧЬ" : "HEATER"}    ${heat}   ${ru ? "СВЕТ" : "LIGHTS"} ${lights}`,
+    `${ru ? "ДИСТИЛЛ" : "STILL"}    ${h.gridOn ? (ru ? "СЕТЬ ОК" : "GRID OK") : (ru ? "НЕТ СЕТИ" : "NO GRID")}`,
   ].join("\n");
 }
 
@@ -139,7 +141,13 @@ export function habAlerts(world, lang = "ru") {
   if ((world.daylight || 0) < 0.32 && h.solarKw < 0.08) out.push(ru ? "НОЧЬ · СОЛНЦА НЕТ" : "NIGHT · NO SOLAR");
   if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
   if (h.waterTank < 1.2) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
+  const fueled = (world.stations || []).some((s) => s.type === "still" && s.fuel > 0);
+  if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");
   return out;
+}
+
+export function stillOnline(world) {
+  return !!world.hab?.gridOn;
 }
 
 export function habStatusLine(world, lang = "ru") {

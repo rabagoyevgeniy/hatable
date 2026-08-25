@@ -12,13 +12,14 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Roof array condition + cell replacement with salvaged solar
 - Sleep advances Sol and ticks habitat/weather/crops
 - Versioned localStorage save: Continue / New Game / autosave
-- Still (ice/hydrazine → water, also pipes into Hab tank)
+- Still (ice/hydrazine → water **if grid is live**, pipes into Hab tank)
 - Plot with persistent moisture / light / temperature; ~4 watered Sols to harvest
 - Seal patch visual
 - Journal 8-step (guidance only)
 - RU/EN, mobile touch, PWA
 - Hab interior furniture (bunk/desk/crates)
-- Weather state machine CLEAR / DUST / STORM (after ~150s play)
+- Weather state machine CLEAR / DUST / STORM (after first emergency minutes)
+- Still requires live Hab grid (night heater vs water)
 
 ## PARTIAL
 

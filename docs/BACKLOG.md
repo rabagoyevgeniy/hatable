@@ -6,8 +6,7 @@
 
 ## P1
 
-- Heater-off vs crops as a night decision, felt in play
-- Still pump / filter diagnostics
+- Still pump / filter diagnostics (grid coupling is in)
 - Hab-as-home audio polish
 
 ## P2

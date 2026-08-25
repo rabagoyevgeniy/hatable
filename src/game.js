@@ -639,7 +639,7 @@ async function bootGame() {
       updateWorld(world, dt, player.root.position, scanning, true);
       tickStill(
         dt,
-        world.stations.some((s) => s.type === "still" && s.fuel > 0)
+        world.stations.some((s) => s.type === "still" && s.fuel > 0 && world.hab?.gridOn)
       );
       setAmbience({
         storm: world.storm,

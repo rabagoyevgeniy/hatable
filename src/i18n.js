@@ -95,7 +95,7 @@ const strings = {
     drankTank: "DRANK — Hab tank",
     tankEmpty: "Hab tank empty",
     scanned: "SCAN",
-    enterHab: "Keep walking in. Cyan screen on the right is the Hab console.",
+    stillNoPower: "STILL OFFLINE — no Hab power",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -192,7 +192,7 @@ const strings = {
     drankTank: "ВЫПИЛ — бак Hab",
     tankEmpty: "Бак Hab пуст",
     scanned: "СКАН",
-    enterHab: "Иди вглубь. Голубой экран справа — консоль Hab.",
+    stillNoPower: "ДИСТИЛЛЯТОР СТОИТ — нет сети Hab",
     consoleDeeper: "глубже — голубой экран",
   },
 };
