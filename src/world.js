@@ -3,7 +3,9 @@ import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
 import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
-import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors } from "./systems/habitat.js";
+import { createWeather, tickWeather } from "./systems/weather.js";
+import { createScience } from "./systems/science.js";
 import { isMobileView } from "./device.js";
 
 export { isMobileView };
@@ -137,7 +139,11 @@ export function createWorld(scene) {
     habSealed: false,
     powered: false,
     contacted: false,
+    hab: createHabitat(),
+    weather: createWeather(),
+    science: createScience(),
   };
+  world._tickWeather = tickWeather;
 
   for (const spawn of NODE_SPAWNS) spawnNode(world, spawn.type, spawn.x, spawn.z, spawn);
   world.locker.mesh = makeLocker(world.locker.x, world.locker.z);
@@ -467,6 +473,7 @@ export function placeStation(world, station, x, z) {
     fuel: 0,
     planted: false,
     grow: 0,
+    moisture: 0.2,
   };
   world.stations.push(st);
   if (station === "solar") {
@@ -601,7 +608,7 @@ export function placementSpot(player) {
 export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   const mobile = isMobileView();
   if (playing) {
-    world.clock = (world.clock + dt / 220) % 1;
+    tickTime(world, dt);
     world.playTime = (world.playTime || 0) + dt;
   }
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
@@ -657,11 +664,9 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   }
 
   world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.35);
-  if (!playing || (world.playTime || 0) < 160) {
-    world.stormTarget = 0.04;
-    world.storm = Math.min(world.storm, 0.12);
-  } else if (Math.random() < dt * 0.0032) {
-    world.stormTarget = Math.random() < 0.18 ? 0.82 : 0.04;
+  if (playing) {
+    tickWeather(world, dt);
+    tickHabitat(world, dt);
   }
 
   const dustPos = world.dust.geometry.attributes.position;
@@ -697,12 +702,30 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
 
   const hab = world.outposts.find((o) => o.kind === "hab");
   const inner = hab?.group.getObjectByName("innerLight");
-  if (inner) inner.intensity = (world.habSealed ? 1.1 : 0.45) + (world.powered ? 0.5 : 0) + night * 0.4;
+  const bat = world.hab?.battery ?? 0.3;
+  const live = world.hab?.gridOn;
+  const lights = world.hab?.lightsOn !== false;
+  if (inner) {
+    if (!live || !lights) inner.intensity = live ? 0.16 : 0.08;
+    else inner.intensity = (world.habSealed ? 1.35 : 0.48) + bat * 0.7;
+    inner.color?.setHex(!live || bat < 0.12 ? 0xff3a18 : 0xffe0b0);
+  }
+  const consoleGlow = hab?.group.getObjectByName("habConsole");
+  if (consoleGlow?.material) {
+    consoleGlow.material.emissiveIntensity = live ? (isMobileView() ? 1.1 : 0.55) : 0.08;
+  }
+  for (let i = 0; i < 3; i++) {
+    const cell = hab?.group.getObjectByName(`roofCell${i}`);
+    if (!cell?.material) continue;
+    const ok = (world.hab?.arrayHealth ?? 0) > 0.22 + i * 0.24;
+    cell.material.color?.setHex(ok ? 0x243044 : 0x1a1210);
+    if (cell.material.emissive) cell.material.emissive.setHex(ok && world.daylight > 0.2 ? 0x1a3050 : 0x000000);
+  }
 
   for (const st of world.stations) {
     if (st.type === "still" && st.fuel > 0) {
       st.fuel -= dt;
-      st.water += dt * 0.045;
+      st.water += dt * 0.045 * (world.science?.known?.ice ? 1.12 : 1);
       const globe = st.mesh.getObjectByName("stillGlobe");
       if (globe) globe.material.emissiveIntensity = 0.55 + Math.sin(performance.now() / 280) * 0.25;
       const stillGlow = st.mesh.getObjectByName("stillGlow");
@@ -711,7 +734,10 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       if (gauge) gauge.scale.set(1, 1 + Math.min(6, st.water * 0.4), 1);
     }
     if (st.type === "plot" && st.planted && st.grow < 1) {
-      st.grow += dt * (0.018 + world.daylight * 0.016);
+      const f = cropFactors(world);
+      st.moisture = Math.max(0, (st.moisture ?? 0.4) - dt * 0.007);
+      const soil = world.science?.known?.soil ? 1.12 : 1;
+      st.grow += dt * 0.01 * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
       updatePlotVisual(st);
     }
   }
@@ -734,15 +760,19 @@ export function updatePlotVisual(st) {
 }
 
 export function advanceSol(world) {
-  world.clock = (world.clock + 0.42) % 1;
+  simulateSleep(world, 96);
+  const f = cropFactors(world);
+  const soil = world.science?.known?.soil ? 1.12 : 1;
   for (const st of world.stations) {
     if (st.type === "plot" && st.planted) {
-      st.grow = Math.min(1, st.grow + 0.55);
+      st.moisture = Math.max(0.05, (st.moisture ?? 0.4) * 0.62);
+      st.grow = Math.min(1, st.grow + 0.34 * f.light * f.temp * Math.max(0.2, st.moisture) * soil);
       updatePlotVisual(st);
     }
     if (st.type === "still" && st.fuel > 0) {
-      st.water += 6;
-      st.fuel = Math.max(0, st.fuel - 12);
+      st.water += 5;
+      st.fuel = Math.max(0, st.fuel - 10);
+      if (world.hab) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);
     }
   }
 }
@@ -1057,7 +1087,12 @@ function dressHabRoom(g, { hull, orange, bunkMat, sheet, tex }) {
   g.add(box(hull, 0.08, 0.72, 0.08, 1.05, 0.4, -1.1));
   g.add(box(hull, 0.08, 0.72, 0.08, 2.05, 0.4, -1.6));
   const screen = std({ color: 0x1a2830, emissive: 0x4ec4e8, emissiveIntensity: mobile ? 1.1 : 0.55 });
-  g.add(box(screen, 0.42, 0.28, 0.04, 1.55, 1.08, -1.55));
+  const consoleMesh = box(screen, 0.42, 0.28, 0.04, 1.55, 1.08, -1.55);
+  consoleMesh.name = "habConsole";
+  g.add(consoleMesh);
+  const consoleTag = makePlate(mobile ? "SYS" : "CONSOLE", 0.7, 0.16);
+  consoleTag.position.set(1.55, 0.95, -0.95);
+  g.add(consoleTag);
   const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), orange);
   deskLamp.position.set(1.95, 1.02, -1.2);
   g.add(deskLamp);
@@ -1180,6 +1215,15 @@ function buildOutpost(data) {
     const plate = makePlate("ARES III", 2.3, 0.55);
     plate.position.set(0, 2.55, 6.55);
     g.add(plate);
+    const cellMat = std({ color: 0x243044, map: tex.solar, roughness: 0.32, metalness: 0.42 });
+    const deadMat = std({ color: 0x1a1210, roughness: 0.7, metalness: 0.15 });
+    for (let i = 0; i < 3; i++) {
+      const ok = i === 0;
+      const cell = box((ok ? cellMat : deadMat).clone(), 1.15, 0.05, 0.72, (i - 1) * 1.28, 4.58, -1.15);
+      cell.rotation.x = ok ? -0.12 : -0.38;
+      cell.name = `roofCell${i}`;
+      g.add(cell);
+    }
     const hole = new THREE.Mesh(
       new THREE.CircleGeometry(0.58, 16),
       std({

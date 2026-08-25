@@ -2,6 +2,8 @@ let ctx;
 let windGain;
 let droneGain;
 let humGain;
+let hissGain;
+let breathGain;
 let master;
 let dripTimer = 0;
 
@@ -53,14 +55,39 @@ export function startAudio() {
   hum.connect(humGain);
   humGain.connect(master);
   hum.start();
+
+  const hissFilter = ctx.createBiquadFilter();
+  hissFilter.type = "bandpass";
+  hissFilter.frequency.value = 2400;
+  hissFilter.Q.value = 0.7;
+  hissGain = ctx.createGain();
+  hissGain.gain.value = 0;
+  const hiss = ctx.createBufferSource();
+  hiss.buffer = noiseBuffer;
+  hiss.loop = true;
+  hiss.connect(hissFilter);
+  hissFilter.connect(hissGain);
+  hissGain.connect(master);
+  hiss.start();
+
+  const breath = ctx.createOscillator();
+  breath.type = "sine";
+  breath.frequency.value = 9;
+  breathGain = ctx.createGain();
+  breathGain.gain.value = 0;
+  breath.connect(breathGain);
+  breathGain.connect(master);
+  breath.start();
 }
 
-export function setAmbience({ storm = 0, inside = false, sealed = false, night = false } = {}) {
+export function setAmbience({ storm = 0, inside = false, sealed = false, night = false, leak = false, o2 = 100, grid = true } = {}) {
   if (!windGain) return;
-  const outside = inside ? 0.28 : 1;
+  const outside = inside ? 0.22 : 1;
   windGain.gain.value = (0.04 + storm * 0.28 + (night ? 0.03 : 0)) * outside;
   if (droneGain) droneGain.gain.value = 0.12 + storm * 0.1;
-  if (humGain) humGain.gain.value = inside && sealed ? 0.05 : inside ? 0.02 : 0;
+  if (humGain) humGain.gain.value = inside && sealed && grid ? 0.055 : inside ? 0.018 : 0;
+  if (hissGain) hissGain.gain.value = leak ? (inside ? 0.085 : 0.025) : 0;
+  if (breathGain) breathGain.gain.value = o2 < 34 ? ((34 - o2) / 34) * 0.07 : 0;
 }
 
 export function setStormAudio(intensity) {

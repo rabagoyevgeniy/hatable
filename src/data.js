@@ -11,6 +11,12 @@ export const OUTPOSTS = [
 
 export const SPAWN = { x: 1.2, z: 18.5 };
 
+/** Hab origin and interior interact points (world XZ). */
+export const HAB_POS = { x: 0, z: 8 };
+export const HAB_DESK = { x: 1.55, z: 6.65 };
+export const HAB_BUNK = { x: -1.55, z: 6.45 };
+export const HAB_ARRAY = { x: 0, z: 3.9 };
+
 export const ITEMS = {
   scrap: { color: 0xe8e2d4, beacon: 0xc5d4de, name: { en: "Scrap", ru: "Металлолом" } },
   rock: { color: 0xd4893a, beacon: 0xff9a3c, name: { en: "Rock", ru: "Камень" } },
@@ -57,6 +63,7 @@ export const NODE_SPAWNS = [
   { type: "fabric", x: -11, z: 9 },
   { type: "fabric", x: -7.2, z: 7.4 },
   { type: "tape", x: -5, z: 15 },
+  { type: "solar", x: 9.4, z: 6.1, needHammer: true },
   { type: "ice", x: 7.8, z: 21.6 },
   { type: "ice", x: -3.4, z: 23.2 },
   { type: "ice", x: 18, z: 28 },

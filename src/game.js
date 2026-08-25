@@ -37,7 +37,11 @@ import {
   storageOpen,
   renderStorage,
   renderInv,
+  toggleHabConsole,
+  refreshContinue,
 } from "./ui.js";
+import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
+import { noteScan } from "./systems/science.js";
 
 export async function boot() {
   applyDom();
@@ -89,10 +93,21 @@ export async function boot() {
   const touchMove = { x: 0, y: 0 };
   const coarse = isMobileView();
   let touchScan = false;
+  let saveAcc = 0;
+  let scanAcc = 0;
 
   bindUi({
-    start() {
+    start(load) {
       startAudio();
+      if (load) {
+        const data = readSave();
+        if (data) {
+          applySave(data, { player, world, journal, placeStation, updatePlotVisual });
+          if (player.tools.hammer) attachHammer(player);
+        }
+      } else {
+        clearSave();
+      }
       playing = true;
       showHud();
       const g = currentGoal(journal);
@@ -100,6 +115,7 @@ export async function boot() {
       const touchUi = document.getElementById("touch-ui");
       if (coarse && touchUi) touchUi.classList.remove("hidden");
       if (!coarse) canvas.requestPointerLock?.();
+      persist();
     },
     lang() {
       toggleLang();
@@ -133,6 +149,27 @@ export async function boot() {
       pickupTone();
       renderInv(player);
       renderStorage(world);
+    },
+    habAct(act) {
+      if (!world.hab) return;
+      if (act === "heater") {
+        world.hab.heaterOn = !world.hab.heaterOn;
+        toast(world.hab.heaterOn ? t("heaterOn") : t("heaterOff"));
+      } else if (act === "lights") {
+        world.hab.lightsOn = !world.hab.lightsOn;
+        toast(world.hab.lightsOn ? t("lightsOn") : t("lightsOff"));
+      } else if (act === "drink") {
+        if (world.hab.waterTank < 0.35) {
+          toast(t("tankEmpty"));
+          return;
+        }
+        world.hab.waterTank -= 0.4;
+        player.thirst = Math.min(100, player.thirst + 22);
+        player.drank = true;
+        pickupTone("water");
+        toast(t("drankTank"));
+        maybeGoal();
+      }
     },
   });
 
@@ -229,6 +266,7 @@ export async function boot() {
       deliverTone();
       toast(`${t("placed")} · ${loc(rec.title)}`);
       maybeGoal();
+      persist();
       return;
     }
     if (hit.kind === "gather") {
@@ -253,6 +291,23 @@ export async function boot() {
       else canvas.requestPointerLock?.();
       return;
     }
+    if (hit.kind === "console") {
+      const open = toggleHabConsole(world);
+      if (open) document.exitPointerLock?.();
+      else canvas.requestPointerLock?.();
+      return;
+    }
+    if (hit.kind === "repair-array") {
+      if (!takeItems(player, { solar: 1 })) {
+        toast(t("needMats"));
+        return;
+      }
+      world.hab.arrayHealth = Math.min(1, world.hab.arrayHealth + 0.24);
+      deliverTone();
+      toast(`${t("arrayRepaired")} · ${Math.round(world.hab.arrayHealth * 100)}%`);
+      persist();
+      return;
+    }
     if (hit.kind === "sleep") {
       const result = trySleep(player, world);
       if (result === "slept") {
@@ -260,6 +315,7 @@ export async function boot() {
         journal.sols += 1;
         const plot = world.stations.find((s) => s.type === "plot" && s.planted);
         toast(plot ? `${t("slept")} · ${Math.floor(plot.grow * 100)}%` : t("slept"));
+        persist();
       } else {
         toast(t(result));
       }
@@ -285,13 +341,16 @@ export async function boot() {
       takeItems(player, { potato: 1 });
       hit.station.planted = true;
       hit.station.grow = 0;
+      hit.station.moisture = 0.85;
       pickupTone("potato");
       toast(t("planted"));
+      persist();
       return;
     }
     if (hit.kind === "water-plot") {
       takeItems(player, { water: 1 });
-      hit.station.grow = Math.min(1, hit.station.grow + 0.42);
+      hit.station.moisture = 1;
+      hit.station.grow = Math.min(1, hit.station.grow + 0.08);
       updatePlotVisual(hit.station);
       pickupTone("water");
       toast(t("watered"));
@@ -307,10 +366,16 @@ export async function boot() {
       player.harvestedCrop = true;
       hit.station.planted = false;
       hit.station.grow = 0;
+      hit.station.moisture = 0.2;
       updatePlotVisual(hit.station);
       deliverTone();
       maybeGoal();
     }
+  }
+
+  function persist() {
+    writeSave(collectSave(player, world, journal));
+    refreshContinue();
   }
 
   function maybeGoal() {
@@ -509,6 +574,9 @@ export async function boot() {
 
   window.addEventListener("resize", fitCanvas);
   window.visualViewport?.addEventListener("resize", fitCanvas);
+  window.addEventListener("pagehide", () => {
+    if (playing) persist();
+  });
   fitCanvas();
 
   function frame(now) {
@@ -536,7 +604,36 @@ export async function boot() {
         inside: result.inside,
         sealed: world.habSealed,
         night: world.daylight < 0.28,
+        leak: !world.habSealed,
+        o2: player.oxygen,
+        grid: !!world.hab?.gridOn,
       });
+      if (scanning) {
+        scanAcc += dt;
+        if (scanAcc > 0.35) {
+          scanAcc = 0;
+          let nearest = null;
+          let nd = 5.2;
+          for (const n of world.nodes) {
+            if (n.taken) continue;
+            const d = Math.hypot(player.root.position.x - n.mesh.position.x, player.root.position.z - n.mesh.position.z);
+            if (d < nd) {
+              nd = d;
+              nearest = n.type;
+            }
+          }
+          if (!nearest && result.inside) nearest = world.habSealed ? "hab" : "leak";
+          const entry = noteScan(world, nearest);
+          if (entry) toast(`${t("scanned")} · ${loc(entry)}`);
+        }
+      } else {
+        scanAcc = 0;
+      }
+      saveAcc += dt;
+      if (saveAcc > 22) {
+        saveAcc = 0;
+        persist();
+      }
       placeCamera(dt);
       if (currentGoal(journal)?.id === "escape") maybeGoal();
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });

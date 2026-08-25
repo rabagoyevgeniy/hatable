@@ -39,6 +39,7 @@
             You were left for dead. Scavenge. Craft. Survive. Science the shit out of it.
           </p>
           <div class="title-actions">
+            <button id="btn-continue" class="primary hidden" data-i18n="continue">CONTINUE</button>
             <button id="btn-start" class="primary" data-i18n="begin">WAKE UP</button>
             <button id="btn-lang" class="ghost">RU / EN</button>
           </div>
@@ -65,7 +66,7 @@
           <div class="right">
             <p class="label">HAB</p>
             <p id="hab-status">LEAK</p>
-            <p id="base-line">утечка</p>
+            <p id="base-line">P -- · BAT --</p>
           </div>
         </header>
 
@@ -156,6 +157,19 @@
         </div>
         <ul id="craft-list"></ul>
         <p class="muted" data-i18n="craftHint">Need a hammer to build stations. Place with E.</p>
+      </div>
+
+      <div id="hab-console" class="panel hidden menu wide console">
+        <div class="panel-head">
+          <p class="label" data-i18n="consoleTitle">HAB SYSTEMS</p>
+          <button type="button" class="panel-close" data-close-menu aria-label="close">✕</button>
+        </div>
+        <pre id="hab-readout"></pre>
+        <div class="console-acts">
+          <button type="button" class="chip" data-hab="heater" id="hab-heater">HEATER</button>
+          <button type="button" class="chip" data-hab="lights" id="hab-lights">LIGHTS</button>
+          <button type="button" class="chip" data-hab="drink" data-i18n="drinkTank">DRINK FROM TANK</button>
+        </div>
       </div>
 
       <div id="end-screen" class="screen hidden">

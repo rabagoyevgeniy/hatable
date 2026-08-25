@@ -230,7 +230,14 @@ function clamp(v) {
 }
 
 export function isInsideHab(player) {
-  return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 8.8;
+  return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 6.2;
+}
+
+export function estimateRangeM(player, world) {
+  const storm = world.storm || 0;
+  const rate = SURVIVAL.o2Outside + (world.habSealed ? 0.05 : 0.22) + storm * SURVIVAL.o2Storm;
+  const seconds = player.oxygen / Math.max(0.08, rate);
+  return (seconds * 3.05) / 2;
 }
 
 export function updatePlayer(player, dt, input, world) {
@@ -311,14 +318,18 @@ export function updatePlayer(player, dt, input, world) {
   player.root.rotation.y = yaw;
 
   const night = world.daylight < 0.28;
-  const leak = world.habSealed ? 0.12 : 0.52;
+  const hab = world.hab;
+  const pressureOk = world.habSealed && hab && hab.pressure > 0.48;
   if (inside) {
-    player.oxygen = clamp(player.oxygen + dt * (world.habSealed ? 8 : -leak));
-    player.warmth = clamp(player.warmth + dt * (world.powered ? 10 : night ? -3.2 : 3));
+    if (pressureOk) player.oxygen = clamp(player.oxygen + dt * 8);
+    else player.oxygen = clamp(player.oxygen - dt * (hab ? Math.max(0.08, (1 - hab.pressure) * 0.42) : 0.28));
+    const tC = hab ? hab.insideC : 8;
+    const targetW = Math.max(14, Math.min(96, 50 + tC * 2));
+    player.warmth = clamp(player.warmth + (targetW - player.warmth) * Math.min(1, dt * 0.4));
     player.hunger = clamp(player.hunger - dt * SURVIVAL.hungerHab);
     player.thirst = clamp(player.thirst - dt * SURVIVAL.thirstHab);
   } else {
-    player.oxygen = clamp(player.oxygen - dt * (SURVIVAL.o2Outside + leak * 0.4 + world.storm * SURVIVAL.o2Storm));
+    player.oxygen = clamp(player.oxygen - dt * (SURVIVAL.o2Outside + (world.habSealed ? 0.05 : 0.22) + world.storm * SURVIVAL.o2Storm));
     player.warmth = clamp(
       player.warmth - dt * (night ? SURVIVAL.warmthNight : SURVIVAL.warmthDay) * (world.storm + 0.55)
     );
@@ -355,7 +366,7 @@ export function trySleep(player, world) {
   player.thirst = clamp(player.thirst - 16);
   if (world.habSealed) player.oxygen = 100;
   else player.oxygen = clamp(player.oxygen + 12);
-  player.warmth = clamp(world.powered ? 88 : player.warmth + 18);
+  player.warmth = clamp(world.hab?.insideC > 12 ? 86 : player.warmth + 14);
   return "slept";
 }
 

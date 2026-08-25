@@ -1,14 +1,18 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS } from "./data.js";
-import { count, canAfford, itemName, isInsideHab, pocketSlots } from "./player.js";
+import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY } from "./data.js";
+import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
+import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
+import { weatherLabel } from "./systems/weather.js";
+import { hasSave } from "./systems/save.js";
 
 const $ = (id) => document.getElementById(id);
 
 export function bindUi(handlers) {
-  $("btn-start").addEventListener("click", handlers.start);
+  $("btn-start").addEventListener("click", () => handlers.start(false));
+  $("btn-continue")?.addEventListener("click", () => handlers.start(true));
   $("btn-lang").addEventListener("click", handlers.lang);
   $("btn-again").addEventListener("click", () => location.reload());
   $("craft-list").addEventListener("click", (e) => {
@@ -25,6 +29,10 @@ export function bindUi(handlers) {
     const btn = e.target.closest("[data-item]");
     if (btn) handlers.takeStorage(btn.dataset.item);
   });
+  $("hab-console")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-hab]");
+    if (btn) handlers.habAct(btn.dataset.hab);
+  });
   document.querySelectorAll("[data-close-menu]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -32,6 +40,13 @@ export function bindUi(handlers) {
     });
   });
   $("menu-scrim")?.addEventListener("click", () => closeMenus());
+  refreshContinue();
+}
+
+export function refreshContinue() {
+  const btn = $("btn-continue");
+  if (!btn) return;
+  btn.classList.toggle("hidden", !hasSave());
 }
 
 export function showHud() {
@@ -48,7 +63,8 @@ export function menusOpen() {
   return (
     !$("craft").classList.contains("hidden") ||
     !$("inv").classList.contains("hidden") ||
-    !$("storage").classList.contains("hidden")
+    !$("storage").classList.contains("hidden") ||
+    ($("hab-console") && !$("hab-console").classList.contains("hidden"))
   );
 }
 
@@ -89,7 +105,33 @@ export function closeMenus() {
   $("craft").classList.add("hidden");
   $("inv").classList.add("hidden");
   $("storage").classList.add("hidden");
+  $("hab-console")?.classList.add("hidden");
   syncMenuChrome();
+}
+
+export function toggleHabConsole(world) {
+  $("craft").classList.add("hidden");
+  $("inv").classList.add("hidden");
+  $("storage").classList.add("hidden");
+  const el = $("hab-console");
+  if (!el) return false;
+  el.classList.toggle("hidden");
+  if (!el.classList.contains("hidden")) renderHabConsole(world);
+  syncMenuChrome();
+  return !el.classList.contains("hidden");
+}
+
+export function consoleOpen() {
+  return $("hab-console") && !$("hab-console").classList.contains("hidden");
+}
+
+export function renderHabConsole(world) {
+  const pre = $("hab-readout");
+  if (pre) pre.textContent = habReadout(world, getLang());
+  const heat = $("hab-heater");
+  const lights = $("hab-lights");
+  if (heat) heat.textContent = world.hab?.heaterOn ? t("heaterOn") : t("heaterOff");
+  if (lights) lights.textContent = world.hab?.lightsOn ? t("lightsOn") : t("lightsOff");
 }
 
 function syncMenuChrome() {
@@ -188,11 +230,14 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   colorBar("bar-warmth", player.warmth);
 
   const warn = $("vital-warn");
-  if (player.thirst < 22) warn.textContent = t("warnThirst");
-  else if (player.hunger < 22) warn.textContent = t("warnHunger");
-  else if (player.oxygen < 22) warn.textContent = t("warnO2");
-  else if (player.warmth < 22) warn.textContent = t("warnWarmth");
-  else warn.textContent = "";
+  const alerts = [];
+  if (player.thirst < 22) alerts.push(t("warnThirst"));
+  else if (player.hunger < 22) alerts.push(t("warnHunger"));
+  else if (player.oxygen < 22) alerts.push(t("warnO2"));
+  else if (player.warmth < 22) alerts.push(t("warnWarmth"));
+  if (!alerts.length && world.hab && !world.habSealed && inside) alerts.push(t("warnLeak"));
+  if (!alerts.length && world.hab && world.hab.battery < 0.16) alerts.push(t("warnBattery"));
+  warn.textContent = alerts[0] || "";
 
   const goal = currentGoal(journal);
   $("goal-step").textContent = `${Math.min(journal.index + 1, 8)} / 8`;
@@ -214,8 +259,10 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   if (tod) tod.textContent = timeOfDay(world);
   const stormFlag = $("storm-flag");
   if (stormFlag) {
-    stormFlag.classList.toggle("hidden", world.storm < 0.42);
-    stormFlag.textContent = t("storm");
+    const dusty = (world.weather?.state === "dust" && (world.weather?.warn || 0) > 0.4) || world.storm > 0.42;
+    const storming = world.weather?.state === "storm" || world.storm > 0.62;
+    stormFlag.classList.toggle("hidden", !dusty && !storming);
+    stormFlag.textContent = storming ? t("storm") : t("dustWarn");
   }
   renderHotbar(player);
   const base = $("base-line");
@@ -223,8 +270,12 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
     const still = world.stations.find((s) => s.type === "still");
     const plot = world.stations.find((s) => s.type === "plot");
     const bits = [];
-    bits.push(world.habSealed ? (getLang() === "ru" ? "герметика" : "sealed") : getLang() === "ru" ? "утечка" : "leak");
-    bits.push(world.powered ? (getLang() === "ru" ? "ток" : "power") : getLang() === "ru" ? "тьма" : "dark");
+    if (world.hab) {
+      bits.push(`P ${(world.hab.pressure * 100).toFixed(0)}%`);
+      bits.push(`BAT ${(world.hab.battery * 100).toFixed(0)}%`);
+    }
+    bits.push(weatherLabel(world, getLang()));
+    if (!inside) bits.push(`${t("range")} ${Math.max(0.1, estimateRangeM(player, world) / 1000).toFixed(1)} km`);
     if (still) bits.push(`${getLang() === "ru" ? "вода" : "still"} ${Math.floor(still.water)}`);
     if (plot?.planted) bits.push(`${getLang() === "ru" ? "рост" : "crop"} ${Math.floor(plot.grow * 100)}%`);
     base.textContent = bits.join(" · ");
@@ -240,9 +291,10 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   const hint = $("first-hint");
   if (hint) hint.classList.toggle("hidden", player.tools.hammer || player.gathered > 0);
 
-  const leak = world.habSealed ? (world.powered ? "SEALED + PWR" : "SEALED") : "LEAK";
+  const leak = habStatusLine(world, getLang());
   $("hab-status").textContent = leak;
-  $("hab-status").style.color = world.habSealed ? "#8fd3b0" : "#ff5a3c";
+  const danger = !world.habSealed || (world.hab && (world.hab.battery < 0.18 || world.hab.pressure < 0.5));
+  $("hab-status").style.color = danger ? "#ff5a3c" : "#8fd3b0";
 
   const near = nearestOutpost(world, player.root.position);
   $("location-label").textContent =
@@ -260,10 +312,14 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
     : String(Math.max(0, 0.55 - world.daylight));
   $("scan-overlay").style.opacity = scanning ? "1" : "0";
   document.body.classList.toggle("inside-hab", !!inside);
+  document.body.classList.toggle("hab-leak", !world.habSealed);
+  document.body.classList.toggle("low-o2", player.oxygen < 26);
+  document.body.classList.toggle("cold", player.warmth < 26);
 
   if (!$("craft").classList.contains("hidden")) renderCraft(player);
   if (!$("inv").classList.contains("hidden")) renderInv(player);
   if (!$("storage").classList.contains("hidden")) renderStorage(world);
+  if (consoleOpen()) renderHabConsole(world);
 
   updateScanLabels(player, world, camera, scanning);
   updatePrompt(player, world);
@@ -272,7 +328,8 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
 function timeOfDay(world) {
   const d = world.daylight;
   const ru = getLang() === "ru";
-  if (world.storm > 0.45) return ru ? "БУРЯ" : "STORM";
+  if (world.weather?.state === "storm" || world.storm > 0.62) return ru ? "БУРЯ" : "STORM";
+  if (world.weather?.state === "dust") return ru ? "ПЫЛЬ" : "DUST";
   if (d < 0.18) return ru ? "НОЧЬ" : "NIGHT";
   if (d < 0.38) return ru ? "СУМЕРКИ" : "DUSK";
   if (d > 0.82) return ru ? "ПОЛДЕНЬ" : "NOON";
@@ -321,7 +378,6 @@ export function findInteract(player, world) {
   const p = player.root.position;
   const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
   const inside = isInsideHab(player);
-  const habD = Math.hypot(p.x, p.z - 8);
 
   let gather = null;
   let gatherD = 5.4;
@@ -356,15 +412,32 @@ export function findInteract(player, world) {
         return { kind: "water-plot", station: st, label: `${t("waterPlot")}  ·  ${Math.floor(st.grow * 100)}%` };
       }
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvest") };
-      if (st.planted) return { kind: "wait-plot", station: st, label: `${t("growing")}  ·  ${Math.floor(st.grow * 100)}%` };
+      if (st.planted) {
+        const f = cropFactors(world);
+        const wet = st.moisture ?? 0;
+        let why = `${t("growing")}  ·  ${Math.floor(st.grow * 100)}%`;
+        if (f.light < 0.35) why += ` · ${t("lowLight")}`;
+        else if (f.temp < 0.35) why += ` · ${t("lowTemp")}`;
+        else if (wet < 0.25) why += ` · ${t("lowMoist")}`;
+        return { kind: "wait-plot", station: st, label: why };
+      }
     }
   }
 
+  const deskD = Math.hypot(p.x - HAB_DESK.x, p.z - HAB_DESK.z);
+  const bunkD = Math.hypot(p.x - HAB_BUNK.x, p.z - HAB_BUNK.z);
+  const arrayD = Math.hypot(p.x - HAB_ARRAY.x, p.z - HAB_ARRAY.z);
+
   if (gather && gatherD < 3.2 && gatherD <= lockerD) return gather;
-  if (inside && habD < 5.1 && lockerD > 2.5) return { kind: "sleep", label: t("sleep") };
+  if (inside && deskD < 1.85) return { kind: "console", label: t("console") };
+  if (arrayD < 3.4 && count(player, "solar") > 0 && (world.hab?.arrayHealth ?? 1) < 0.97) {
+    return { kind: "repair-array", label: `${t("repairArray")}  ·  ${Math.round((world.hab?.arrayHealth || 0) * 100)}%` };
+  }
+  if (inside && bunkD < 2.15) return { kind: "sleep", label: t("sleep") };
   if (lockerD < 4.0) return { kind: "locker", label: t("locker") };
   if (gather) return gather;
-  if (inside && habD < 7.4) return { kind: "sleep", label: t("sleep") };
+  if (inside && deskD < 2.6) return { kind: "console", label: t("console") };
+  if (inside && bunkD < 3.4) return { kind: "sleep", label: t("sleep") };
   return null;
 }
 
@@ -477,11 +550,19 @@ function updateScanLabels(player, world, camera, scanning) {
     }
     if (!mobile && Math.hypot(p.x, p.z - 8) < 16) {
       targets.push({
-        x: -1.4,
+        x: HAB_BUNK.x,
         y: 2.2,
-        z: 6.4,
+        z: HAB_BUNK.z,
         title: lang === "ru" ? "КОЙКА · СОН" : "BUNK · SLEEP",
         sub: "",
+        loot: true,
+      });
+      targets.push({
+        x: HAB_DESK.x,
+        y: 2.2,
+        z: HAB_DESK.z,
+        title: lang === "ru" ? "КОНСОЛЬ HAB" : "HAB CONSOLE",
+        sub: world.hab ? `P ${(world.hab.pressure * 100).toFixed(0)}%` : "",
         loot: true,
       });
     }
