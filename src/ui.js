@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY } from "./data.js";
+import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK } from "./data.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -374,6 +374,9 @@ function colorBar(id, v) {
 export function findInteract(player, world) {
   if (player.placing) {
     const spot = resolvePlacement(world, player.placing, player);
+    if (player.placing.station === "seal") {
+      return { kind: "place", label: spot.valid ? t("patchLeak") : t("needLeak") };
+    }
     return { kind: "place", label: spot.valid ? t("place") : t("needNear") };
   }
   const p = player.root.position;
@@ -437,16 +440,22 @@ export function findInteract(player, world) {
   const deskD = Math.hypot(p.x - HAB_DESK.x, p.z - HAB_DESK.z);
   const bunkD = Math.hypot(p.x - HAB_BUNK.x, p.z - HAB_BUNK.z);
   const arrayD = Math.hypot(p.x - HAB_ARRAY.x, p.z - HAB_ARRAY.z);
+  const leakD = Math.hypot(p.x - HAB_LEAK.x, p.z - HAB_LEAK.z);
 
   const interior = pickInteriorAction({
     deskD,
     bunkD,
     lockerD,
     gatherD,
+    leakD,
     inside,
     usedConsole: !!player.usedConsole,
+    sealed: !!world.habSealed,
+    canPatch: canAfford(player, { fabric: 2, tape: 1 }),
   });
   if (interior?.kind === "gather") return gather;
+  if (interior?.kind === "patch") return { kind: "patch", label: t("patchLeak") };
+  if (interior?.kind === "leak-hint") return { kind: "leak-hint", label: t("leakHint") };
   if (interior?.kind === "console") return { kind: "console", label: t("console") };
   if (interior?.kind === "sleep") return { kind: "sleep", label: t("sleep") };
   if (interior?.kind === "locker") {
@@ -570,6 +579,16 @@ function updateScanLabels(player, world, camera, scanning) {
       });
     }
     if (!mobile && Math.hypot(p.x, p.z - 8) < 16) {
+      if (!world.habSealed) {
+        targets.push({
+          x: HAB_LEAK.x,
+          y: 2.05,
+          z: HAB_LEAK.z,
+          title: lang === "ru" ? "УТЕЧКА" : "LEAK",
+          sub: lang === "ru" ? "слева от шлюза" : "left of hatch",
+          loot: true,
+        });
+      }
       targets.push({
         x: HAB_BUNK.x,
         y: 2.2,

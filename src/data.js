@@ -16,6 +16,8 @@ export const HAB_POS = { x: 0, z: 8 };
 export const HAB_DESK = { x: 1.55, z: 9.2 };
 export const HAB_BUNK = { x: -1.55, z: 6.45 };
 export const HAB_ARRAY = { x: 0, z: 3.9 };
+/** Torn canvas on the left wall just inside the hatch — world XZ. */
+export const HAB_LEAK = { x: -2.15, z: 9.45 };
 
 export const ITEMS = {
   scrap: { color: 0xe8e2d4, beacon: 0xc5d4de, name: { en: "Scrap", ru: "Металлолом" } },
@@ -59,6 +61,7 @@ export const NODE_SPAWNS = [
   { type: "rock", x: 1.4, z: 16.8, starter: true },
   { type: "rock", x: -4.5, z: 20 },
   { type: "rock", x: 16, z: 22 },
+  { type: "fabric", x: -6.1, z: 11.4 },
   { type: "fabric", x: -8.5, z: 12 },
   { type: "fabric", x: -11, z: 9 },
   { type: "fabric", x: -7.2, z: 7.4 },
@@ -116,7 +119,7 @@ export const RECIPES = [
     near: "hab",
     need: { fabric: 2, tape: 1 },
     title: { en: "Hab seal", ru: "Заплата Hab" },
-    brief: { en: "Two canvas, one tape from the locker. E at the Hab — the patch sits on the leak.", ru: "Два брезента, скотч из шкафа. E у Hab — заплата сядет на дыру." },
+    brief: { en: "Two canvas (left of hatch) + tape from the locker. E on the torn canvas LEFT inside the airlock.", ru: "Два брезента слева от шлюза + скотч из шкафа. E по рваному брезенту СЛЕВА сразу за шлюзом." },
   },
   {
     id: "still",
@@ -160,7 +163,7 @@ export const RECIPES = [
 export const GOAL_DEST = {
   gather: { x: 1.4, z: 16.4 },
   hammer: { x: 0, z: 8 },
-  seal: { x: 0, z: 8 },
+  seal: { x: -2.15, z: 9.45 },
   water: { x: -6.4, z: 10.6 },
   farm: { x: -18, z: 13 },
   power: { x: 48, z: 108 },
@@ -202,8 +205,8 @@ export const GOALS = [
     sol: 20,
     title: { en: "Seal the Hab", ru: "Запечатай Hab" },
     brief: {
-      en: "Two canvas, one tape (locker). Craft, then E at the Hab — the patch goes on the leak, not in the yard.",
-      ru: "Два брезента, один скотч (шкаф). Скрафть и нажми E у Hab — заплата сядет на дыру, не во двор.",
+      en: "Two canvas left of the hatch, tape in the locker. Walk to the torn canvas LEFT inside the airlock and press E — or craft the patch first.",
+      ru: "Два брезента слева от шлюза, скотч в шкафу. Подойди к рваному брезенту СЛЕВА сразу за шлюзом и нажми E — или скрафть заплату заранее.",
     },
     log: {
       from: "WATNEY",

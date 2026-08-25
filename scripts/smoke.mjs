@@ -4,7 +4,7 @@ import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habSta
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, dist } from "../src/systems/interact.js";
-import { HAB_DESK, HAB_BUNK } from "../src/data.js";
+import { HAB_DESK, HAB_BUNK, HAB_LEAK } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 
 const root = resolve(import.meta.dirname, "..");
@@ -52,6 +52,7 @@ must(world.includes("from \"./motion.js\""), "Hab flag/leak steam import");
 const ui = readFileSync(resolve(root, "src/ui.js"), "utf8");
 must(ui.includes("kind: \"console\""), "desk opens console not whole-hab sleep");
 must(ui.includes("pickInteriorAction"), "interior E uses shared picker");
+must(ui.includes("kind: \"patch\""), "leak is an interior action");
 
 /* Live sim: leak, seal, day/night battery. */
 const worldSim = {
@@ -154,6 +155,74 @@ must(
   }).kind === "console",
   "two steps inward prefers Hab console"
 );
+
+must(
+  pickInteriorAction({
+    inside: true,
+    sealed: false,
+    canPatch: true,
+    leakD: dist(0, 10.2, HAB_LEAK.x, HAB_LEAK.z),
+    deskD: dist(0, 10.2, HAB_DESK.x, HAB_DESK.z),
+    lockerD: dist(0, 10.2, locker.x, locker.z),
+    bunkD: 9,
+  }).kind === "patch",
+  "aisle from hatch prefers leak while unsealed"
+);
+must(
+  pickInteriorAction({
+    inside: true,
+    sealed: false,
+    canPatch: false,
+    leakD: dist(HAB_DESK.x, HAB_DESK.z, HAB_LEAK.x, HAB_LEAK.z),
+    deskD: 0,
+    lockerD: 9,
+    bunkD: 9,
+  }).kind === "console",
+  "desk still opens console when you walk to it while leaking"
+);
+must(
+  pickInteriorAction({
+    inside: true,
+    sealed: false,
+    leakD: dist(locker.x, locker.z, HAB_LEAK.x, HAB_LEAK.z),
+    deskD: dist(locker.x, locker.z, HAB_DESK.x, HAB_DESK.z),
+    lockerD: 0,
+    bunkD: 9,
+  }).kind === "locker",
+  "airlock locker still wins outside leak range"
+);
+
+const leakingNight = {
+  clock: 0.78,
+  daylight: 0,
+  storm: 0,
+  habSealed: false,
+  stations: [],
+  hab: createHabitat(),
+};
+tickTime(leakingNight, 0);
+leakingNight.hab.heaterOn = true;
+for (let i = 0; i < 40; i++) tickHabitat(leakingNight, 1);
+must(leakingNight.hab.battery < 0.56, "leaking heated night spends battery");
+must(leakingNight.hab.battery > 0.22, "leaking night is tense but not an instant blackout");
+const leakNightBat = leakingNight.hab.battery;
+const savedNight = {
+  clock: 0.78,
+  daylight: 0,
+  storm: 0,
+  habSealed: true,
+  stations: [],
+  hab: createHabitat(),
+};
+tickTime(savedNight, 0);
+savedNight.hab.heaterOn = false;
+savedNight.hab.lightsOn = false;
+for (let i = 0; i < 40; i++) tickHabitat(savedNight, 1);
+must(savedNight.hab.battery > leakNightBat + 0.03, "seal + cut heater saves the night");
+
+must(game.includes("kind === \"patch\""), "E at torn canvas patches without a yard ghost");
+must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("HAB_LEAK"), "leak has a world-space interact point");
+must(readFileSync(resolve(root, "src/i18n.js"), "utf8").includes("enterHab"), "first entry toast names left leak / right console");
 
 let grow = 0;
 let moist = 1;

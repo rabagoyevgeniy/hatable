@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { heightAt, fbm, normalAt } from "./noise.js";
-import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
+import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS, HAB_LEAK, HAB_POS } from "./data.js";
 import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
@@ -388,8 +388,8 @@ export function padTaken(world, pad) {
 export function resolvePlacement(world, rec, player) {
   const raw = placementSpot(player);
   if (rec.station === "seal") {
-    const d = Math.hypot(player.root.position.x, player.root.position.z - 8);
-    return { x: 0, z: 3.6, y: heightAt(0, 3.6), valid: d < 16 && !world.habSealed, snap: true };
+    const d = Math.hypot(player.root.position.x - HAB_LEAK.x, player.root.position.z - HAB_LEAK.z);
+    return { x: HAB_LEAK.x, z: HAB_LEAK.z, y: heightAt(HAB_LEAK.x, HAB_LEAK.z), valid: d < 4.2 && !world.habSealed, snap: true };
   }
   if (rec.station === "radio") {
     const site = OUTPOSTS.find((o) => o.id === "pathfinder");
@@ -459,6 +459,14 @@ export function placeStation(world, station, x, z) {
     const patch = hab?.group.getObjectByName("patch");
     if (leak) leak.visible = false;
     if (patch) patch.visible = true;
+    const rag = hab?.group.getObjectByName("leakRag");
+    const plate = hab?.group.getObjectByName("leakPlate");
+    const light = hab?.group.getObjectByName("leakLight");
+    const steam = hab?.group.getObjectByName("leakSteam");
+    if (rag) rag.visible = false;
+    if (plate) plate.visible = false;
+    if (light) light.visible = false;
+    if (steam) steam.visible = false;
     const st = { type: "seal", mesh: hab?.group, x: 0, z: 8, water: 0, fuel: 0, planted: false, grow: 0 };
     world.stations.push(st);
     return st;
@@ -720,6 +728,15 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   if (consoleGlow?.material) {
     const pulse = !world.habSealed ? 0.85 + 0.45 * Math.sin(performance.now() / 220) : live ? (isMobileView() ? 1.1 : 0.55) : 0.08;
     consoleGlow.material.emissiveIntensity = pulse;
+  }
+  const leakHole = hab?.group.getObjectByName("leak");
+  const leakLight = hab?.group.getObjectByName("leakLight");
+  if (leakHole?.material) {
+    leakHole.material.emissiveIntensity = world.habSealed ? 0 : 0.65 + 0.45 * Math.sin(performance.now() / 180);
+  }
+  if (leakLight) {
+    leakLight.visible = !world.habSealed;
+    leakLight.intensity = world.habSealed ? 0 : 1.05 + 0.55 * Math.sin(performance.now() / 160);
   }
   for (let i = 0; i < 3; i++) {
     const cell = hab?.group.getObjectByName(`roofCell${i}`);
@@ -1232,23 +1249,54 @@ function buildOutpost(data) {
       cell.name = `roofCell${i}`;
       g.add(cell);
     }
+    const leakLocal = { x: HAB_LEAK.x - HAB_POS.x, z: HAB_LEAK.z - HAB_POS.z };
+    const wallX = -3.28;
+    const wallZ = 1.38;
     const hole = new THREE.Mesh(
-      new THREE.CircleGeometry(0.58, 16),
+      new THREE.CircleGeometry(0.72, 18),
       std({
-        color: 0x1a0c08,
-        emissive: 0x501808,
-        emissiveIntensity: 0.45,
+        color: 0x140806,
+        emissive: 0xff6a28,
+        emissiveIntensity: 0.85,
         side: THREE.DoubleSide,
       })
     );
-    hole.position.set(0, 1.65, -4.15);
-    hole.rotation.y = Math.PI;
+    hole.position.set(wallX, 1.62, wallZ);
+    hole.lookAt(0, 1.62, 0);
     hole.name = "leak";
     g.add(hole);
-    g.add(makeLeakSteam());
-    const patch = new THREE.Mesh(new THREE.CircleGeometry(0.72, 16), std({ color: 0xe8dcc8, map: tex.hull, roughness: 0.7 }));
-    patch.position.set(0, 1.65, -4.12);
-    patch.rotation.y = Math.PI;
+    const rag = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.35, 1.05, 6, 4),
+      std({
+        color: 0xe8c090,
+        map: tex.eva,
+        side: THREE.DoubleSide,
+        roughness: 0.78,
+        emissive: 0x6a3010,
+        emissiveIntensity: 0.22,
+      })
+    );
+    rag.position.set(wallX + 0.12, 1.68, wallZ + 0.08);
+    rag.lookAt(0, 1.55, 0.4);
+    rag.name = "leakRag";
+    g.add(rag);
+    const steam = makeLeakSteam();
+    steam.position.set(leakLocal.x, 1.55, leakLocal.z);
+    g.add(steam);
+    const leakGlow = new THREE.PointLight(0x9ee8ff, 1.35, 7);
+    leakGlow.position.set(leakLocal.x, 1.7, leakLocal.z);
+    leakGlow.name = "leakLight";
+    g.add(leakGlow);
+    const leakTag = makePlate("LEAK", 0.95, 0.22);
+    leakTag.position.set(-2.05, 1.78, 2.42);
+    leakTag.name = "leakPlate";
+    g.add(leakTag);
+    const patch = new THREE.Mesh(
+      new THREE.CircleGeometry(0.88, 16),
+      std({ color: 0xe8dcc8, map: tex.hull, roughness: 0.7 })
+    );
+    patch.position.copy(hole.position);
+    patch.rotation.copy(hole.rotation);
     patch.name = "patch";
     patch.visible = false;
     g.add(patch);

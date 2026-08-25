@@ -52,4 +52,18 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Prompt: «ДИСТИЛЛЯТОР СТОИТ — нет сети Hab»; console alert STILL OFFLINE
 - Smoke: heater off saves night battery and lets the Hab go cold; still does not fill the tank without grid
 
-Next: pump/filter repair as a scavenger reason, not more items.
+### Cycle F — still pump diagnostic
+
+- After ~56s of powered runtime the still pump dies (`fault: "pump"`)
+- Repair: hammer + 1 wire + 1 scrap (wire at the solar graveyard)
+- Failed pump makes no water and sheds load
+
+### Cycle G — leak findable on the airlock path
+
+- Torn canvas + steam + LEAK plate moved to the LEFT wall just inside the hatch (desk stays right)
+- Aisle from the airlock prefers `ЗАЛАТАТЬ УТЕЧКУ` / leak hint while unsealed; walking to the desk still opens the console
+- E at the hole with 2 canvas + tape patches without a yard ghost; craft-then-place still works
+- First-entry toast names left leak / right console (was a missing `enterHab` string)
+- Night feel: leaking + heater spends battery; seal + cut heater saves the night
+
+Next: playtest leak → seal → console heater → sleep. Rover still waits.

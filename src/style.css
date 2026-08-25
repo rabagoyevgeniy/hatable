@@ -527,6 +527,11 @@ button:hover {
   font-size: 15px;
 }
 
+body.hab-leak #prompt {
+  border-color: #ff7a3c;
+  box-shadow: 0 0 16px rgba(255, 90, 60, 0.4);
+}
+
 #log {
   position: absolute;
   right: 28px;

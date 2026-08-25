@@ -20,6 +20,8 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Hab interior furniture (bunk/desk/crates)
 - Weather state machine CLEAR / DUST / STORM (after first emergency minutes)
 - Still requires live Hab grid (night heater vs water)
+- Still pump fails after a short run; salvage wire at the solar wreck to repair
+- Leak is on the left wall inside the hatch (prompt + steam + plate), not the far back wall
 
 ## PARTIAL
 
@@ -32,7 +34,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 ## NOT IMPLEMENTED
 
 - Rover (drive/battery/storage)
-- Repair diagnostics as a full signature (pump/filter failures)
+- Repair diagnostics as a full signature (filter / other machines; still pump is in)
 - Remote shelters, cart, suit upgrades
 - Escape as an engineering project (MAV is still a place)
 - Event director (random fair failures)

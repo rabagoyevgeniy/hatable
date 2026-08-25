@@ -17,19 +17,24 @@ export function tickMotion(world, dt) {
 
   const leak = world.scene.getObjectByName("leak");
   const steam = world.scene.getObjectByName("leakSteam");
+  const rag = world.scene.getObjectByName("leakRag");
   if (steam) {
     steam.visible = !world.habSealed && leak?.visible !== false;
     if (steam.visible) {
       const pos = steam.geometry.attributes.position;
       for (let i = 0; i < pos.count; i++) {
-        let y = pos.getY(i) + dt * (0.55 + (i % 5) * 0.08);
-        if (y > 2.4) y = 0.05 * Math.random();
+        let y = pos.getY(i) + dt * (0.7 + (i % 5) * 0.1);
+        if (y > 2.6) y = 0.05 * Math.random();
         pos.setY(i, y);
-        pos.setX(i, pos.getX(i) + Math.sin(t * 3 + i) * dt * 0.08);
+        pos.setX(i, pos.getX(i) + Math.sin(t * 3 + i) * dt * 0.12);
       }
       pos.needsUpdate = true;
-      steam.material.opacity = 0.38 + Math.sin(t * 4) * 0.1;
+      steam.material.opacity = 0.48 + Math.sin(t * 4) * 0.14;
     }
+  }
+  if (rag && !world.habSealed) {
+    rag.rotation.z = Math.sin(t * 6.4) * 0.12;
+    rag.rotation.x = Math.sin(t * 4.1) * 0.05;
   }
 
   for (const o of world.outposts || []) {
@@ -90,27 +95,27 @@ export function tickMotion(world, dt) {
 }
 
 export function makeLeakSteam() {
-  const n = 48;
+  const n = 72;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 0.4;
-    positions[i * 3 + 1] = Math.random() * 1.6;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 0.25;
+    positions[i * 3] = (Math.random() - 0.5) * 0.55;
+    positions[i * 3 + 1] = Math.random() * 1.8;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   const steam = new THREE.Points(
     geo,
     new THREE.PointsMaterial({
-      color: 0xe8f0f8,
-      size: 0.2,
+      color: 0xe8f4ff,
+      size: 0.28,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.52,
       depthWrite: false,
     })
   );
   steam.name = "leakSteam";
-  steam.position.set(0, 1.55, -4.05);
+  steam.position.set(-2.15, 1.55, 1.45);
   return steam;
 }
 

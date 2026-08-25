@@ -6,8 +6,8 @@
 
 ## P1
 
-- Still pump / filter diagnostics (grid coupling is in)
 - Hab-as-home audio polish
+- First-night playtest: leak → seal → console heater → sleep
 
 ## P2
 

@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
-import { RECIPES, SURVIVAL } from "./data.js";
+import { RECIPES, SURVIVAL, HAB_LEAK } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
+import { repairStillPump } from "./systems/machines.js";
 import {
   createPlayer,
   updatePlayer,
@@ -336,6 +337,24 @@ async function bootGame() {
       } else canvas.requestPointerLock?.();
       return;
     }
+    if (hit.kind === "leak-hint") {
+      toast(t("needPatchMats"));
+      return;
+    }
+    if (hit.kind === "patch") {
+      if (!takeItems(player, { fabric: 2, tape: 1 })) {
+        toast(t("needPatchMats"));
+        return;
+      }
+      placeStation(world, "seal", HAB_LEAK.x, HAB_LEAK.z);
+      player.placing = null;
+      setGhost(world, null);
+      deliverTone();
+      toast(t("patched"));
+      maybeGoal();
+      persist();
+      return;
+    }
     if (hit.kind === "repair-array") {
       if (!takeItems(player, { solar: 1 })) {
         toast(t("needMats"));
@@ -369,8 +388,7 @@ async function bootGame() {
         toast(t("needPumpParts"));
         return;
       }
-      hit.station.fault = null;
-      hit.station.repaired = true;
+      repairStillPump(hit.station);
       deliverTone();
       toast(t("pumpFixed"));
       persist();
