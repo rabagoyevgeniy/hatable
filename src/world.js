@@ -3,6 +3,7 @@ import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
 import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
+import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors } from "./systems/habitat.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience } from "./systems/science.js";

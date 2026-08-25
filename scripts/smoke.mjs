@@ -44,7 +44,7 @@ must(html.includes("hab-console"), "hab console panel");
 const world = readFileSync(resolve(root, "src/world.js"), "utf8");
 must(world.includes("function dressHabRoom"), "Hab interior is a dressed room");
 must(world.includes("tickHabitat"), "habitat sim in world tick");
-must(world.includes("tickWeather"), "weather state machine");
+must(world.includes("from \"./motion.js\""), "Hab flag/leak steam import");
 
 const ui = readFileSync(resolve(root, "src/ui.js"), "utf8");
 must(ui.includes("kind: \"console\""), "desk opens console not whole-hab sleep");
