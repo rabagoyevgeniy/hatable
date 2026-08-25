@@ -329,8 +329,10 @@ async function bootGame() {
     if (hit.kind === "console") {
       player.usedConsole = true;
       const open = toggleHabConsole(world);
-      if (open) document.exitPointerLock?.();
-      else canvas.requestPointerLock?.();
+      if (open) {
+        toast(t("consoleTitle"));
+        document.exitPointerLock?.();
+      } else canvas.requestPointerLock?.();
       return;
     }
     if (hit.kind === "repair-array") {

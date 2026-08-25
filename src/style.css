@@ -972,15 +972,18 @@ li.ready .recipe {
 
 #hab-console.console {
   font-family: "Share Tech Mono", monospace;
-  border-color: rgba(78, 196, 232, 0.35);
-  background: rgba(8, 14, 16, 0.82);
+  border-color: rgba(78, 196, 232, 0.55);
+  background: rgba(6, 16, 18, 0.92);
+  bottom: 132px;
+  width: min(420px, 52vw);
+  box-shadow: 0 0 28px rgba(78, 196, 232, 0.18);
 }
 
 #hab-readout {
   margin: 8px 0 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #8fd3b0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #9ee8c4;
   white-space: pre-wrap;
 }
 

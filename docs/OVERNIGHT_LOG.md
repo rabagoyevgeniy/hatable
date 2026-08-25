@@ -39,4 +39,6 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Weather waits ~280s so the leak emergency is not also a storm
 - Start battery 58%; leaking life-support load slightly lower (heater still the night decision)
 
-Next: playtest walk-in → console → heater toggle.
+- Playtest: tester reached КОНС- prompt and pressed E at the moved desk (panel OCR was weak; panel contrast raised after)
+
+Next: confirm heater toggle in a clean run, then water/food pacing.
