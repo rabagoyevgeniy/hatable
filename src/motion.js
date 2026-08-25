@@ -26,7 +26,7 @@ export function tickMotion(world, dt) {
         pos.setX(i, pos.getX(i) + Math.sin(t * 3 + i) * dt * 0.08);
       }
       pos.needsUpdate = true;
-      steam.material.opacity = 0.22 + Math.sin(t * 4) * 0.06;
+      steam.material.opacity = 0.38 + Math.sin(t * 4) * 0.1;
     }
   }
 
@@ -91,10 +91,10 @@ export function makeLeakSteam() {
   const steam = new THREE.Points(
     geo,
     new THREE.PointsMaterial({
-      color: 0xc8d8e8,
-      size: 0.12,
+      color: 0xe8f0f8,
+      size: 0.2,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.45,
       depthWrite: false,
     })
   );

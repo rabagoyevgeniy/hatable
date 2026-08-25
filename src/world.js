@@ -940,7 +940,8 @@ function buildOutpost(data) {
     g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
     g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
     const flag = makeClothFlag();
-    flag.position.set(-4.15, 2.05, 0.55);
+    flag.position.set(2.05, 2.55, 6.48);
+    flag.rotation.y = 0.35;
     g.add(flag);
     g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 1.8));
     g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.28, 1.6, 3.6, 0.85, 2.5));
