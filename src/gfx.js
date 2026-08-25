@@ -257,11 +257,11 @@ const SKY_FRAG = /* glsl */ `
     vec3 sunCol = vec3(1.0, 0.88, 0.62);
     vec3 marsBlue = vec3(0.42, 0.58, 0.92);
     col += sunCol * sun * (1.0 - night) * 1.35;
-    col += mix(sunCol, marsBlue, dusk) * glow * (1.0 - night) * 0.35;
+    col += mix(sunCol, marsBlue, dusk) * glow * (1.0 - night) * 0.42;
     col += marsBlue * dusk * pow(max(0.0, dot(dir, normalize(sunDir))), 12.0) * 0.55;
 
-    float haze = pow(1.0 - abs(h), 2.2);
-    col = mix(col, vec3(0.62, 0.34, 0.2), haze * 0.28 * (1.0 - night));
+    float haze = pow(1.0 - abs(h), 2.35);
+    col = mix(col, vec3(0.68, 0.38, 0.22), haze * 0.34 * (1.0 - night));
     col = mix(col, vec3(0.42, 0.22, 0.12), storm * 0.55);
     gl_FragColor = vec4(col, 1.0);
   }
@@ -338,4 +338,35 @@ export function packedYard() {
   m.position.y = 0.04;
   m.receiveShadow = true;
   return m;
+}
+
+export function dustSprite() {
+  const t = canvasTex(64, (ctx, s) => {
+    const g = ctx.createRadialGradient(s / 2, s / 2, 1, s / 2, s / 2, s / 2);
+    g.addColorStop(0, "rgba(255, 228, 196, 0.95)");
+    g.addColorStop(0.28, "rgba(214, 146, 88, 0.42)");
+    g.addColorStop(1, "rgba(140, 62, 28, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+  });
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}
+
+/** Low horizon band so Meshy props sit in Mars dust, not a hard sky cut. */
+export function makeHaze() {
+  const geo = new THREE.SphereGeometry(490, 36, 18, 0, Math.PI * 2, Math.PI * 0.4, Math.PI * 0.18);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xc47a4a,
+    transparent: true,
+    opacity: 0.32,
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.name = "haze";
+  mesh.frustumCulled = false;
+  mesh.renderOrder = -8;
+  return mesh;
 }

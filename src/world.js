@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS } from "./data.js";
-import { maps, makeSky, makeSunHalo, packedYard, std } from "./gfx.js";
-import { takeModel } from "./models.js";
+import { maps, makeSky, makeSunHalo, packedYard, std, makeHaze, dustSprite } from "./gfx.js";
+import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 
 const TERRAIN_SIZE = 620;
@@ -19,6 +19,7 @@ const LOOT_FIT = {
   wire: 0.5,
   comms: 0.55,
   solar: 0.82,
+  solarcell: 0.7,
 };
 
 export function createWorld(scene) {
@@ -35,11 +36,11 @@ export function createWorld(scene) {
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 2;
-  sun.shadow.camera.far = 180;
-  sun.shadow.camera.left = -42;
-  sun.shadow.camera.right = 42;
-  sun.shadow.camera.top = 42;
-  sun.shadow.camera.bottom = -42;
+  sun.shadow.camera.far = 160;
+  sun.shadow.camera.left = -34;
+  sun.shadow.camera.right = 34;
+  sun.shadow.camera.top = 34;
+  sun.shadow.camera.bottom = -34;
   sun.shadow.bias = -0.0006;
   sun.shadow.normalBias = 0.035;
   scene.add(sun);
@@ -71,6 +72,8 @@ export function createWorld(scene) {
   scene.add(makeDebris());
   const dust = makeDust();
   scene.add(dust);
+  const haze = makeHaze();
+  scene.add(haze);
   const scanRing = makeScanRing();
   scene.add(scanRing);
 
@@ -110,6 +113,7 @@ export function createWorld(scene) {
     hemi,
     stars,
     dust,
+    haze,
     scanRing,
     clock: 0.12,
     ghost,
@@ -139,36 +143,9 @@ export function spawnNode(world, type, x, z, extra = {}) {
   const starter = !!extra.starter;
   const group = new THREE.Group();
   group.add(lootMesh(type, def.color, wreck));
+  addLootMarker(group, { starter, wreck, color: def.beacon || 0xffe0a8 });
 
-  const beaconCol = wreck ? 0xff4a32 : starter ? 0x7ee8ff : def.beacon || 0xffe0a8;
-  const stemH = wreck ? 1.9 : starter ? 3.15 : 2.15;
-  const stem = new THREE.Mesh(
-    new THREE.CylinderGeometry(starter ? 0.06 : 0.04, starter ? 0.08 : 0.045, stemH, 6),
-    new THREE.MeshBasicMaterial({ color: beaconCol })
-  );
-  stem.position.y = stemH * 0.5 + 0.15;
-  group.add(stem);
-  const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(starter ? 0.18 : wreck ? 0.14 : 0.11, 10, 8),
-    new THREE.MeshBasicMaterial({ color: beaconCol })
-  );
-  bulb.position.y = stemH + 0.28;
-  group.add(bulb);
-
-  if (starter) {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.58, 0.78, 24),
-      new THREE.MeshBasicMaterial({ color: 0x7ee8ff, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.05;
-    group.add(ring);
-    const light = new THREE.PointLight(0x7ee8ff, 1.4, 15);
-    light.position.y = 2.1;
-    group.add(light);
-  }
-
-  group.position.set(x, heightAt(x, z) + (wreck ? 0.16 : 0.3), z);
+  group.position.set(x, heightAt(x, z) + (wreck ? 0.02 : starter ? 0.05 : 0.02), z);
   group.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
@@ -188,10 +165,51 @@ export function spawnNode(world, type, x, z, extra = {}) {
   return node;
 }
 
+function lootModelId(type, wreck) {
+  if (wreck) return "scrap";
+  if (type === "solar" && hasModel("solarcell")) return "solarcell";
+  return type;
+}
+
+function addLootMarker(group, { starter, wreck, color }) {
+  const col = wreck ? 0xff4a32 : starter ? 0x7ee8ff : color;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(starter ? 0.62 : wreck ? 0.9 : 0.4, starter ? 0.84 : wreck ? 1.14 : 0.54, 28),
+    new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide, transparent: true, opacity: starter ? 0.88 : 0.52 })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.04;
+  ring.name = "lootMark";
+  group.add(ring);
+  if (starter) {
+    const pin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.028, 0.045, 1.05, 8),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 })
+    );
+    pin.position.y = 1.0;
+    pin.name = "lootPin";
+    group.add(pin);
+    const bulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 12, 10),
+      new THREE.MeshBasicMaterial({ color: col })
+    );
+    bulb.position.y = 1.58;
+    bulb.name = "lootBulb";
+    group.add(bulb);
+    const light = new THREE.PointLight(col, 1.15, 12);
+    light.position.y = 1.35;
+    group.add(light);
+  }
+}
+
 function lootMesh(type, color, wreck) {
-  const fit = wreck ? 2.05 : LOOT_FIT[type] || 0.8;
-  const ready = takeModel(wreck ? "scrap" : type, fit);
-  if (ready) return ready;
+  const id = lootModelId(type, wreck);
+  const fit = wreck ? 2.05 : LOOT_FIT[id] || LOOT_FIT[type] || 0.8;
+  const ready = takeModel(id, fit);
+  if (ready) {
+    ready.name = "lootSpin";
+    return ready;
+  }
   const tex = maps();
   const mat = std({
     color,
@@ -204,6 +222,7 @@ function lootMesh(type, color, wreck) {
   });
   if (wreck || type === "scrap") {
     const g = new THREE.Group();
+    g.name = "lootSpin";
     const a = new THREE.Mesh(new THREE.BoxGeometry(wreck ? 1.7 : 0.95, wreck ? 0.75 : 0.48, wreck ? 1.15 : 0.7), mat);
     a.rotation.y = 0.4;
     g.add(a);
@@ -213,9 +232,13 @@ function lootMesh(type, color, wreck) {
     g.add(shard);
     return g;
   }
-  if (type === "rock") return new THREE.Mesh(new THREE.DodecahedronGeometry(0.62, 0), mat);
+  if (type === "rock") {
+    const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.62, 0), mat);
+    m.name = "lootSpin";
+    return m;
+  }
   if (type === "ice") {
-    return new THREE.Mesh(
+    const ice = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.5, 1),
       new THREE.MeshPhysicalMaterial({
         color: 0xd4f0ff,
@@ -229,9 +252,12 @@ function lootMesh(type, color, wreck) {
         opacity: 0.88,
       })
     );
+    ice.name = "lootSpin";
+    return ice;
   }
   if (type === "fabric") {
     const g = new THREE.Group();
+    g.name = "lootSpin";
     const cloth = new THREE.Mesh(
       new THREE.PlaneGeometry(1.15, 0.8, 6, 4),
       std({ color: 0xf4ead8, map: tex.hull, roughness: 0.85, side: THREE.DoubleSide })
@@ -241,32 +267,53 @@ function lootMesh(type, color, wreck) {
     g.add(cloth);
     return g;
   }
-  if (type === "tape") return new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 10, 16), mat);
+  if (type === "tape") {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 10, 16), mat);
+    m.name = "lootSpin";
+    return m;
+  }
   if (type === "potato") {
     const p = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mat);
     p.scale.set(1, 0.82, 1.12);
+    p.name = "lootSpin";
     return p;
   }
-  if (type === "soil") return new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.4, 7), mat);
+  if (type === "soil") {
+    const m = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.4, 7), mat);
+    m.name = "lootSpin";
+    return m;
+  }
   if (type === "solar") {
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(0.9, 0.06, 0.6),
       std({ color: 0x1a2838, map: tex.solar, roughness: 0.25, metalness: 0.45 })
     );
     m.rotation.x = -0.4;
+    m.name = "lootSpin";
     return m;
   }
-  if (type === "wire") return new THREE.Mesh(new THREE.TorusKnotGeometry(0.18, 0.04, 48, 8), mat);
-  if (type === "comms") return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.22, 0.7), mat);
+  if (type === "wire") {
+    const m = new THREE.Mesh(new THREE.TorusKnotGeometry(0.18, 0.04, 48, 8), mat);
+    m.name = "lootSpin";
+    return m;
+  }
+  if (type === "comms") {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.22, 0.7), mat);
+    m.name = "lootSpin";
+    return m;
+  }
   if (type === "hydrazine") {
     const g = new THREE.Group();
+    g.name = "lootSpin";
     g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 12), mat));
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.12, 8), std({ color: 0xc8c0b4, metalness: 0.6, roughness: 0.3 }));
     cap.position.y = 0.4;
     g.add(cap);
     return g;
   }
-  return new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), mat);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), mat);
+  box.name = "lootSpin";
+  return box;
 }
 
 function makeLocker(x, z) {
@@ -446,6 +493,18 @@ function buildStation(type) {
   const ready = takeModel(type);
   if (ready) {
     ready.userData.motion = type;
+    if (type === "still") {
+      const glow = new THREE.PointLight(0x6ec8e8, 0.25, 6);
+      glow.name = "stillGlow";
+      glow.position.set(0, 1.35, 0);
+      ready.add(glow);
+    }
+    if (type === "radio") {
+      const blink = new THREE.PointLight(0x7ed8f0, 0.55, 8);
+      blink.name = "radioBlink";
+      blink.position.set(0, 1.85, 0);
+      ready.add(blink);
+    }
     return ready;
   }
   const g = new THREE.Group();
@@ -586,7 +645,11 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   );
   world.scene.background.copy(fogCol);
   world.scene.fog.color.copy(fogCol);
-  world.scene.fog.density = 0.0078 + night * 0.006 + world.storm * 0.02;
+  world.scene.fog.density = 0.0074 + night * 0.006 + world.storm * 0.022;
+  if (world.haze?.material) {
+    world.haze.material.color.copy(fogCol);
+    world.haze.material.opacity = 0.22 + world.storm * 0.28 + night * 0.12;
+  }
 
   world.storm += (world.stormTarget - world.storm) * Math.min(1, dt * 0.35);
   if (!playing || (world.playTime || 0) < 160) {
@@ -622,8 +685,9 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
 
   for (const node of world.nodes) {
     if (node.taken) continue;
-    const bob = node.needHammer ? 0 : 0.06 * Math.sin(performance.now() / 380 + node.mesh.position.x);
-    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + (node.needHammer ? 0.16 : 0.32) + bob;
+    const bob = node.needHammer ? 0 : 0.035 * Math.sin(performance.now() / 420 + node.mesh.position.x);
+    const lift = node.needHammer ? 0.02 : node.starter ? 0.05 : 0.02;
+    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + lift + bob;
   }
 
   const hab = world.outposts.find((o) => o.kind === "hab");
@@ -636,6 +700,8 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       st.water += dt * 0.045;
       const globe = st.mesh.getObjectByName("stillGlobe");
       if (globe) globe.material.emissiveIntensity = 0.55 + Math.sin(performance.now() / 280) * 0.25;
+      const stillGlow = st.mesh.getObjectByName("stillGlow");
+      if (stillGlow) stillGlow.intensity = 0.55 + Math.sin(performance.now() / 280) * 0.35;
       const gauge = st.mesh.getObjectByName("waterGauge");
       if (gauge) gauge.scale.set(1, 1 + Math.min(6, st.water * 0.4), 1);
     }
@@ -778,30 +844,32 @@ function makeMountains() {
 }
 
 function makeDust() {
-  const n = 2200;
+  const n = 2800;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 220;
-    positions[i * 3 + 1] = Math.random() * 16;
+    positions[i * 3 + 1] = Math.random() * 18;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 220;
-    const k = 0.75 + Math.random() * 0.25;
+    const k = 0.7 + Math.random() * 0.3;
     colors[i * 3] = k;
-    colors[i * 3 + 1] = k * 0.72;
-    colors[i * 3 + 2] = k * 0.48;
+    colors[i * 3 + 1] = k * 0.7;
+    colors[i * 3 + 2] = k * 0.42;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   const points = new THREE.Points(
     geo,
     new THREE.PointsMaterial({
+      map: dustSprite(),
       vertexColors: true,
-      size: 0.32,
+      size: 0.55,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.34,
       depthWrite: false,
       sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
     })
   );
   points.userData.n = n;
@@ -839,31 +907,46 @@ function makeDebris() {
   const g = new THREE.Group();
   const rust = std({ color: 0x8a4a2a, map: maps().rock, roughness: 0.9, flatShading: true });
   const pale = std({ color: 0xd8cfc4, map: maps().metal, roughness: 0.5, metalness: 0.28, flatShading: true });
-  const spots = [
-    [6.5, 6.2, 1.4, 0.35, rust],
-    [-7.2, 4.8, 1.1, 0.5, pale],
-    [9.4, 11.5, 0.9, 0.4, rust],
-    [-5.8, 2.2, 1.8, 0.25, pale],
-    [11.2, 7.8, 0.7, 0.55, rust],
-    [-12.4, 10.2, 1.2, 0.3, pale],
+  const meshySpots = [
+    ["scrap", 1.35, 6.5, 6.2, 0.5],
+    ["rock", 0.95, -7.2, 4.8, 1.2],
+    ["scrap", 1.1, 9.4, 11.5, -0.4],
+    ["crate", 0.72, -5.8, 2.2, 0.8],
+    ["rock", 1.25, 11.2, 7.8, 0.2],
+    ["scrap", 1.0, -12.4, 10.2, 2.1],
+    ["rock", 0.7, 4.2, 19.6, 0.9],
+    ["ice", 0.55, 8.4, 20.2, 0.3],
   ];
-  for (const [x, z, w, h, mat] of spots) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.7), mat);
-    m.position.set(x, heightAt(x, z) + h * 0.5, z);
-    m.rotation.y = x * 0.3;
-    m.castShadow = true;
+  let used = 0;
+  for (const [id, fit, x, z, rot] of meshySpots) {
+    const m = takeModel(id, fit);
+    if (!m) continue;
+    m.position.set(x, heightAt(x, z), z);
+    m.rotation.y = rot;
     g.add(m);
+    used++;
+  }
+  if (!used) {
+    const spots = [
+      [6.5, 6.2, 1.4, 0.35, rust],
+      [-7.2, 4.8, 1.1, 0.5, pale],
+      [9.4, 11.5, 0.9, 0.4, rust],
+      [-5.8, 2.2, 1.8, 0.25, pale],
+      [11.2, 7.8, 0.7, 0.55, rust],
+      [-12.4, 10.2, 1.2, 0.3, pale],
+    ];
+    for (const [x, z, w, h, mat] of spots) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.7), mat);
+      m.position.set(x, heightAt(x, z) + h * 0.5, z);
+      m.rotation.y = x * 0.3;
+      m.castShadow = true;
+      g.add(m);
+    }
   }
   const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4.2, 6), pale);
   strut.position.set(-3.4, heightAt(-3.4, 3.2) + 0.4, 3.2);
   strut.rotation.z = 1.05;
   g.add(strut);
-  const extra = takeModel("crate", 0.85) || takeModel("scrap", 1.3);
-  if (extra) {
-    extra.position.set(8.2, heightAt(8.2, 9.4), 9.4);
-    extra.rotation.y = 0.6;
-    g.add(extra);
-  }
   return g;
 }
 
@@ -969,9 +1052,27 @@ function buildOutpost(data) {
       g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
       g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
     }
-    g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
-    g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
-    g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
+    const desk = takeModel("desk", 1.35);
+    if (desk) {
+      desk.position.set(1.55, 0, -1.45);
+      desk.rotation.y = -0.4;
+      g.add(desk);
+    } else {
+      g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
+      g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
+      g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
+    }
+    const spud = takeModel("potato", 0.16);
+    if (spud) {
+      spud.position.set(1.45, 0.58, 1.05);
+      g.add(spud);
+    }
+    const extraCrate = takeModel("crate", 0.55);
+    if (extraCrate) {
+      extraCrate.position.set(-0.35, 0, 1.65);
+      extraCrate.rotation.y = 0.7;
+      g.add(extraCrate);
+    }
     const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), orange);
     deskLamp.position.set(1.7, 1.05, -1.35);
     g.add(deskLamp);
@@ -1033,39 +1134,114 @@ function buildOutpost(data) {
       }
       g.add(box(rust, 1.2, 0.35, 0.8, 2.6, 0.3, 1.4));
     }
+    const roverScrap = takeModel("scrap", 1.85);
+    if (roverScrap) {
+      roverScrap.position.set(3.4, 0, 2.1);
+      roverScrap.rotation.y = 0.8;
+      g.add(roverScrap);
+    }
+    const roverCrate = takeModel("crate", 0.8);
+    if (roverCrate) {
+      roverCrate.position.set(-2.6, 0, 1.8);
+      roverCrate.rotation.y = -0.5;
+      g.add(roverCrate);
+    }
   } else if (data.kind === "farm") {
-    const hoop = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.08, 8, 24, Math.PI), white);
-    hoop.rotation.z = Math.PI / 2;
-    hoop.position.y = 0.2;
-    g.add(hoop);
-    const hoop2 = hoop.clone();
-    hoop2.position.z = 2.2;
-    g.add(hoop2);
-    const plastic = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 4.2, 6, 16, 1, true, 0, Math.PI),
-      std({ color: 0x7ec98a, transparent: true, opacity: 0.22, roughness: 0.12, side: THREE.DoubleSide })
-    );
-    plastic.rotation.z = Math.PI / 2;
-    plastic.position.y = 2;
-    g.add(plastic);
+    const greenhouse = takeModel("farm", 9.5);
+    if (greenhouse) {
+      g.add(greenhouse);
+    } else {
+      const hoop = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.08, 8, 24, Math.PI), white);
+      hoop.rotation.z = Math.PI / 2;
+      hoop.position.y = 0.2;
+      g.add(hoop);
+      const hoop2 = hoop.clone();
+      hoop2.position.z = 2.2;
+      g.add(hoop2);
+      const plastic = new THREE.Mesh(
+        new THREE.CylinderGeometry(4.2, 4.2, 6, 16, 1, true, 0, Math.PI),
+        std({ color: 0x7ec98a, transparent: true, opacity: 0.22, roughness: 0.12, side: THREE.DoubleSide })
+      );
+      plastic.rotation.z = Math.PI / 2;
+      plastic.position.y = 2;
+      g.add(plastic);
+    }
     const dirt = std({ color: 0x5a3318, map: tex.mars, roughness: 1 });
-    g.add(box(dirt, 2.4, 0.25, 6.5, 0, 0.2, 0));
-    g.add(box(dirt, 2.4, 0.25, 6.5, 2.8, 0.2, 0));
-    g.add(box(dirt, 2.4, 0.25, 6.5, -2.8, 0.2, 0));
     const leaf = std({ color: 0x4a7a38, roughness: 0.7 });
-    for (const x of [-2.2, 0, 2.2]) {
-      for (const z of [-2, 0, 2]) {
-        g.add(mesh(new THREE.ConeGeometry(0.18, 0.55, 5), leaf, x, 0.55, z));
+    let plots = 0;
+    const beds = [
+      [-2.2, -1.6],
+      [0, -1.4],
+      [2.2, -1.8],
+      [-2.0, 1.8],
+      [0.3, 2.0],
+      [2.1, 1.5],
+    ];
+    for (const [x, z] of beds) {
+      const plot = takeModel("plot", 2.15);
+      if (plot) {
+        plot.position.set(x, 0, z);
+        plot.rotation.y = x * 0.15;
+        g.add(plot);
+        plots++;
       }
     }
+    const soilA = takeModel("soil", 1.15);
+    if (soilA) {
+      soilA.position.set(-3.4, 0, 0.2);
+      g.add(soilA);
+    }
+    const soilB = takeModel("soil", 0.9);
+    if (soilB) {
+      soilB.position.set(3.2, 0, 2.4);
+      g.add(soilB);
+    }
+    if (!plots) {
+      g.add(box(dirt, 2.4, 0.25, 6.5, 0, 0.2, 0));
+      g.add(box(dirt, 2.4, 0.25, 6.5, 2.8, 0.2, 0));
+      g.add(box(dirt, 2.4, 0.25, 6.5, -2.8, 0.2, 0));
+      for (const x of [-2.2, 0, 2.2]) {
+        for (const z of [-2, 0, 2]) {
+          g.add(mesh(new THREE.ConeGeometry(0.18, 0.55, 5), leaf, x, 0.55, z));
+        }
+      }
+    }
+    const crate = takeModel("crate", 0.95);
+    if (crate) {
+      crate.position.set(3.6, 0, -0.4);
+      crate.rotation.y = 0.4;
+      g.add(crate);
+    }
   } else if (data.kind === "solar") {
+    let panels = 0;
     for (let i = -3; i <= 3; i++) {
       const broken = i === -1 || i === 2;
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.5), broken ? rust : dark);
-      panel.position.set(i * 1.05, broken ? 0.9 : 1.45, (i % 2) * 0.4);
-      panel.rotation.x = broken ? -1.1 : -0.55;
-      g.add(panel);
-      g.add(box(white, 0.08, 1.2, 0.08, i * 1.05, 0.6, 0.5));
+      const panel = takeModel("solar", 3.35);
+      if (panel) {
+        panel.position.set(i * 2.15, 0, (i % 2) * 0.85);
+        panel.rotation.y = i * 0.12;
+        if (broken) {
+          panel.rotation.z = 0.55;
+          panel.rotation.x = 0.18;
+          panel.position.y = 0.05;
+        }
+        g.add(panel);
+        panels++;
+      } else {
+        const fallback = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.5), broken ? rust : dark);
+        fallback.position.set(i * 1.05, broken ? 0.9 : 1.45, (i % 2) * 0.4);
+        fallback.rotation.x = broken ? -1.1 : -0.55;
+        g.add(fallback);
+        g.add(box(white, 0.08, 1.2, 0.08, i * 1.05, 0.6, 0.5));
+      }
+    }
+    if (panels) {
+      const scrapPile = takeModel("scrap", 1.6);
+      if (scrapPile) {
+        scrapPile.position.set(4.8, 0, 1.4);
+        scrapPile.rotation.y = 0.7;
+        g.add(scrapPile);
+      }
     }
   } else if (data.kind === "pathfinder") {
     const ready = takeModel("pathfinder", 4.2);

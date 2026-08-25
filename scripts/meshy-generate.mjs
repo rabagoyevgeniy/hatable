@@ -9,7 +9,7 @@
  * so the walk cycle keeps named arms and legs.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, access } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -133,6 +133,36 @@ const ASSETS = [
     prompt:
       "Game-ready low-poly open NASA supply crate with metal edges, dusty beige, realistic PBR, isolated prop, no people, no ground plane",
   },
+  {
+    id: "wire",
+    file: "public/models/wire.glb",
+    prompt:
+      "Game-ready low-poly coil of orange copper electrical wire, dusty Mars, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "comms",
+    file: "public/models/comms.glb",
+    prompt:
+      "Game-ready low-poly gold NASA Pathfinder communications circuit board with chips and antenna connector, dusty, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "solarcell",
+    file: "public/models/solarcell.glb",
+    prompt:
+      "Game-ready low-poly single dusty NASA photovoltaic solar cell panel fragment, dark blue cells, metal frame, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "desk",
+    file: "public/models/desk.glb",
+    prompt:
+      "Game-ready low-poly compact NASA Mars habitat work desk with a rugged laptop, dusty, realistic PBR, isolated furniture, no people, no ground plane",
+  },
+  {
+    id: "farm",
+    file: "public/models/farm.glb",
+    prompt:
+      "Game-ready low-poly collapsed NASA greenhouse hoop tunnel on Mars, torn plastic sheeting, metal arcs, rows of red soil, dusty, realistic PBR, isolated structure, no people, no ground plane",
+  },
 ];
 
 if (!KEY) {
@@ -182,7 +212,17 @@ async function download(url, dest) {
   await writeFile(dest, buf);
 }
 
-async function generate(asset) {
+async function generate(asset, force) {
+  const dest = resolve(ROOT, asset.file);
+  if (!force) {
+    try {
+      await access(dest);
+      console.log(`\n== ${asset.id} == skip (already on disk)`);
+      return;
+    } catch {
+      /* generate */
+    }
+  }
   console.log(`\n== ${asset.id} ==`);
   const previewId = await post({
     mode: "preview",
@@ -219,11 +259,12 @@ async function pool(items, n, fn) {
 }
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+const force = process.argv.includes("--force");
 const list = only.length ? ASSETS.filter((a) => only.includes(a.id)) : ASSETS;
 if (!list.length) {
   console.error("No matching assets.");
   process.exit(1);
 }
 
-await pool(list, CONCURRENCY, generate);
+await pool(list, CONCURRENCY, (asset) => generate(asset, force));
 console.log("\nDone. GLBs are in public/models/. The key can be deleted from secrets now.");

@@ -63,6 +63,10 @@ export function tickMotion(world, dt) {
       st.mesh.rotation.y = Math.atan2(Math.sin(ang), Math.cos(ang)) * 0.35;
     } else if (st.type === "radio") {
       st.mesh.rotation.y += dt * (world.contacted ? 0.9 : 0.15);
+      const blink = st.mesh.getObjectByName("radioBlink");
+      if (blink) {
+        blink.intensity = world.contacted ? 0.45 + 0.7 * (0.5 + 0.5 * Math.sin(t * 9)) : 0.22;
+      }
     } else if (st.type === "plot" && st.planted) {
       const sway = Math.sin(t * 1.8 + st.x) * 0.08;
       const plant = st.mesh.getObjectByName("plant");
@@ -74,7 +78,12 @@ export function tickMotion(world, dt) {
 
   for (const node of world.nodes || []) {
     if (node.taken || !node.mesh) continue;
-    node.mesh.rotation.y += dt * (node.starter ? 0.9 : 0.35);
+    const spin = node.mesh.getObjectByName("lootSpin") || node.mesh.children[0];
+    if (spin) spin.rotation.y += dt * (node.starter ? 0.55 : 0.28);
+    const mark = node.mesh.getObjectByName("lootMark");
+    if (mark?.material) {
+      mark.material.opacity = (node.starter ? 0.62 : 0.38) + 0.22 * Math.sin(t * 2.6 + node.mesh.position.x);
+    }
   }
 }
 

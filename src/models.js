@@ -22,6 +22,11 @@ const URLS = {
   hammer: "/models/hammer.glb",
   soil: "/models/soil.glb",
   crate: "/models/crate.glb",
+  wire: "/models/wire.glb",
+  comms: "/models/comms.glb",
+  solarcell: "/models/solarcell.glb",
+  desk: "/models/desk.glb",
+  farm: "/models/farm.glb",
   "watney-walk": "/models/watney-walk.glb",
   "watney-idle": "/models/watney-idle.glb",
   "watney-run": "/models/watney-run.glb",
@@ -29,6 +34,68 @@ const URLS = {
 
 const cache = {};
 let pending = null;
+
+function polishMaterial(mat) {
+  if (!mat) return;
+  if (mat.map) {
+    mat.map.colorSpace = THREE.SRGBColorSpace;
+    mat.map.anisotropy = 8;
+    mat.map.needsUpdate = true;
+  }
+  if (mat.emissiveMap) {
+    mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+    mat.emissiveMap.anisotropy = 8;
+  }
+  if (mat.normalMap) mat.normalMap.anisotropy = 8;
+  if (mat.roughnessMap) mat.roughnessMap.anisotropy = 8;
+  if (mat.metalnessMap) mat.metalnessMap.anisotropy = 8;
+  if (typeof mat.envMapIntensity === "number") mat.envMapIntensity = Math.max(mat.envMapIntensity, 1.2);
+  else mat.envMapIntensity = 1.2;
+  if (typeof mat.roughness === "number" && mat.roughness > 0.92 && !mat.transmission) {
+    mat.roughness = 0.76;
+  }
+  mat.needsUpdate = true;
+}
+
+function polishObject(root) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+    if (Array.isArray(o.material)) {
+      o.material = o.material.map((mat) => {
+        if (mat?.isMeshBasicMaterial) {
+          const std = new THREE.MeshStandardMaterial({
+            map: mat.map,
+            color: mat.color,
+            transparent: mat.transparent,
+            opacity: mat.opacity,
+            roughness: 0.55,
+            metalness: 0.12,
+            envMapIntensity: 1.2,
+          });
+          polishMaterial(std);
+          return std;
+        }
+        polishMaterial(mat);
+        return mat;
+      });
+    } else if (o.material?.isMeshBasicMaterial) {
+      o.material = new THREE.MeshStandardMaterial({
+        map: o.material.map,
+        color: o.material.color,
+        transparent: o.material.transparent,
+        opacity: o.material.opacity,
+        roughness: 0.55,
+        metalness: 0.12,
+        envMapIntensity: 1.2,
+      });
+      polishMaterial(o.material);
+    } else {
+      polishMaterial(o.material);
+    }
+  });
+}
 
 export function preloadModels() {
   if (pending) return pending;
@@ -40,12 +107,7 @@ export function preloadModels() {
           loader.load(
             url,
             (gltf) => {
-              gltf.scene.traverse((o) => {
-                if (o.isMesh) {
-                  o.castShadow = true;
-                  o.receiveShadow = true;
-                }
-              });
+              polishObject(gltf.scene);
               cache[id] = gltf;
               resolve(id);
             },
@@ -84,6 +146,7 @@ export function takeCharacter(fit = 1.92) {
   const walk = cache["watney-walk"] || cache["watney-idle"];
   if (!walk) return null;
   const root = cloneSkinned(walk.scene);
+  polishObject(root);
   fitRoot(root, fit);
   const mixer = new THREE.AnimationMixer(root);
   const walkClip = (cache["watney-walk"]?.animations || [])[0] || walk.animations[0];

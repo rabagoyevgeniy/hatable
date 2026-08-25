@@ -20,6 +20,10 @@ import { createJournal, currentGoal, goalText, checkProgress } from "./journal.j
 import { heightAt } from "./noise.js";
 import { preloadModels } from "./models.js";
 import { bakeEnvironment } from "./gfx.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import {
   bindUi,
   showHud,
@@ -48,20 +52,27 @@ export async function boot() {
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(54, innerWidth / innerHeight, 0.1, 900);
-  camera.position.set(14, 7.6, 34);
+  const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 900);
+  camera.position.set(12.5, 6.8, 31.5);
 
   await preloadModels();
   const world = createWorld(scene);
   const player = createPlayer(scene);
   const journal = createJournal();
   scene.environment = bakeEnvironment(renderer);
-  scene.environmentIntensity = 0.55;
+  scene.environmentIntensity = 0.78;
+
+  const composer = new EffectComposer(renderer);
+  composer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.22, 0.42, 0.84);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
 
   const keys = new Set();
   let playing = false;
@@ -460,6 +471,8 @@ export async function boot() {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    composer.setSize(w, h);
+    bloom.setSize(w, h);
   });
 
   function frame(now) {
@@ -492,15 +505,15 @@ export async function boot() {
       if (currentGoal(journal)?.id === "escape") maybeGoal();
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });
     } else {
-      const t = now * 0.00007;
-      camera.position.set(13 + Math.sin(t) * 3.2, 7.4 + Math.sin(t * 0.6) * 0.4, 33 + Math.cos(t) * 2.4);
-      camera.lookAt(0.4, 2.15, 11);
+      const drift = now * 0.00007;
+      camera.position.set(12.4 + Math.sin(drift) * 2.6, 6.55 + Math.sin(drift * 0.6) * 0.35, 30.5 + Math.cos(drift) * 2.1);
+      camera.lookAt(0.6, 1.85, 13.2);
       updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
-    renderer.toneMappingExposure = 0.78 + world.daylight * 0.42 - world.storm * 0.12;
+    renderer.toneMappingExposure = 0.74 + world.daylight * 0.4 - world.storm * 0.12;
     lookX *= 0.6;
-    renderer.render(scene, camera);
+    composer.render();
     requestAnimationFrame(frame);
   }
 
