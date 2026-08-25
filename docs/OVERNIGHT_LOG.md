@@ -28,4 +28,6 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Suit O₂ round-trip range on the status line when outside
 - Smoke now runs the habitat/weather/science sim, not only string checks
 
-Next: playtest the first Sol in the browser, then deepen water/food and Hab-as-home feel if the loop holds.
+- Browser playtest: WAKE UP, HUD «УТЕЧКА · ДАВЛЕНИЕ ПАДАЕТ», walk on Mars, no JS errors after restoring `motion.js` import
+
+Next: Hab console reachability (tester did not find the desk), first-night battery feel, then deeper water/food if the loop holds.
