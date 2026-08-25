@@ -824,17 +824,7 @@ li.ready .recipe {
   }
 
   #order-card {
-    display: block;
-    top: 64px;
-    left: 8px;
-    right: 8px;
-    width: auto;
-    padding: 10px 12px;
-  }
-
-  #order-card h2 {
-    font-size: 18px;
-    margin: 4px 0 6px;
+    display: none;
   }
 
   #goal-list,

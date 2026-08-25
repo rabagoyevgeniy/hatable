@@ -215,7 +215,7 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
     }).join("");
   }
   const hint = $("first-hint");
-  if (hint) hint.classList.toggle("hidden", player.tools.hammer);
+  if (hint) hint.classList.toggle("hidden", player.tools.hammer || player.gathered > 0);
 
   const leak = world.habSealed ? (world.powered ? "SEALED + PWR" : "SEALED") : "LEAK";
   $("hab-status").textContent = leak;

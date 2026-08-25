@@ -475,14 +475,18 @@ export async function boot() {
     camera.lookAt(player.root.position.x, player.root.position.y + 1.32, player.root.position.z);
   }
 
-  window.addEventListener("resize", () => {
-    const w = innerWidth;
-    const h = innerHeight;
+  function fitCanvas() {
+    const w = Math.round(window.visualViewport?.width || innerWidth);
+    const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-  });
+  }
+
+  window.addEventListener("resize", fitCanvas);
+  window.visualViewport?.addEventListener("resize", fitCanvas);
+  fitCanvas();
 
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
