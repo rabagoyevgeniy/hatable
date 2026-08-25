@@ -388,7 +388,7 @@ async function bootGame() {
     if (hit.kind === "water-plot") {
       takeItems(player, { water: 1 });
       hit.station.moisture = 1;
-      hit.station.grow = Math.min(1, hit.station.grow + 0.08);
+      hit.station.grow = Math.min(1, hit.station.grow + 0.1);
       updatePlotVisual(hit.station);
       pickupTone("water");
       toast(t("watered"));

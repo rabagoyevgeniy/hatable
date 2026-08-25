@@ -39,6 +39,10 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - Weather waits ~280s so the leak emergency is not also a storm
 - Start battery 58%; leaking life-support load slightly lower (heater still the night decision)
 
-- Playtest: tester reached КОНС- prompt and pressed E at the moved desk (panel OCR was weak; panel contrast raised after)
+### Cycle D — interact tests + first harvest pacing
 
-Next: confirm heater toggle in a clean run, then water/food pacing.
+- Extract `pickInteriorAction` (airlock locker vs desk) and lock it in smoke
+- Sleep grows crops from current moisture first, then soil dries — four watered Sols can finish a plant
+- Watering still not an instant harvest
+
+Next: heater toggle in a clean Hab run if a human is on the stick; otherwise still-pump diagnostics.

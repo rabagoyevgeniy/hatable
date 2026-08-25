@@ -13,7 +13,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Sleep advances Sol and ticks habitat/weather/crops
 - Versioned localStorage save: Continue / New Game / autosave
 - Still (ice/hydrazine → water, also pipes into Hab tank)
-- Plot with persistent moisture / light / temperature factors
+- Plot with persistent moisture / light / temperature; ~4 watered Sols to harvest
 - Seal patch visual
 - Journal 8-step (guidance only)
 - RU/EN, mobile touch, PWA

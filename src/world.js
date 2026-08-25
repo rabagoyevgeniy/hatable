@@ -739,7 +739,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       const f = cropFactors(world);
       st.moisture = Math.max(0, (st.moisture ?? 0.4) - dt * 0.007);
       const soil = world.science?.known?.soil ? 1.12 : 1;
-      st.grow += dt * 0.01 * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
+      st.grow += dt * 0.014 * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
       updatePlotVisual(st);
     }
   }
@@ -767,8 +767,8 @@ export function advanceSol(world) {
   const soil = world.science?.known?.soil ? 1.12 : 1;
   for (const st of world.stations) {
     if (st.type === "plot" && st.planted) {
-      st.moisture = Math.max(0.05, (st.moisture ?? 0.4) * 0.62);
-      st.grow = Math.min(1, st.grow + 0.34 * f.light * f.temp * Math.max(0.2, st.moisture) * soil);
+      st.grow = Math.min(1, st.grow + 0.52 * f.light * f.temp * Math.max(0.22, st.moisture) * soil);
+      st.moisture = Math.max(0.08, (st.moisture ?? 0.4) * 0.72);
       updatePlotVisual(st);
     }
     if (st.type === "still" && st.fuel > 0) {

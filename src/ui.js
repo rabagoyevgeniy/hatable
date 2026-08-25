@@ -7,6 +7,7 @@ import { nearestOutpost, resolvePlacement } from "./world.js";
 import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
 import { weatherLabel } from "./systems/weather.js";
 import { hasSave } from "./systems/save.js";
+import { pickInteriorAction } from "./systems/interact.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -428,19 +429,20 @@ export function findInteract(player, world) {
   const bunkD = Math.hypot(p.x - HAB_BUNK.x, p.z - HAB_BUNK.z);
   const arrayD = Math.hypot(p.x - HAB_ARRAY.x, p.z - HAB_ARRAY.z);
 
-  if (gather && gatherD < 2.15) return gather;
-
-  if (inside) {
-    const habHits = [];
-    if (deskD < 3.6) habHits.push({ d: deskD, kind: "console", label: t("console") });
-    if (bunkD < 3.0) habHits.push({ d: bunkD, kind: "sleep", label: t("sleep") });
-    if (lockerD < 2.8) {
-      const lockerLabel =
-        !player.usedConsole && deskD < 5.5 ? `${t("locker")}  ·  ${t("consoleDeeper")}` : t("locker");
-      habHits.push({ d: lockerD, kind: "locker", label: lockerLabel });
-    }
-    habHits.sort((a, b) => a.d - b.d);
-    if (habHits[0]) return habHits[0];
+  const interior = pickInteriorAction({
+    deskD,
+    bunkD,
+    lockerD,
+    gatherD,
+    inside,
+    usedConsole: !!player.usedConsole,
+  });
+  if (interior?.kind === "gather") return gather;
+  if (interior?.kind === "console") return { kind: "console", label: t("console") };
+  if (interior?.kind === "sleep") return { kind: "sleep", label: t("sleep") };
+  if (interior?.kind === "locker") {
+    const lockerLabel = interior.hintDeeper ? `${t("locker")}  ·  ${t("consoleDeeper")}` : t("locker");
+    return { kind: "locker", label: lockerLabel };
   }
 
   if (arrayD < 3.4 && count(player, "solar") > 0 && (world.hab?.arrayHealth ?? 1) < 0.97) {

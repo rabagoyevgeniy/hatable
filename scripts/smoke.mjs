@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
+import { pickInteriorAction, dist } from "../src/systems/interact.js";
+import { HAB_DESK, HAB_BUNK } from "../src/data.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -48,7 +50,7 @@ must(world.includes("from \"./motion.js\""), "Hab flag/leak steam import");
 
 const ui = readFileSync(resolve(root, "src/ui.js"), "utf8");
 must(ui.includes("kind: \"console\""), "desk opens console not whole-hab sleep");
-must(ui.includes("deskD < 3.6"), "desk console reachable from Hab center");
+must(ui.includes("pickInteriorAction"), "interior E uses shared picker");
 
 /* Live sim: leak, seal, day/night battery. */
 const worldSim = {
@@ -107,6 +109,35 @@ must(habStatusLine(worldSim, "en").length > 3, "status line exists");
 
 simulateSleep(worldSim, 96);
 must(worldSim.clock !== 0.25, "sleep advances clock");
+
+const locker = { x: 3.1, z: 12.3 };
+must(
+  pickInteriorAction({
+    inside: true,
+    deskD: dist(locker.x, locker.z, HAB_DESK.x, HAB_DESK.z),
+    lockerD: 0,
+    bunkD: dist(locker.x, locker.z, HAB_BUNK.x, HAB_BUNK.z),
+  }).kind === "locker",
+  "airlock hatch prefers locker"
+);
+must(
+  pickInteriorAction({
+    inside: true,
+    deskD: dist(2.21, 10.51, HAB_DESK.x, HAB_DESK.z),
+    lockerD: dist(2.21, 10.51, locker.x, locker.z),
+    bunkD: 9,
+  }).kind === "console",
+  "two steps inward prefers Hab console"
+);
+
+let grow = 0;
+let moist = 1;
+for (let i = 0; i < 4; i++) {
+  grow = Math.min(1, grow + 0.52 * 0.85 * 0.7 * Math.max(0.22, moist));
+  moist = Math.max(0.08, moist * 0.72);
+  moist = 1;
+}
+must(grow >= 1, "four watered sols can finish a first crop");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));
