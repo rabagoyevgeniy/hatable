@@ -82,3 +82,11 @@ Next: water/food pacing if the first Sol stays readable. Rover still waits.
 - Last uncopied potato cannot be eaten; HUD/toast say it is seed
 - Eating a potato dries thirst (toast). After the first sleep you need a tank sip — thirst kills first
 - Smoke locks: tank sips, first leak shift can still sleep, seed potato gate
+
+### Cycle H playtest
+
+- Ate one locker potato: toast «картошка сушит. Пей.»; thirst dropped; last tuber stayed in pockets
+- Second eat blocked as seed (potato x1 remained)
+- Ice prompt «СОБРАТЬ · Лёд» west of the hatch; HUD «ЖАЖДА — глоток из бака на консоли, потом лёд → дистиллятор»
+
+Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
