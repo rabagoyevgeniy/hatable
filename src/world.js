@@ -7,6 +7,19 @@ import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 
 const TERRAIN_SIZE = 620;
 const SEGMENTS = 168;
+const LOOT_FIT = {
+  ice: 0.88,
+  scrap: 1.18,
+  rock: 0.95,
+  potato: 0.4,
+  fabric: 1.12,
+  tape: 0.36,
+  hydrazine: 0.72,
+  soil: 0.7,
+  wire: 0.5,
+  comms: 0.55,
+  solar: 0.82,
+};
 
 export function createWorld(scene) {
   scene.background = new THREE.Color(0xc47a4a);
@@ -176,6 +189,9 @@ export function spawnNode(world, type, x, z, extra = {}) {
 }
 
 function lootMesh(type, color, wreck) {
+  const fit = wreck ? 2.05 : LOOT_FIT[type] || 0.8;
+  const ready = takeModel(wreck ? "scrap" : type, fit);
+  if (ready) return ready;
   const tex = maps();
   const mat = std({
     color,
@@ -255,25 +271,30 @@ function lootMesh(type, color, wreck) {
 
 function makeLocker(x, z) {
   const g = new THREE.Group();
-  const tex = maps();
-  const white = std({
-    color: 0xf7f1e8,
-    map: tex.hull,
-    emissive: 0xfff6e8,
-    emissiveIntensity: 0.28,
-    roughness: 0.38,
-    metalness: 0.16,
-  });
-  const amber = std({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.85 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.75, 0.82), white);
-  body.position.y = 0.95;
-  g.add(body);
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.35, 0.06), std({ color: 0xddd4c8, metalness: 0.22, roughness: 0.4 }));
-  door.position.set(-0.32, 0.92, 0.42);
-  g.add(door);
-  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), amber);
-  lamp.position.set(0, 1.95, 0.28);
-  g.add(lamp);
+  const meshy = takeModel("locker", 1.85);
+  if (meshy) {
+    g.add(meshy);
+  } else {
+    const tex = maps();
+    const white = std({
+      color: 0xf7f1e8,
+      map: tex.hull,
+      emissive: 0xfff6e8,
+      emissiveIntensity: 0.28,
+      roughness: 0.38,
+      metalness: 0.16,
+    });
+    const amber = std({ color: 0xffb15a, emissive: 0xffb15a, emissiveIntensity: 0.85 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.75, 0.82), white);
+    body.position.y = 0.95;
+    g.add(body);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.35, 0.06), std({ color: 0xddd4c8, metalness: 0.22, roughness: 0.4 }));
+    door.position.set(-0.32, 0.92, 0.42);
+    g.add(door);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), amber);
+    lamp.position.set(0, 1.95, 0.28);
+    g.add(lamp);
+  }
   const light = new THREE.PointLight(0xffc878, 1.25, 11);
   light.position.set(0, 2.1, 0.4);
   g.add(light);
@@ -837,6 +858,12 @@ function makeDebris() {
   strut.position.set(-3.4, heightAt(-3.4, 3.2) + 0.4, 3.2);
   strut.rotation.z = 1.05;
   g.add(strut);
+  const extra = takeModel("crate", 0.85) || takeModel("scrap", 1.3);
+  if (extra) {
+    extra.position.set(8.2, heightAt(8.2, 9.4), 9.4);
+    extra.rotation.y = 0.6;
+    g.add(extra);
+  }
   return g;
 }
 
@@ -925,9 +952,23 @@ function buildOutpost(data) {
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.05;
     g.add(floor);
-    g.add(box(bunkMat, 2.1, 0.35, 0.95, -1.6, 0.38, -1.6));
-    g.add(box(sheet, 1.9, 0.12, 0.8, -1.6, 0.58, -1.6));
-    g.add(box(std({ color: 0x3a2a22, roughness: 0.85 }), 0.45, 0.18, 0.55, -2.2, 0.78, -1.55));
+    const bunk = takeModel("bunk", 2.2);
+    if (bunk) {
+      bunk.position.set(-1.55, 0, -1.55);
+      g.add(bunk);
+    } else {
+      g.add(box(bunkMat, 2.1, 0.35, 0.95, -1.6, 0.38, -1.6));
+      g.add(box(sheet, 1.9, 0.12, 0.8, -1.6, 0.58, -1.6));
+      g.add(box(std({ color: 0x3a2a22, roughness: 0.85 }), 0.45, 0.18, 0.55, -2.2, 0.78, -1.55));
+    }
+    const crate = takeModel("crate", 0.72);
+    if (crate) {
+      crate.position.set(1.55, 0, 1.05);
+      g.add(crate);
+    } else {
+      g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
+      g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
+    }
     g.add(box(hull, 1.2, 0.08, 0.7, 1.5, 0.72, -1.4));
     g.add(box(hull, 0.08, 0.7, 0.08, 1.05, 0.38, -1.15));
     g.add(box(hull, 0.08, 0.7, 0.08, 1.95, 0.38, -1.65));
@@ -937,8 +978,6 @@ function buildOutpost(data) {
     const deskGlow = new THREE.PointLight(0xffc070, 0.55, 5);
     deskGlow.position.set(1.7, 1.1, -1.35);
     g.add(deskGlow);
-    g.add(box(std({ color: 0x8a6a40, roughness: 0.7 }), 0.7, 0.55, 0.5, 1.6, 0.4, 1.1));
-    g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.16, 0.16, 1.55, 0.78, 1.05));
     const flag = makeClothFlag();
     flag.position.set(2.05, 2.55, 6.48);
     flag.rotation.y = 0.35;

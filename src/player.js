@@ -5,7 +5,7 @@ import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
 import { advanceSol } from "./world.js";
 import { maps, std } from "./gfx.js";
-import { takeCharacter } from "./models.js";
+import { takeCharacter, takeModel } from "./models.js";
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
@@ -353,6 +353,14 @@ export function trySleep(player, world) {
 
 export function attachHammer(player) {
   if (player.hammerMesh) return;
+  const meshy = takeModel("hammer", 0.58);
+  if (meshy) {
+    meshy.position.set(0.08, -0.38, 0.14);
+    meshy.rotation.set(0.4, 0.2, -0.5);
+    player.armR.add(meshy);
+    player.hammerMesh = meshy;
+    return;
+  }
   const g = new THREE.Group();
   const wood = new THREE.MeshStandardMaterial({ color: 0x6a4428, roughness: 0.8 });
   const iron = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, metalness: 0.45, roughness: 0.4 });

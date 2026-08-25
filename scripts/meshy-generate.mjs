@@ -61,6 +61,78 @@ const ASSETS = [
     prompt:
       "Game-ready low-poly NASA Mars Ascent Vehicle rocket on landing legs, white hull with rust dust, engine bell, realistic PBR, isolated vehicle, no people, no ground plane",
   },
+  {
+    id: "ice",
+    file: "public/models/ice.glb",
+    prompt:
+      "Game-ready low-poly chunk of translucent blue-white water ice sitting on Mars, dusty, crystalline, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "scrap",
+    file: "public/models/scrap.glb",
+    prompt:
+      "Game-ready low-poly twisted NASA aluminum wreckage pile, torn habitat skin and struts, dusty Mars rust, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "rock",
+    file: "public/models/rock.glb",
+    prompt:
+      "Game-ready low-poly Mars basalt rock, rust-red and dark, dusty, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "potato",
+    file: "public/models/potato.glb",
+    prompt:
+      "Game-ready low-poly russet potato with eyes and dirt, realistic PBR, isolated food prop, no plate, no people",
+  },
+  {
+    id: "fabric",
+    file: "public/models/fabric.glb",
+    prompt:
+      "Game-ready low-poly folded dirty beige canvas tarp, NASA habitat cloth, dusty, realistic PBR, isolated prop, no people",
+  },
+  {
+    id: "tape",
+    file: "public/models/tape.glb",
+    prompt:
+      "Game-ready low-poly roll of silver duct tape, used, dusty, realistic PBR, isolated prop, no people",
+  },
+  {
+    id: "hydrazine",
+    file: "public/models/hydrazine.glb",
+    prompt:
+      "Game-ready low-poly green NASA hydrazine fuel cylinder tank with valve cap, dusty Mars, realistic PBR, isolated prop, no people",
+  },
+  {
+    id: "locker",
+    file: "public/models/locker.glb",
+    prompt:
+      "Game-ready low-poly white NASA Mars habitat storage locker cabinet with amber lamp, dusty, realistic PBR, isolated furniture, no people, no ground plane",
+  },
+  {
+    id: "bunk",
+    file: "public/models/bunk.glb",
+    prompt:
+      "Game-ready low-poly compact NASA habitat sleeping bunk with tan blanket and pillow, dusty, realistic PBR, isolated furniture, no people, no ground plane",
+  },
+  {
+    id: "hammer",
+    file: "public/models/hammer.glb",
+    prompt:
+      "Game-ready low-poly crude scrap-metal hammer with wooden handle, dusty, realistic PBR, isolated tool, no people",
+  },
+  {
+    id: "soil",
+    file: "public/models/soil.glb",
+    prompt:
+      "Game-ready low-poly pile of red Mars regolith soil, dusty, realistic PBR, isolated prop, no people, no ground plane",
+  },
+  {
+    id: "crate",
+    file: "public/models/crate.glb",
+    prompt:
+      "Game-ready low-poly open NASA supply crate with metal edges, dusty beige, realistic PBR, isolated prop, no people, no ground plane",
+  },
 ];
 
 if (!KEY) {

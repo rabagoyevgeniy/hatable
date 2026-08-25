@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "meshy": "node scripts/meshy-generate.mjs",
-    "meshy:motion": "node scripts/meshy-motion.mjs"
+    "meshy:motion": "node scripts/meshy-motion.mjs",
+    "meshy:props": "node scripts/meshy-generate.mjs ice scrap rock potato fabric tape hydrazine locker bunk hammer soil crate"
   },
   "dependencies": {
     "three": "^0.170.0"
