@@ -8,6 +8,7 @@ import { HAB_DESK, HAB_BUNK, HAB_LEAK } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
+import { ambienceTargets } from "../src/audio.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -263,6 +264,20 @@ must(!canEatPotato({ inv: { potato: 1 }, harvestedCrop: false }), "last potato i
 must(canEatPotato({ inv: { potato: 1 }, harvestedCrop: true }), "harvested copies can be eaten");
 must(game.includes("seedPotato"), "eating seed potato is blocked in play");
 must(existsSync(resolve(root, "src/systems/survival.js")), "first-sol gut lives in systems/survival");
+
+const leakMix = ambienceTargets({ inside: true, sealed: false, leak: true, grid: true, heater: true, o2: 80, storm: 0, night: false });
+must(leakMix.hiss > leakMix.hum, "leaking Hab is hiss over life-support");
+must(leakMix.heater > 0, "heater still rumbles while leaking if grid is live");
+const homeMix = ambienceTargets({ inside: true, sealed: true, leak: false, grid: true, heater: true, o2: 90, storm: 0, night: true });
+must(homeMix.hum > homeMix.hiss, "sealed Hab is hum, not hiss");
+must(homeMix.heater > 0, "heater rumble is part of a live home");
+must(homeMix.wind < leakMix.wind, "sealed walls cut Mars wind");
+const coldMix = ambienceTargets({ inside: true, sealed: true, leak: false, grid: true, heater: false, o2: 90, storm: 0, night: true });
+must(coldMix.heater === 0 && coldMix.hum > 0, "cutting heater quiets rumble; grid hum remains");
+const deadMix = ambienceTargets({ inside: true, sealed: true, leak: false, grid: false, heater: true, o2: 90, storm: 0, night: true });
+must(deadMix.hum === 0 && deadMix.heater === 0, "dead grid silences machines");
+must(game.includes("heater: !!(world.hab?.heaterOn"), "frame passes heater into ambience");
+must(readFileSync(resolve(root, "src/audio.js"), "utf8").includes("setTargetAtTime"), "Hab mix swells instead of switching");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

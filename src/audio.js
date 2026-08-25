@@ -4,8 +4,29 @@ let droneGain;
 let humGain;
 let hissGain;
 let breathGain;
+let heaterGain;
 let master;
 let dripTimer = 0;
+
+export function ambienceTargets({
+  storm = 0,
+  inside = false,
+  sealed = false,
+  night = false,
+  leak = false,
+  o2 = 100,
+  grid = true,
+  heater = false,
+} = {}) {
+  const wall = inside && sealed ? 0.5 : inside ? 0.78 : 1;
+  const wind = (0.038 + storm * 0.28 + (night && !inside ? 0.028 : 0)) * (inside ? 0.2 : 1) * wall;
+  const drone = (inside && sealed ? 0.028 : inside ? 0.06 : 0.1) + storm * (inside ? 0.04 : 0.09);
+  const hum = inside && grid ? (sealed ? 0.058 : 0.016) : 0;
+  const hiss = leak ? (inside ? 0.09 : 0.026) : 0;
+  const heaterRumble = inside && heater && grid ? 0.04 : 0;
+  const breath = o2 < 34 ? ((34 - o2) / 34) * 0.07 : 0;
+  return { wind, drone, hum, hiss, heater: heaterRumble, breath };
+}
 
 export function startAudio() {
   try {
@@ -25,7 +46,7 @@ export function startAudio() {
     droneFilter.type = "lowpass";
     droneFilter.frequency.value = 160;
     droneGain = ctx.createGain();
-    droneGain.gain.value = 0.14;
+    droneGain.gain.value = 0.1;
     drone.connect(droneFilter);
     droneFilter.connect(droneGain);
     droneGain.connect(master);
@@ -57,6 +78,19 @@ export function startAudio() {
     humGain.connect(master);
     hum.start();
 
+    const heater = ctx.createOscillator();
+    heater.type = "sine";
+    heater.frequency.value = 62;
+    const heaterFilter = ctx.createBiquadFilter();
+    heaterFilter.type = "lowpass";
+    heaterFilter.frequency.value = 110;
+    heaterGain = ctx.createGain();
+    heaterGain.gain.value = 0;
+    heater.connect(heaterFilter);
+    heaterFilter.connect(heaterGain);
+    heaterGain.connect(master);
+    heater.start();
+
     const hissFilter = ctx.createBiquadFilter();
     hissFilter.type = "bandpass";
     hissFilter.frequency.value = 2400;
@@ -84,14 +118,20 @@ export function startAudio() {
   }
 }
 
-export function setAmbience({ storm = 0, inside = false, sealed = false, night = false, leak = false, o2 = 100, grid = true } = {}) {
+function swell(gainNode, value, seconds = 0.32) {
+  if (!gainNode || !ctx) return;
+  gainNode.gain.setTargetAtTime(Math.max(0, value), ctx.currentTime, seconds);
+}
+
+export function setAmbience(state = {}) {
   if (!windGain) return;
-  const outside = inside ? 0.22 : 1;
-  windGain.gain.value = (0.04 + storm * 0.28 + (night ? 0.03 : 0)) * outside;
-  if (droneGain) droneGain.gain.value = 0.12 + storm * 0.1;
-  if (humGain) humGain.gain.value = inside && sealed && grid ? 0.055 : inside ? 0.018 : 0;
-  if (hissGain) hissGain.gain.value = leak ? (inside ? 0.085 : 0.025) : 0;
-  if (breathGain) breathGain.gain.value = o2 < 34 ? ((34 - o2) / 34) * 0.07 : 0;
+  const mix = ambienceTargets(state);
+  swell(windGain, mix.wind, 0.4);
+  swell(droneGain, mix.drone, 0.45);
+  swell(humGain, mix.hum, 0.38);
+  swell(hissGain, mix.hiss, 0.22);
+  swell(heaterGain, mix.heater, 0.28);
+  swell(breathGain, mix.breath, 0.2);
 }
 
 export function setStormAudio(intensity) {
@@ -126,6 +166,10 @@ export function deliverTone() {
   setTimeout(() => beep(660, 0.18, 0.2, "sine"), 180);
 }
 
+export function switchTone() {
+  beep(196, 0.05, 0.07, "sine");
+}
+
 export function sleepTone() {
   beep(180, 0.1, 0.4, "sine");
   setTimeout(() => beep(140, 0.08, 0.5, "sine"), 200);
@@ -148,7 +192,7 @@ export function tickStill(dt, running) {
 }
 
 function beep(freq, gain, dur, type) {
-  if (!ctx) return;
+  if (!ctx || !master) return;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
   osc.type = type;

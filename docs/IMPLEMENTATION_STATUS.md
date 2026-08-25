@@ -24,6 +24,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Leak is on the left wall inside the hatch (prompt + steam + plate), not the far back wall
 - Browser playtest: leak hint → 2 canvas + locker tape → patch → console → heater off (load 0.99 → 0.49 kW)
 - Hab tank is leftover sips (~2.2 L); last potato is seed until harvest
+- Hab mix: leak hiss, sealed hum, heater rumble; grid death is silence
 
 ## PARTIAL
 

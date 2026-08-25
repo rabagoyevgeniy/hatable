@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
-import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
+import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill, switchTone } from "./audio.js";
 import { RECIPES, SURVIVAL, HAB_LEAK } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { repairStillPump, stillCanRun } from "./systems/machines.js";
@@ -172,9 +172,11 @@ async function bootGame() {
       if (!world.hab) return;
       if (act === "heater") {
         world.hab.heaterOn = !world.hab.heaterOn;
+        switchTone();
         toast(world.hab.heaterOn ? t("heaterOn") : t("heaterOff"));
       } else if (act === "lights") {
         world.hab.lightsOn = !world.hab.lightsOn;
+        switchTone();
         toast(world.hab.lightsOn ? t("lightsOn") : t("lightsOff"));
       } else if (act === "drink") {
         if (world.hab.waterTank < TANK_MIN_L) {
@@ -687,6 +689,7 @@ async function bootGame() {
         leak: !world.habSealed,
         o2: player.oxygen,
         grid: !!world.hab?.gridOn,
+        heater: !!(world.hab?.heaterOn && world.hab?.gridOn),
       });
       if (scanning) {
         scanAcc += dt;

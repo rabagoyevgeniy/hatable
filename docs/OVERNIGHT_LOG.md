@@ -90,3 +90,11 @@ Next: water/food pacing if the first Sol stays readable. Rover still waits.
 - Ice prompt «СОБРАТЬ · Лёд» west of the hatch; HUD «ЖАЖДА — глоток из бака на консоли, потом лёд → дистиллятор»
 
 Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
+
+### Cycle I — Hab sounds like a machine you live in
+
+- Mix is a swell (`setTargetAtTime`), not a hard switch — seal fades hiss, hum comes up
+- Heater rumble only while inside + grid + heater on; cutting it is the night decision you hear
+- Dead grid silences hum and heater. Sealed walls cut Mars wind
+- Console heater/lights click (`switchTone`)
+- Smoke locks leak hiss > hum, home hum > hiss, heater off vs grid dead

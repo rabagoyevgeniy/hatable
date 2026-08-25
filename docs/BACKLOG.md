@@ -6,7 +6,6 @@
 
 ## P1
 
-- Hab-as-home audio polish
 - First crop as a moment (plot already takes four watered Sols)
 
 ## P2

@@ -16,7 +16,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `ui.js` / `i18n.js` | HUD, menus, language, Hab console |
 | `data.js` | items, recipes, spawns, goals, Hab interact points |
 | `journal.js` | linear guidance (not the simulation) |
-| `audio.js` | wind / hum / leak hiss / beeps |
+| `audio.js` | wind / hum / leak hiss / heater rumble / beeps |
 | `models.js` / `gfx.js` | GLB + materials |
 
 **Update order each frame (playing):** input → player vitals → `tickTime` → weather visual lerp → `tickWeather` → `tickHabitat` → stations/crops → HUD → render.
