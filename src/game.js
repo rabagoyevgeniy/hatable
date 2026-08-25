@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill } from "./audio.js";
 import { RECIPES, SURVIVAL } from "./data.js";
-import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual } from "./world.js";
+import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import {
   createPlayer,
   updatePlayer,
@@ -18,7 +18,7 @@ import {
 } from "./player.js";
 import { createJournal, currentGoal, goalText, checkProgress } from "./journal.js";
 import { heightAt } from "./noise.js";
-import { preloadModels } from "./models.js";
+import { preloadModels, preloadRest } from "./models.js";
 import { bakeEnvironment } from "./gfx.js";
 import {
   bindUi,
@@ -43,8 +43,9 @@ export async function boot() {
   applyDom();
 
   const canvas = document.getElementById("scene");
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !window.matchMedia("(pointer: coarse)").matches });
+  const dprCap = window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, dprCap));
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -57,11 +58,14 @@ export async function boot() {
   camera.position.set(12.5, 6.8, 31.5);
 
   await preloadModels();
+  const status = document.getElementById("boot-status");
+  if (status) status.textContent = "";
   const world = createWorld(scene);
   const player = createPlayer(scene);
   const journal = createJournal();
   scene.environment = bakeEnvironment(renderer);
   scene.environmentIntensity = 0.85;
+  preloadRest().then(() => refreshOutpostModels(world));
 
   const keys = new Set();
   let playing = false;
@@ -69,7 +73,8 @@ export async function boot() {
   let lookX = 0;
   let last = performance.now();
   const touchMove = { x: 0, y: 0 };
-  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const coarse = isMobileView();
+  let touchScan = false;
 
   bindUi({
     start() {
@@ -235,6 +240,7 @@ export async function boot() {
       return;
     }
     if (hit.kind === "sleep") {
+      const result = trySleep(player, world);
       if (result === "slept") {
         sleepTone();
         journal.sols += 1;
@@ -335,6 +341,7 @@ export async function boot() {
     const use = document.getElementById("btn-use");
     const craftBtn = document.getElementById("btn-craft-touch");
     const invBtn = document.getElementById("btn-inv-touch");
+    const scanBtn = document.getElementById("btn-scan-touch");
     let joyId = null;
     let lookId = null;
     let lookLast = { x: 0, y: 0 };
@@ -418,6 +425,21 @@ export async function boot() {
       const open = toggleInv(player);
       if (open) document.exitPointerLock?.();
     });
+    const holdScan = (on) => {
+      touchScan = on;
+      scanBtn?.classList.toggle("held", on);
+    };
+    scanBtn?.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      holdScan(true);
+    }, { passive: false });
+    scanBtn?.addEventListener("touchend", () => holdScan(false));
+    scanBtn?.addEventListener("touchcancel", () => holdScan(false));
+    scanBtn?.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      holdScan(true);
+    });
+    window.addEventListener("mouseup", () => holdScan(false));
   }
 
   function placeCamera(dt) {
@@ -465,7 +487,7 @@ export async function boot() {
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    scanning = playing && keys.has("KeyF");
+    scanning = playing && (keys.has("KeyF") || touchScan);
 
     if (player.placing) {
       const spot = resolvePlacement(world, player.placing, player);

@@ -22,7 +22,12 @@ const LOOT_FIT = {
   solarcell: 0.7,
 };
 
+export function isMobileView() {
+  return window.matchMedia("(pointer: coarse)").matches || innerWidth < 720;
+}
+
 export function createWorld(scene) {
+  const mobile = isMobileView();
   scene.background = new THREE.Color(0xc47a4a);
   scene.fog = new THREE.FogExp2(0xc47a4a, 0.0085);
 
@@ -34,7 +39,7 @@ export function createWorld(scene) {
   const sun = new THREE.DirectionalLight(0xffe0c0, 1.7);
   sun.position.set(80, 70, -40);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(mobile ? 1024 : 2048);
   sun.shadow.camera.near = 2;
   sun.shadow.camera.far = 160;
   sun.shadow.camera.left = -34;
@@ -767,7 +772,7 @@ function makeTerrain() {
 function makeRocks() {
   const geo = new THREE.DodecahedronGeometry(1.15, 0);
   const mat = std({ color: 0xffffff, map: maps().rock, roughness: 0.95, flatShading: true });
-  const count = 240;
+  const count = isMobileView() ? 90 : 240;
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
   meshInst.castShadow = true;
   meshInst.receiveShadow = true;
@@ -797,7 +802,7 @@ function makeRocks() {
 function makePebbles() {
   const geo = new THREE.TetrahedronGeometry(0.28);
   const mat = std({ color: 0x8a4a2c, map: maps().rock, roughness: 1, flatShading: true });
-  const count = 420;
+  const count = isMobileView() ? 180 : 420;
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
   meshInst.receiveShadow = true;
   const dummy = new THREE.Object3D();
@@ -830,7 +835,7 @@ function makeMountains() {
 }
 
 function makeDust() {
-  const n = 2800;
+  const n = isMobileView() ? 900 : 2800;
   const geo = new THREE.BufferGeometry();
   const positions = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
@@ -1307,4 +1312,16 @@ export function nearestOutpost(world, pos) {
     }
   }
   return { outpost: best, dist: bestD };
+}
+
+export function refreshOutpostModels(world) {
+  for (const o of world.outposts) {
+    if (o.kind === "hab") continue;
+    const fresh = buildOutpost(o);
+    fresh.position.copy(o.group.position);
+    world.scene.remove(o.group);
+    world.scene.add(fresh);
+    o.group = fresh;
+    o.beacon = fresh.userData.beacon;
+  }
 }

@@ -58,6 +58,22 @@ npm run dev
 
 Opens at http://localhost:5173.
 
+## Phone (ярлык на экране)
+
+The playable build is on GitHub Pages after the first successful deploy:
+
+**https://rabagoyevgeniy.github.io/hatable/**
+
+One-time: GitHub → this repo → Settings → Pages → Source: **GitHub Actions**.
+
+Then on the phone:
+
+1. Open that link in Safari (iPhone) or Chrome (Android).
+2. Share / menu → **Add to Home Screen** / **Install app**.
+3. Launch the icon. Stick left, look by dragging the desert, **E** gathers, hold **F** to scan.
+
+Each push to this branch rebuilds the site, so you can re-open the icon and check what just landed.
+
 ## Visuals / Meshy (Mesh AI)
 
 The game looks like Acidalia without any extra service: sky, dust, lighting, and Hab are procedural in Three.js.

@@ -2,35 +2,57 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/addons/utils/SkeletonUtils.js";
 
+const BASE = import.meta.env.BASE_URL || "/";
+
 const URLS = {
-  still: "/models/still.glb",
-  plot: "/models/plot.glb",
-  solar: "/models/solar.glb",
-  radio: "/models/radio.glb",
-  rover: "/models/rover.glb",
-  pathfinder: "/models/pathfinder.glb",
-  mav: "/models/mav.glb",
-  ice: "/models/ice.glb",
-  scrap: "/models/scrap.glb",
-  rock: "/models/rock.glb",
-  potato: "/models/potato.glb",
-  fabric: "/models/fabric.glb",
-  tape: "/models/tape.glb",
-  hydrazine: "/models/hydrazine.glb",
-  locker: "/models/locker.glb",
-  bunk: "/models/bunk.glb",
-  hammer: "/models/hammer.glb",
-  soil: "/models/soil.glb",
-  crate: "/models/crate.glb",
-  wire: "/models/wire.glb",
-  comms: "/models/comms.glb",
-  solarcell: "/models/solarcell.glb",
-  desk: "/models/desk.glb",
-  farm: "/models/farm.glb",
-  "watney-walk": "/models/watney-walk.glb",
-  "watney-idle": "/models/watney-idle.glb",
-  "watney-run": "/models/watney-run.glb",
+  still: "models/still.glb",
+  plot: "models/plot.glb",
+  solar: "models/solar.glb",
+  radio: "models/radio.glb",
+  rover: "models/rover.glb",
+  pathfinder: "models/pathfinder.glb",
+  mav: "models/mav.glb",
+  ice: "models/ice.glb",
+  scrap: "models/scrap.glb",
+  rock: "models/rock.glb",
+  potato: "models/potato.glb",
+  fabric: "models/fabric.glb",
+  tape: "models/tape.glb",
+  hydrazine: "models/hydrazine.glb",
+  locker: "models/locker.glb",
+  bunk: "models/bunk.glb",
+  hammer: "models/hammer.glb",
+  soil: "models/soil.glb",
+  crate: "models/crate.glb",
+  wire: "models/wire.glb",
+  comms: "models/comms.glb",
+  solarcell: "models/solarcell.glb",
+  desk: "models/desk.glb",
+  farm: "models/farm.glb",
+  "watney-walk": "models/watney-walk.glb",
+  "watney-idle": "models/watney-idle.glb",
+  "watney-run": "models/watney-run.glb",
 };
+
+const BOOT_IDS = [
+  "scrap",
+  "rock",
+  "locker",
+  "bunk",
+  "crate",
+  "ice",
+  "fabric",
+  "tape",
+  "potato",
+  "soil",
+  "hammer",
+  "watney-walk",
+  "watney-idle",
+];
+
+function urlFor(id) {
+  return `${BASE}${URLS[id]}`;
+}
 
 const cache = {};
 let pending = null;
@@ -100,12 +122,24 @@ function polishObject(root) {
 export function preloadModels() {
   if (pending) return pending;
   const loader = new GLTFLoader();
-  pending = Promise.all(
-    Object.entries(URLS).map(
-      ([id, url]) =>
+  pending = loadIds(loader, BOOT_IDS);
+  return pending;
+}
+
+export function preloadRest() {
+  const rest = Object.keys(URLS).filter((id) => !BOOT_IDS.includes(id));
+  return loadIds(new GLTFLoader(), rest);
+}
+
+function loadIds(loader, ids) {
+  return Promise.all(
+    ids.map(
+      (id) =>
         new Promise((resolve) => {
+          if (!URLS[id]) return resolve(null);
+          if (cache[id]) return resolve(id);
           loader.load(
-            url,
+            urlFor(id),
             (gltf) => {
               polishObject(gltf.scene);
               cache[id] = gltf;
@@ -116,12 +150,11 @@ export function preloadModels() {
           );
         })
     )
-  ).then((ids) => {
-    const ok = ids.filter(Boolean);
-    console.info(`[stranded] meshy ${ok.length}/${Object.keys(URLS).length}`);
-    return ids;
+  ).then((loaded) => {
+    const ok = loaded.filter(Boolean);
+    console.info(`[stranded] meshy +${ok.length} (${Object.keys(cache).length} cached)`);
+    return loaded;
   });
-  return pending;
 }
 
 export function hasModel(id) {

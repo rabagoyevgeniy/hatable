@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "STRANDED MARS",
+  "short_name": "MARS",
+  "description": "Acidalia. Hab. Survive.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#140b08",
+  "theme_color": "#c45c2a",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
