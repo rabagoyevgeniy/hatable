@@ -66,4 +66,12 @@ Autonomous overnight mode on. ChatGPT is Game Director. Ignore “stop after Pha
 - First-entry toast names left leak / right console (was a missing `enterHab` string)
 - Night feel: leaking + heater spends battery; seal + cut heater saves the night
 
-Next: playtest leak → seal → console heater → sleep. Rover still waits.
+### Cycle G playtest (browser, localhost)
+
+- HUD: «УТЕЧКА · ДАВЛЕНИЕ ПАДАЕТ»
+- Prompt in the aisle: «УТЕЧКА · 2 брезента + скотч из шкафа» then «ЗАЛАТАТЬ УТЕЧКУ» after tape + 2 canvas
+- Toast: «КОРПУС ЗАДЕЛАН — давление держится»; pressure held at ~49% then recovered
+- Desk console opened: ГЕРМЕТИКА, battery ~43%, load 0.99 kW with heater on
+- Heater off: load dropped to 0.49 kW, «ПЕЧЬ ВЫКЛ» — night decision is readable
+
+Next: water/food pacing if the first Sol stays readable. Rover still waits.

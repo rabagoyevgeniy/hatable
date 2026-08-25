@@ -22,6 +22,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Still requires live Hab grid (night heater vs water)
 - Still pump fails after a short run; salvage wire at the solar wreck to repair
 - Leak is on the left wall inside the hatch (prompt + steam + plate), not the far back wall
+- Browser playtest: leak hint → 2 canvas + locker tape → patch → console → heater off (load 0.99 → 0.49 kW)
 
 ## PARTIAL
 

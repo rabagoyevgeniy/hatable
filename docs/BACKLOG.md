@@ -7,7 +7,7 @@
 ## P1
 
 - Hab-as-home audio polish
-- First-night playtest: leak → seal → console heater → sleep
+- Water / food pacing now that leak → seal → console is playable
 
 ## P2
 
