@@ -134,6 +134,14 @@ export function createPlayer(scene) {
   });
 
   root.position.set(SPAWN.x, heightAt(SPAWN.x, SPAWN.z) + 0.02, SPAWN.z);
+  const blob = new THREE.Mesh(
+    new THREE.CircleGeometry(0.62, 18),
+    new THREE.MeshBasicMaterial({ color: 0x2a1008, transparent: true, opacity: 0.42, depthWrite: false })
+  );
+  blob.rotation.x = -Math.PI / 2;
+  blob.position.y = 0.035;
+  blob.renderOrder = 1;
+  root.add(blob);
   scene.add(root);
 
   const inv = {};

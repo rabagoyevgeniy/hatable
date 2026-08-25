@@ -129,20 +129,31 @@
         <div id="hotbar"></div>
       </div>
 
+      <div id="menu-scrim" class="hidden"></div>
+
       <div id="inv" class="panel hidden menu">
-        <p class="label" data-i18n="inv">КАРМАНЫ</p>
+        <div class="panel-head">
+          <p class="label" data-i18n="inv">КАРМАНЫ</p>
+          <button type="button" class="panel-close" data-close-menu aria-label="close">✕</button>
+        </div>
         <ul id="inv-list" class="grid-list"></ul>
         <p class="muted" data-i18n="invHint">Еда и вода — отдельной кнопкой. В шкаф — только пока шкаф открыт.</p>
       </div>
 
       <div id="storage" class="panel hidden menu">
-        <p class="label" data-i18n="lockerTitle">ШКАФ HAB</p>
+        <div class="panel-head">
+          <p class="label" data-i18n="lockerTitle">ШКАФ HAB</p>
+          <button type="button" class="panel-close" data-close-menu aria-label="close">✕</button>
+        </div>
         <ul id="storage-list" class="grid-list"></ul>
         <p class="muted" data-i18n="lockerHint">Клик по шкафу — взять. В карманах кнопка «в шкаф». «Съесть» — отдельно.</p>
       </div>
 
       <div id="craft" class="panel hidden menu wide">
-        <p class="label" data-i18n="craft">CRAFT</p>
+        <div class="panel-head">
+          <p class="label" data-i18n="craft">CRAFT</p>
+          <button type="button" class="panel-close" data-close-menu aria-label="close">✕</button>
+        </div>
         <ul id="craft-list"></ul>
         <p class="muted" data-i18n="craftHint">Need a hammer to build stations. Place with E.</p>
       </div>

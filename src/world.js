@@ -72,6 +72,7 @@ export function createWorld(scene) {
   scene.add(yard);
   scene.add(makeRocks());
   scene.add(makePebbles());
+  scene.add(makeYardDressing());
   scene.add(makeMountains());
   scene.add(makeDebris());
   const dust = makeDust();
@@ -92,10 +93,12 @@ export function createWorld(scene) {
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(p.x, heightAt(p.x, p.z) + 0.07, p.z);
     scene.add(ring);
-    const plate = makePlate(p.label.ru, 1.6, 0.28);
-    plate.position.set(p.x, heightAt(p.x, p.z) + 0.04, p.z + 0.02);
-    plate.rotation.x = -Math.PI / 2;
-    scene.add(plate);
+    if (!mobile) {
+      const plate = makePlate(p.label.ru, 1.6, 0.28);
+      plate.position.set(p.x, heightAt(p.x, p.z) + 0.04, p.z + 0.02);
+      plate.rotation.x = -Math.PI / 2;
+      scene.add(plate);
+    }
     return { ...p, ring, taken: false };
   });
 
@@ -336,9 +339,11 @@ function makeLocker(x, z) {
   const light = new THREE.PointLight(0xffc878, 1.25, 11);
   light.position.set(0, 2.1, 0.4);
   g.add(light);
-  const plate = makePlate("LOCKER", 1.1, 0.28);
-  plate.position.set(0, 1.25, 0.43);
-  g.add(plate);
+  if (!isMobileView()) {
+    const plate = makePlate("LOCKER", 1.1, 0.28);
+    plate.position.set(0, 1.25, 0.43);
+    g.add(plate);
+  }
   g.position.set(x, heightAt(x, z), z);
   g.traverse((o) => {
     if (o.isMesh) {
@@ -796,7 +801,8 @@ function makeRocks() {
     guard++;
     const x = (Math.random() - 0.5) * 540;
     const z = (Math.random() - 0.5) * 540;
-    if (OUTPOSTS.some((o) => Math.hypot(x - o.x, z - o.z) < 22)) continue;
+    if (Math.hypot(x, z - 8) < 9) continue;
+    if (OUTPOSTS.some((o) => o.kind !== "hab" && Math.hypot(x - o.x, z - o.z) < 18)) continue;
     dummy.position.set(x, heightAt(x, z) + 0.18, z);
     dummy.rotation.set(Math.random(), Math.random(), Math.random());
     const s = 0.55 + Math.random() * 2.6;
@@ -828,6 +834,53 @@ function makePebbles() {
     meshInst.setMatrixAt(i, dummy.matrix);
   }
   return meshInst;
+}
+
+function makeYardDressing() {
+  const g = new THREE.Group();
+  const rock = std({
+    color: 0x8a4a2c,
+    map: maps().rock,
+    roughness: 1,
+    flatShading: true,
+    emissive: 0x4a2414,
+    emissiveIntensity: 0.22,
+  });
+  const spots = [
+    [8.6, 16.4, 1.05],
+    [-6.4, 21.2, 1.35],
+    [11.2, 23.1, 0.72],
+    [-9.8, 14.2, 1.15],
+    [5.8, 26.4, 1.55],
+    [-3.6, 28.2, 0.85],
+    [13.8, 12.4, 1.2],
+    [-12.2, 19.5, 0.95],
+  ];
+  for (const [x, z, s] of spots) {
+    const m = new THREE.Mesh(new THREE.DodecahedronGeometry(1.05, 0), rock);
+    m.position.set(x, heightAt(x, z) + 0.12, z);
+    m.scale.set(s, s * 0.52, s);
+    m.rotation.set(0.25, x * 0.3, 0.18);
+    g.add(m);
+  }
+  const scar = new THREE.MeshBasicMaterial({
+    color: 0x5a2a14,
+    transparent: true,
+    opacity: 0.38,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  for (const [x, z, r] of [
+    [-14, 24, 3.1],
+    [16.5, 28, 2.3],
+    [3.2, 33, 3.8],
+  ]) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.45, r, 22), scar);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(x, heightAt(x, z) + 0.045, z);
+    g.add(ring);
+  }
+  return g;
 }
 
 function makeMountains() {

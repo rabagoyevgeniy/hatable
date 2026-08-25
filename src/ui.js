@@ -25,13 +25,23 @@ export function bindUi(handlers) {
     const btn = e.target.closest("[data-item]");
     if (btn) handlers.takeStorage(btn.dataset.item);
   });
+  document.querySelectorAll("[data-close-menu]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeMenus();
+    });
+  });
+  $("menu-scrim")?.addEventListener("click", () => closeMenus());
 }
 
 export function showHud() {
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
   const hint = $("first-hint");
-  if (hint && document.body.classList.contains("mobile")) hint.textContent = t("firstHintTouch");
+  if (hint && document.body.classList.contains("mobile")) {
+    hint.textContent = t("firstHintTouch");
+    window.setTimeout(() => hint.classList.add("hidden"), 9000);
+  }
 }
 
 export function menusOpen() {
@@ -44,8 +54,10 @@ export function menusOpen() {
 
 export function toggleCraft(player) {
   $("inv").classList.add("hidden");
+  $("storage").classList.add("hidden");
   $("craft").classList.toggle("hidden");
   renderCraft(player);
+  syncMenuChrome();
   return !$("craft").classList.contains("hidden");
 }
 
@@ -53,6 +65,7 @@ export function toggleInv(player) {
   $("craft").classList.add("hidden");
   $("inv").classList.toggle("hidden");
   renderInv(player);
+  syncMenuChrome();
   return !$("inv").classList.contains("hidden");
 }
 
@@ -64,6 +77,7 @@ export function toggleStorage(player, world) {
     renderInv(player);
     renderStorage(world);
   }
+  syncMenuChrome();
   return !$("storage").classList.contains("hidden");
 }
 
@@ -75,6 +89,13 @@ export function closeMenus() {
   $("craft").classList.add("hidden");
   $("inv").classList.add("hidden");
   $("storage").classList.add("hidden");
+  syncMenuChrome();
+}
+
+function syncMenuChrome() {
+  const open = menusOpen();
+  $("menu-scrim")?.classList.toggle("hidden", !open);
+  document.body.classList.toggle("menu-open", open);
 }
 
 export function renderCraft(player) {
@@ -86,7 +107,7 @@ export function renderCraft(player) {
       canAfford(player, rec.need) && (!rec.requireTool || player.tools[rec.requireTool]);
     li.className = rec.id === "hammer" && ok ? "ready" : "";
     li.innerHTML = `<button class="recipe ${ok ? "" : "locked"}" data-recipe="${rec.id}">
-      <span><b>${loc(rec.title)}</b><small>${needLine(rec.need)}${rec.requireTool ? " · hammer" : ""}</small></span>
+      <span><b>${loc(rec.title)}</b><small>${needLine(rec.need)}${rec.requireTool ? (getLang() === "ru" ? " · молоток" : " · hammer") : ""}</small></span>
       <span>${ok ? "▸" : "–"}</span>
     </button>`;
     list.appendChild(li);
@@ -365,100 +386,134 @@ function updateScanLabels(player, world, camera, scanning) {
   if (!camera) return;
   const lang = getLang();
   const p = player.root.position;
-  const lootRange = mobile ? 7.2 : 18;
-  const outpostRange = mobile ? 14 : 42;
   const targets = [];
-  for (const o of world.outposts) {
-    const d = Math.hypot(p.x - o.x, p.z - o.z);
-    if (scanning || d < outpostRange) {
+
+  if (mobile && !scanning) {
+    const hit = findInteract(player, world);
+    if (hit?.node) {
       targets.push({
-        x: o.x,
-        y: o.group.position.y + 4.6,
-        z: o.z,
-        title: o.short[lang],
-        sub: loc(o.name),
-        far: d > 22,
+        x: hit.node.mesh.position.x,
+        y: hit.node.mesh.position.y + 0.95,
+        z: hit.node.mesh.position.z,
+        title: itemName(hit.node.type),
+        loot: true,
+      });
+    } else if (hit?.kind === "locker") {
+      targets.push({
+        x: world.locker.x,
+        y: world.locker.mesh.position.y + 2.2,
+        z: world.locker.z,
+        title: lang === "ru" ? "ШКАФ" : "LOCKER",
+        loot: true,
+      });
+    } else if (hit?.station) {
+      targets.push({
+        x: hit.station.x,
+        y: hit.station.mesh.position.y + 2.2,
+        z: hit.station.z,
+        title: hit.label,
+        loot: true,
       });
     }
+  } else {
+    const lootRange = mobile ? 10 : 18;
+    const outpostRange = mobile ? 28 : 42;
+    for (const o of world.outposts) {
+      const d = Math.hypot(p.x - o.x, p.z - o.z);
+      if (scanning || d < outpostRange) {
+        targets.push({
+          x: o.x,
+          y: o.group.position.y + 4.6,
+          z: o.z,
+          title: o.short[lang],
+          sub: loc(o.name),
+          far: d > 22,
+        });
+      }
+    }
+    for (const n of world.nodes) {
+      if (n.taken) continue;
+      const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
+      if (d > lootRange && !scanning) continue;
+      if (d > 48) continue;
+      targets.push({
+        x: n.mesh.position.x,
+        y: n.mesh.position.y + 0.95,
+        z: n.mesh.position.z,
+        title: itemName(n.type),
+        sub: n.needHammer ? (lang === "ru" ? "молоток" : "needs hammer") : "",
+        loot: true,
+      });
+    }
+    for (const st of world.stations) {
+      const d = Math.hypot(p.x - st.x, p.z - st.z);
+      if (d > (mobile ? 10 : 22) && !scanning) continue;
+      const names = {
+        still: { ru: "Дистиллятор", en: "Still" },
+        plot: { ru: "Грядка", en: "Plot" },
+        seal: { ru: "Заплата", en: "Seal" },
+        solar: { ru: "Панель", en: "Solar" },
+        radio: { ru: "Рация", en: "Radio" },
+      };
+      const title = names[st.type]?.[lang] || st.type;
+      const sub =
+        st.type === "still"
+          ? String(Math.floor(st.water))
+          : st.planted
+            ? `${Math.floor(st.grow * 100)}%`
+            : "";
+      targets.push({ x: st.x, y: st.mesh.position.y + 2.2, z: st.z, title, sub, loot: true });
+    }
+    const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
+    if (lockerD < (mobile ? 10 : 18) || scanning) {
+      targets.push({
+        x: world.locker.x,
+        y: world.locker.mesh.position.y + 2.4,
+        z: world.locker.z,
+        title: lang === "ru" ? "ШКАФ" : "LOCKER",
+        sub: "",
+        loot: true,
+      });
+    }
+    if (!mobile && Math.hypot(p.x, p.z - 8) < 16) {
+      targets.push({
+        x: -1.4,
+        y: 2.2,
+        z: 6.4,
+        title: lang === "ru" ? "КОЙКА · СОН" : "BUNK · SLEEP",
+        sub: "",
+        loot: true,
+      });
+    }
+    if (player.placing) {
+      for (const pad of YARD_PADS) {
+        const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
+        if (occupied) continue;
+        targets.push({
+          x: pad.x,
+          y: 1.8,
+          z: pad.z,
+          title: pad.label[lang] || pad.label.en,
+          sub: "",
+          loot: true,
+        });
+      }
+    }
   }
-  for (const n of world.nodes) {
-    if (n.taken) continue;
-    const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
-    if (d > lootRange && !scanning) continue;
-    if (d > 48) continue;
-    targets.push({
-      x: n.mesh.position.x,
-      y: n.mesh.position.y + 0.95,
-      z: n.mesh.position.z,
-      title: itemName(n.type),
-      sub: n.needHammer ? (lang === "ru" ? "молоток" : "needs hammer") : "",
-      loot: true,
-    });
-  }
-  for (const st of world.stations) {
-    const d = Math.hypot(p.x - st.x, p.z - st.z);
-    if (d > (mobile ? 8 : 22) && !scanning) continue;
-    const names = {
-      still: { ru: "Дистиллятор", en: "Still" },
-      plot: { ru: "Грядка", en: "Plot" },
-      seal: { ru: "Заплата", en: "Seal" },
-      solar: { ru: "Панель", en: "Solar" },
-      radio: { ru: "Рация", en: "Radio" },
-    };
-    const title = names[st.type]?.[lang] || st.type;
-    const sub =
-      st.type === "still"
-        ? String(Math.floor(st.water))
-        : st.planted
-          ? `${Math.floor(st.grow * 100)}%`
-          : "";
-    targets.push({ x: st.x, y: st.mesh.position.y + 2.2, z: st.z, title, sub, loot: true });
-  }
-  const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-  if (lockerD < (mobile ? 8 : 18) || scanning) {
-    targets.push({
-      x: world.locker.x,
-      y: world.locker.mesh.position.y + 2.4,
-      z: world.locker.z,
-      title: lang === "ru" ? "ШКАФ" : "LOCKER",
-      sub: "",
-      loot: true,
-    });
-  }
-  if (Math.hypot(p.x, p.z - 8) < (mobile ? 7 : 16)) {
-    targets.push({
-      x: -1.4,
-      y: 2.2,
-      z: 6.4,
-      title: lang === "ru" ? "КОЙКА · СОН" : "BUNK · SLEEP",
-      sub: "",
-      loot: true,
-    });
-  }
-  for (const pad of YARD_PADS) {
-    const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
-    if (occupied) continue;
-    const d = Math.hypot(p.x - pad.x, p.z - pad.z);
-    if (d > (mobile ? 8 : 26) && !scanning) continue;
-    targets.push({
-      x: pad.x,
-      y: 1.8,
-      z: pad.z,
-      title: pad.label[lang] || pad.label.en,
-      sub: "",
-      loot: true,
-    });
-  }
+
   const v = new THREE.Vector3();
+  const hudBottom = mobile ? 0.28 : 0;
   for (const item of targets) {
     v.set(item.x, item.y, item.z);
     v.project(camera);
     if (v.z > 1) continue;
+    const top = -v.y * 0.5 + 0.5;
+    if (top > 1 - hudBottom) continue;
     const el = document.createElement("div");
     el.className = `scan-tag${item.loot ? " loot" : ""}${item.far ? " far" : ""}`;
     el.innerHTML = `${item.title}${item.sub ? `<small>${item.sub}</small>` : ""}`;
     el.style.left = `${(v.x * 0.5 + 0.5) * 100}%`;
-    el.style.top = `${(-v.y * 0.5 + 0.5) * 100}%`;
+    el.style.top = `${top * 100}%`;
     root.appendChild(el);
   }
 }
