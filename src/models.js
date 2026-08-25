@@ -116,7 +116,11 @@ export function preloadModels() {
           );
         })
     )
-  );
+  ).then((ids) => {
+    const ok = ids.filter(Boolean);
+    console.info(`[stranded] meshy ${ok.length}/${Object.keys(URLS).length}`);
+    return ids;
+  });
   return pending;
 }
 

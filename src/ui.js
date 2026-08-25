@@ -381,7 +381,7 @@ function updateScanLabels(player, world, camera, scanning) {
     if (d > 48) continue;
     targets.push({
       x: n.mesh.position.x,
-      y: n.mesh.position.y + 2.2,
+      y: n.mesh.position.y + 0.95,
       z: n.mesh.position.z,
       title: itemName(n.type),
       sub: n.needHammer ? (lang === "ru" ? "молоток" : "needs hammer") : "",

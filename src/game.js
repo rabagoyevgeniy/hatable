@@ -20,10 +20,6 @@ import { createJournal, currentGoal, goalText, checkProgress } from "./journal.j
 import { heightAt } from "./noise.js";
 import { preloadModels } from "./models.js";
 import { bakeEnvironment } from "./gfx.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import {
   bindUi,
   showHud,
@@ -52,7 +48,7 @@ export async function boot() {
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.18;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -65,14 +61,7 @@ export async function boot() {
   const player = createPlayer(scene);
   const journal = createJournal();
   scene.environment = bakeEnvironment(renderer);
-  scene.environmentIntensity = 0.78;
-
-  const composer = new EffectComposer(renderer);
-  composer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.22, 0.42, 0.84);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  scene.environmentIntensity = 0.85;
 
   const keys = new Set();
   let playing = false;
@@ -471,8 +460,6 @@ export async function boot() {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-    composer.setSize(w, h);
-    bloom.setSize(w, h);
   });
 
   function frame(now) {
@@ -511,9 +498,9 @@ export async function boot() {
       updateWorld(world, dt, { x: 0, y: 0, z: 8 }, false, false);
     }
 
-    renderer.toneMappingExposure = 0.74 + world.daylight * 0.4 - world.storm * 0.12;
+    renderer.toneMappingExposure = 0.92 + world.daylight * 0.38 - world.storm * 0.1;
     lookX *= 0.6;
-    composer.render();
+    renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
 

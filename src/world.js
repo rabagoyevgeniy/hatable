@@ -29,9 +29,9 @@ export function createWorld(scene) {
   const sky = makeSky();
   scene.add(sky.mesh);
 
-  const hemi = new THREE.HemisphereLight(0xffd2b0, 0x5a2a18, 0.95);
+  const hemi = new THREE.HemisphereLight(0xffd2b0, 0x5a2a18, 1.15);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffe0c0, 1.55);
+  const sun = new THREE.DirectionalLight(0xffe0c0, 1.7);
   sun.position.set(80, 70, -40);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -45,10 +45,10 @@ export function createWorld(scene) {
   sun.shadow.normalBias = 0.035;
   scene.add(sun);
   scene.add(sun.target);
-  const fill = new THREE.DirectionalLight(0x9bb8d8, 0.32);
+  const fill = new THREE.DirectionalLight(0x9bb8d8, 0.48);
   fill.position.set(-50, 28, 40);
   scene.add(fill);
-  scene.add(new THREE.AmbientLight(0x6a3a18, 0.18));
+  scene.add(new THREE.AmbientLight(0x6a3a18, 0.32));
 
   const sunMesh = new THREE.Mesh(
     new THREE.SphereGeometry(9, 20, 20),
@@ -115,7 +115,7 @@ export function createWorld(scene) {
     dust,
     haze,
     scanRing,
-    clock: 0.12,
+    clock: 0.22,
     ghost,
     pads,
     outposts,
@@ -182,22 +182,8 @@ function addLootMarker(group, { starter, wreck, color }) {
   ring.name = "lootMark";
   group.add(ring);
   if (starter) {
-    const pin = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.028, 0.045, 1.05, 8),
-      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 })
-    );
-    pin.position.y = 1.0;
-    pin.name = "lootPin";
-    group.add(pin);
-    const bulb = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 12, 10),
-      new THREE.MeshBasicMaterial({ color: col })
-    );
-    bulb.position.y = 1.58;
-    bulb.name = "lootBulb";
-    group.add(bulb);
-    const light = new THREE.PointLight(col, 1.15, 12);
-    light.position.y = 1.35;
+    const light = new THREE.PointLight(col, 1.35, 14);
+    light.position.y = 1.15;
     group.add(light);
   }
 }
@@ -616,9 +602,9 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     playerPos.z + Math.sin(ang) * 36 - 28
   );
   world.sun.target.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.sun.intensity = Math.max(0.05, world.daylight * 1.55);
-  world.hemi.intensity = 0.18 + world.daylight * 0.78;
-  if (world.fill) world.fill.intensity = 0.12 + world.daylight * 0.22 + night * 0.18;
+  world.sun.intensity = Math.max(0.12, world.daylight * 1.7);
+  world.hemi.intensity = 0.32 + world.daylight * 0.85;
+  if (world.fill) world.fill.intensity = 0.22 + world.daylight * 0.28 + night * 0.22;
   const sunDir = world.sun.position.clone().sub(new THREE.Vector3(playerPos.x, 0, playerPos.z)).normalize();
   if (world.sunMesh) {
     world.sunMesh.position.copy(sunDir).multiplyScalar(380);
@@ -869,7 +855,7 @@ function makeDust() {
       opacity: 0.34,
       depthWrite: false,
       sizeAttenuation: true,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
     })
   );
   points.userData.n = n;
