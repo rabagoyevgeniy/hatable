@@ -12,7 +12,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState`; storm array/cable damage |
 | `systems/science.js` | scan discoveries; ice/soil/wire/comms scans unlock tools; desk lab lines; overlay names gated to ident reach (wrecks and loot); S-band listen after radio |
 | `systems/machines.js` | station records, still pump, headless `placeStationSim` |
-| `systems/survival.js` | seed potato, tank sip, bunk `trySleepSol`, suit range (O₂ ∩ warmth ∩ thirst ∩ hunger), console packing list, MAV cargo (not the last seed) |
+| `systems/survival.js` | seed potato, tank sip, bunk `trySleepSol` (O₂ refill follows `habCanRefillSuit`), suit range (O₂ ∩ warmth ∩ thirst ∩ hunger), console packing list, MAV cargo (not the last seed) |
 | `systems/firstSol.js` | sequential First Sol + stabilize harness |
 | `systems/save.js` | localStorage snapshot `stranded-mars-save-v1` |
 | `ui.js` / `i18n.js` | HUD, menus, language, Hab console |

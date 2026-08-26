@@ -6,7 +6,7 @@ import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStil
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
-import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank, hasMavCargo } from "../src/systems/survival.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank, hasMavCargo, trySleepSol } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
 import { goalsDone, advanceJournal, GOAL_IDS } from "../src/systems/goals.js";
@@ -334,6 +334,18 @@ must(!heaterDrawsLoad({ heaterOn: false, insideC: 4 }, 1), "heater off draws not
   for (let i = 0; i < 220; i++) tickHabitat(shedDawn, 1);
   must(shedDawn.hab.gridOn, "shedding the heater lets noon recover a dead battery");
 }
+{
+  const liveBunk = { hunger: 64, thirst: 62, oxygen: 40, warmth: 20 };
+  must(trySleepSol(liveBunk, { habSealed: true, hab: { pressure: 0.9, insideC: 18 } }, () => {}) === "slept", "live bunk accepts sleep");
+  must(liveBunk.oxygen === 100, "live sealed bunk refills O₂");
+  const blackBunk = { hunger: 64, thirst: 62, oxygen: 40, warmth: 20 };
+  must(trySleepSol(blackBunk, { habSealed: true, hab: { pressure: HAB_DEAD_P_FLOOR, insideC: 4 } }, () => {}) === "slept", "blackout bunk still sleeps");
+  must(blackBunk.oxygen === 52, "blackout bunk is a trickle, not a full tank");
+  const leakBunk = { hunger: 64, thirst: 62, oxygen: 40, warmth: 20 };
+  must(trySleepSol(leakBunk, { habSealed: false, hab: { pressure: 0.9, insideC: 8 } }, () => {}) === "slept", "leaking bunk still sleeps");
+  must(leakBunk.oxygen === 52, "leaking bunk shares the trickle with a blackout");
+}
+must(readFileSync(resolve(root, "src/systems/survival.js"), "utf8").includes("habCanRefillSuit"), "bunk O₂ uses the same refill line as standing inside");
 
 const ration = createHabitat();
 must(ration.waterTank < 3, "Hab tank is leftover sips, not a still");

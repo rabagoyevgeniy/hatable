@@ -481,6 +481,13 @@ Overnight: hunt couplings, no new HUD. First Sol already taught heater-off saves
 - Heater left on keeps `gridOn` false through a Sol of sun. Shedding it lets noon recover. No new HUD. No rover
 - No Pointer Lock playtest
 
+### Cycle BF — bunk is not a magic O₂ tank
+
+Overnight: hunt couplings, no new HUD. Standing inside already needed sealed ∩ pressure. The bunk still filled to 100 on a sealed flag, even after a blackout bled the house below refill.
+
+- `trySleepSol` uses `habCanRefillSuit`. Live First Sol bunk still fills. Blackout and leak share the trickle. No rover
+- No Pointer Lock playtest
+
 
 
 

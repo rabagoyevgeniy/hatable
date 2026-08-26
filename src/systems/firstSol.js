@@ -574,6 +574,29 @@ export function runStabilizeCoupling() {
   if (!shedDawn.hab.gridOn) fail("stabilize", "shedding the heater should let noon recover a dead battery");
   notes.push("heater-on-holds-noon-blackout");
 
+  const bunkAir = createHeadlessWorld();
+  bunkAir.habSealed = true;
+  bunkAir.hab.battery = 0;
+  bunkAir.hab.gridOn = false;
+  bunkAir.hab.heaterOn = true;
+  bunkAir.hab.cableFault = true;
+  bunkAir.hab.pressure = HAB_DEAD_P_FLOOR;
+  bunkAir.hab.insideC = 4;
+  bunkAir.clock = 0.78;
+  tickTime(bunkAir, 0);
+  applyWeatherState(bunkAir, "clear");
+  const sleeper = createHeadlessPlayer();
+  sleeper.oxygen = 40;
+  sleeper.hunger = 64;
+  sleeper.thirst = 62;
+  if (trySleepSol(sleeper, bunkAir) !== "slept") fail("stabilize", "blackout bunk should still let you sleep");
+  if (habCanRefillSuit(bunkAir)) fail("stabilize", "heater-held blackout sleep should not restore life support");
+  if (sleeper.oxygen >= 100) fail("stabilize", "bunk is not a magic O₂ tank when the house cannot refill");
+  if (!(sleeper.oxygen > 40 && sleeper.oxygen < 60)) {
+    fail("stabilize", `blackout bunk should trickle O₂, got ${sleeper.oxygen}`);
+  }
+  notes.push("blackout-bunk-is-not-magic-o2");
+
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {
     fail("stabilize", "dry soil should grow slower than watered");

@@ -19,7 +19,7 @@ HABITAT (world.hab)
   leak until seal station
     → pressure
     → Hab O₂ tank
-    → suit O₂ while inside (refill only if sealed AND pressure > 0.48; dead grid bleeds a sealed hull below that)
+    → suit O₂ while inside (refill only if sealed AND pressure > 0.48; dead grid bleeds a sealed hull below that; bunk uses the same line)
   solar (damaged roof arrayHealth + placed panels)
     → battery (kWh compressed per Sol)
     → gridOn
@@ -46,7 +46,7 @@ HABITAT (world.hab)
 
 PLAYER
   suit O₂, hunger, thirst, warmth
-  pockets, hammer, sleep (bunk)
+  pockets, hammer, sleep (bunk — full O₂ only if the Hab can refill the suit; blackout bunk is a trickle like a leak)
   round-trip range = min(O₂ time, warmth time, thirst time, hunger time) × actual walk / 2
   walk speed shared with the body; storm shove derates the estimate
   solar-wreck wire is outside a storm-night leash

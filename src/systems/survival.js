@@ -1,7 +1,7 @@
 /** First-Sol gut: leftover tank, seed potato, sleep, tank sip. No Three.js. */
 
 import { SURVIVAL, HAB_POS, OUTPOSTS, NODE_SPAWNS } from "../data.js";
-import { advanceSolSim } from "./habitat.js";
+import { advanceSolSim, habCanRefillSuit } from "./habitat.js";
 
 export const TANK_SIP_L = 0.4;
 export const TANK_MIN_L = 0.35;
@@ -60,7 +60,7 @@ export function trySleepSol(player, world, advance = advanceSolSim) {
   advance(world);
   player.hunger = clamp100(player.hunger - SLEEP_HUNGER);
   player.thirst = clamp100(player.thirst - SLEEP_THIRST);
-  if (world.habSealed) player.oxygen = 100;
+  if (habCanRefillSuit(world)) player.oxygen = 100;
   else player.oxygen = clamp100(player.oxygen + 12);
   player.warmth = clamp100(world.hab?.insideC > 12 ? 86 : player.warmth + 14);
   return "slept";
