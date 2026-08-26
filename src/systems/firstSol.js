@@ -210,8 +210,10 @@ export function runFirstSol() {
     });
     if (blind?.kind !== "still-scan") fail("ice", `unidentified ice is not fuel, got ${blind?.kind}`);
     if (canFuelStill(world, "ice")) fail("ice", "unscanned ice must not be feedstock");
+    if (habReadout(world, "en").includes("FEEDSTOCK")) fail("ice", "desk lab should be empty before the ice scan");
     const iceId = noteScan(world, "ice");
     if (!iceId) fail("ice", "ice scan should identify feedstock");
+    if (!habReadout(world, "en").includes("FEEDSTOCK")) fail("ice", "desk should log identified ice");
     if (pickScanTarget({ heldId: "ice" }) !== "ice") fail("ice", "F on a held sample should identify ice");
     if (!canFuelStill(world, "ice")) fail("ice", "scanned ice should unlock the still");
     const fuelAct = pickStillMachineAction({
@@ -612,6 +614,7 @@ export function runStabilizeCoupling() {
   if (pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE + 1, heldId: "ice" }) !== "ice") {
     fail("stabilize", "beyond ring range a pocket sample wins; the farm is not a horizon cheat");
   }
+  notes.push("ident-matches-ring-range");
   if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
     fail("stabilize", "copper underfoot still identifies as wire");
   }
@@ -679,6 +682,7 @@ export function runStabilizeCoupling() {
   notes.push("scan-names-expedition-sites");
 
   const recipe = createHeadlessWorld();
+  if (habReadout(recipe, "en").includes("FEEDSTOCK")) fail("stabilize", "empty desk is not a lab until you scan");
   if (canFuelStill(recipe, "ice")) fail("stabilize", "unscanned ice is not still feedstock");
   if (canPlantCrop(recipe)) fail("stabilize", "unscanned soil is not crop substrate");
   if (pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true }).kind !== "still-scan") {
@@ -696,6 +700,7 @@ export function runStabilizeCoupling() {
   }
   noteScan(recipe, "ice");
   if (!canFuelStill(recipe, "ice")) fail("stabilize", "ice scan should unlock the still recipe");
+  if (!habReadout(recipe, "en").includes("FEEDSTOCK")) fail("stabilize", "desk should log identified ice");
   if (
     pickStillMachineAction({
       d: 0.4,
@@ -710,6 +715,7 @@ export function runStabilizeCoupling() {
   }
   noteScan(recipe, "soil");
   if (!canPlantCrop(recipe)) fail("stabilize", "soil scan should unlock planting");
+  if (!habReadout(recipe, "en").includes("SUBSTRATE")) fail("stabilize", "desk should log identified soil");
   if (pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true }).kind !== "plant") {
     fail("stabilize", "identified soil lets you plant the seed");
   }
@@ -719,6 +725,7 @@ export function runStabilizeCoupling() {
   if (canUseWire(recipe)) fail("stabilize", "unscanned wire must not repair");
   noteScan(recipe, "wire");
   if (!canUseWire(recipe)) fail("stabilize", "wire scan should unlock electrical repair");
+  if (!habReadout(recipe, "en").includes("COPPER")) fail("stabilize", "desk should log identified copper");
   if (
     pickStillMachineAction({
       d: 0.4,
@@ -732,6 +739,7 @@ export function runStabilizeCoupling() {
     fail("stabilize", "identified copper rebuilds the pump");
   }
   notes.push("scan-unlocks-recipes");
+  notes.push("desk-is-the-lab");
   notes.push("scan-unlocks-copper-repair");
 
   const link = createHeadlessWorld();

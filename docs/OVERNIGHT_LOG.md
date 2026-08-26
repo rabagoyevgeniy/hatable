@@ -341,6 +341,13 @@ Overnight timer still listed desk/night. Repo: wrecks have names, but F stopped 
 - Place ident uses the same 22 m as loot rings. Beyond that a pocket sample wins; the farm is not a horizon cheat
 - No rover. No Pointer Lock playtest
 
+### Cycle AL — the desk is the lab
+
+Overnight timer still listed desk/night. P2 leftover: lab / samples. Do not add a new panel.
+
+- Identified ice / soil / wire / comms / hydrazine write onto the Hab console. Empty desk stays empty
+- Field toast still names the sample; the desk is where you review the recipe. No rover. No Pointer Lock playtest
+
 
 
 

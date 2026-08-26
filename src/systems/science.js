@@ -134,6 +134,25 @@ export function recipeKnown(world, rec) {
   return isKnown(world, rec.needScan);
 }
 
+/** Desk lab: identified samples, not XP. Places stay field idents. */
+export const LAB_SAMPLES = {
+  ice: { en: "ICE     STILL FEEDSTOCK", ru: "ЛЁД     СЫРЬЁ STILL" },
+  soil: { en: "SOIL    CROP SUBSTRATE", ru: "ГРУНТ   СУБСТРАТ" },
+  wire: { en: "WIRE    COPPER SPLICE", ru: "ПРОВОД  МЕДЬ / СПЛАЙС" },
+  comms: { en: "COMMS   S-BAND RADIO", ru: "СВЯЗЬ   РАЦИЯ S-ДИАП" },
+  hydrazine: { en: "N2H4    STILL FUEL", ru: "N2H4    ТОПЛИВО STILL" },
+};
+
+export function labLines(world, lang = "en") {
+  const ru = lang === "ru";
+  const out = [];
+  for (const [id, copy] of Object.entries(LAB_SAMPLES)) {
+    if (!isKnown(world, id)) continue;
+    out.push(ru ? copy.ru : copy.en);
+  }
+  return out;
+}
+
 export function noteScan(world, id) {
   if (!id) return null;
   if (!world.science) world.science = createScience();

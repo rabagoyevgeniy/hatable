@@ -30,7 +30,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 
 ## PARTIAL
 
-- Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; place ident shares the 22 m loot-ring reach. Rover identified as dead, not driven. No bench lab yet)
+- Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples. Place ident shares the 22 m loot-ring reach. Rover identified as dead, not driven)
 - Range estimate (O₂ **and** warmth round-trip; no full sunset packing list yet)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)

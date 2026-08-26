@@ -2,7 +2,7 @@
 
 import { tickStillOnSleep } from "./machines.js";
 import { tickStormDamage } from "./weather.js";
-import { tickRadio, radioPlaced } from "./science.js";
+import { tickRadio, radioPlaced, labLines } from "./science.js";
 
 export const SOL_SECONDS = 220;
 /** Sleep jump toward harvest. Four watered Sols can finish. */
@@ -170,6 +170,7 @@ export function habReadout(world, lang = "ru") {
     else if (!world.contacted && (world.daylight || 0) < 0.28) band = ru ? "НОЧЬ" : "NIGHT";
     lines.push(`${ru ? "S-ДИАП" : "S-BAND"}    ${band}`);
   }
+  lines.push(...labLines(world, lang));
   return lines.join("\n");
 }
 

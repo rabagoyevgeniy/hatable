@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE } from "../src/systems/science.js";
+import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
@@ -537,6 +537,10 @@ must(i18n.includes("earthHeard"), "Earth heard toast is translated");
   for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(uplink, 1);
   must(!!uplink.contacted, "clear-day S-band listen reaches Earth");
 }
+must(labLines({ science: { known: {} } }).length === 0, "empty desk has no lab lines");
+must(labLines({ science: { known: { ice: true } } }, "en").some((s) => s.includes("FEEDSTOCK")), "desk logs identified ice");
+must(habReadout({ hab: createHabitat(), science: { known: { soil: true } } }, "en").includes("SUBSTRATE"), "console lab shows identified soil");
+must(!habReadout({ hab: createHabitat(), science: { known: {} } }, "en").includes("FEEDSTOCK"), "unscanned desk is not a lab");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));
