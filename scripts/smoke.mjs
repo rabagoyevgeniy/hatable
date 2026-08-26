@@ -475,11 +475,14 @@ must(
 must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("WALK_MPS"), "body speed and range line share one walk constant");
 must(lootBeaconVisible({ starter: true, playTime: 10, storm: 0 }), "starter rings show during the leak emergency");
 must(!lootBeaconVisible({ starter: false, storm: 0.5, scanning: false }), "dust eats debug loot rings");
-must(lootBeaconVisible({ starter: false, storm: 0.78, scanning: true }), "scan reveals loot in a storm");
+must(lootBeaconVisible({ starter: false, storm: 0.78, scanning: true, dist: 8 }), "scan reveals nearby loot in a storm");
+must(!lootBeaconVisible({ starter: false, storm: 0.78, scanning: true, dist: 40 }), "storm scan is not a far-wreck detector");
 must(lootBeaconVisible({ starter: false, storm: 0, dist: 8 }), "yard loot still rings on a clear day");
 must(!lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: false }), "distant wrecks have no cheat ring in clear weather");
-must(lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: true }), "scan reveals distant wreck loot");
+must(!lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: true }), "hold-F is not a planet-wide metal detector");
+must(lootBeaconVisible({ starter: false, storm: 0, dist: LOOT_RING_RANGE - 2, scanning: true }), "scan pulse rings loot inside ident reach");
 must(world.includes("lootBeaconVisible"), "world hides loot marks from storm, not only the HUD");
+must(world.includes("LOOT_RING_RANGE"), "scan pulse visual shares ident/ring reach");
 must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "scan at the solar wreck names the farm");
 must(pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE - 2 }) === "solaryard", "farm ident reaches as far as a loot ring");
 must(pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE + 1, heldId: "ice" }) === "ice", "beyond ring range a pocket sample wins");

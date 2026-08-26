@@ -82,7 +82,7 @@ export const SCAN_DB = {
 import { STORM_GRACE_S } from "./weather.js";
 
 export const DUST_HIDES_BEACONS = 0.42;
-/** Further than this, even a clear day has no cheat ring — scan or walk in. Same reach as place ident. */
+/** Further than this: no cheat ring, no overlay name. Walk in. Scan pulse shares this reach. */
 export const LOOT_RING_RANGE = 22;
 export const SCAN_PLACE_RANGE = LOOT_RING_RANGE;
 
@@ -111,7 +111,7 @@ export function overlayNamesLoot(dist, { scanning = false, lootRange = 18 } = {}
   return dist <= lootRange;
 }
 
-/** Debug loot rings. Dust eats them; distance eats them; hold F / Scan to see. */
+/** Debug loot rings. Dust eats them; distance eats them. Hold F only within ident/pulse reach. */
 export function lootBeaconVisible({
   starter = false,
   storm = 0,
@@ -119,7 +119,7 @@ export function lootBeaconVisible({
   playTime = 0,
   dist = 0,
 } = {}) {
-  if (scanning) return true;
+  if (scanning) return dist < LOOT_RING_RANGE;
   if (starter && (playTime || 0) < STORM_GRACE_S) return true;
   if (storm >= DUST_HIDES_BEACONS) return false;
   if (!starter && dist > LOOT_RING_RANGE) return false;

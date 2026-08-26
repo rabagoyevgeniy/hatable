@@ -7,7 +7,7 @@ import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 import { createHabitat, tickTime, tickHabitat, cropFactors, CROP_LIVE, advanceSolSim } from "./systems/habitat.js";
 import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
-import { createScience, lootBeaconVisible } from "./systems/science.js";
+import { createScience, lootBeaconVisible, LOOT_RING_RANGE } from "./systems/science.js";
 import { isMobileView } from "./device.js";
 
 export { isMobileView };

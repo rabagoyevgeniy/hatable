@@ -611,12 +611,20 @@ export function runStabilizeCoupling() {
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");
   if (lootBeaconVisible({ starter: false, storm: 0, scanning: false, dist: 40 })) {
-    fail("stabilize", "clear-day distant wrecks should not glow until you scan or close in");
+    fail("stabilize", "clear-day distant wrecks should not glow until you close in");
   }
-  if (!lootBeaconVisible({ starter: false, storm: 0, scanning: true, dist: 40 })) fail("stabilize", "scan reveals distant wreck loot");
-  notes.push("distant-rings-need-scan");
+  if (lootBeaconVisible({ starter: false, storm: 0, scanning: true, dist: 40 })) {
+    fail("stabilize", "hold-F is not a planet-wide metal detector");
+  }
+  if (!lootBeaconVisible({ starter: false, storm: 0, scanning: true, dist: LOOT_RING_RANGE - 2 })) {
+    fail("stabilize", "scan pulse may still ring loot inside ident reach");
+  }
+  notes.push("scan-pulse-is-not-a-planet-detector");
   if (lootBeaconVisible({ starter: false, storm: 0.5, scanning: false })) fail("stabilize", "dust should eat debug loot rings");
-  if (!lootBeaconVisible({ starter: false, storm: 0.78, scanning: true })) fail("stabilize", "scan must reveal loot in a storm");
+  if (!lootBeaconVisible({ starter: false, storm: 0.78, scanning: true, dist: 8 })) fail("stabilize", "scan must reveal nearby loot in a storm");
+  if (lootBeaconVisible({ starter: false, storm: 0.78, scanning: true, dist: 40 })) {
+    fail("stabilize", "storm scan must not light the far wreck");
+  }
   if (lootBeaconVisible({ starter: true, playTime: 400, storm: 0.5, scanning: false })) {
     fail("stabilize", "after the emergency, even starter rings vanish in dust");
   }

@@ -376,6 +376,13 @@ Overnight timer still listed desk/night. Repo: wreck names gated; loot tags stil
 - Overlay names a pile only inside ident/ring reach. Distant 3D rings may still glint; they do not caption copper
 - No rover. No Pointer Lock playtest
 
+### Cycle AQ — scan pulse is not a planet detector
+
+Overnight timer still listed desk/night. Repo: overlay names gated to 22 m, but hold-F still lit 3D loot rings on the far wreck.
+
+- Scan-mode rings share ident/pulse reach. Dust still hides yard rings unless F is in range. Walk to the wreck
+- No rover. No Pointer Lock playtest
+
 
 
 

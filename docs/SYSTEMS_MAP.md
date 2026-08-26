@@ -63,11 +63,11 @@ SCIENCE
   farm / rover / mav scans → name the leftover expedition (rover is not a taxi; MAV is a project)
   comms scan → radio recipe (hammer / still / plot stay ungated)
   contacted after RADIO_CONTACT_S of clear daylight — not on place
-  dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
-  distant (>22 m) non-starter rings stay off even in clear weather
+  dust/storm hides loot rings unless scanning **within 22 m** (starter rings survive the first emergency)
+  distant (>22 m) rings stay off — even while holding F; walk in
   place ident uses the same 22 m as loot rings — F names the wreck you can see, not the horizon
   scan overlay names a wreck only within that 22 m, or after F; hold-F is not a horizon atlas (Hab stays named)
-  scan overlay names loot only within that 22 m; 3D rings may still glint farther while scanning
+  scan overlay names loot only within that 22 m; 3D rings match the pulse, not a planet detector
 
 WORLD
   nodes (loot), stations, locker, outposts
