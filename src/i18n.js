@@ -115,6 +115,9 @@ const strings = {
     patched: "HULL SEALED — pressure holding",
     patchedHome: "HULL SEALED — RIGHT: console (heater). Deeper left: bunk.",
     fuelStillHint: "STILL UP — E ice into it. Ice is fuel, not a girder.",
+    buildStill: "E  BUILD STILL",
+    stillHint: "STILL PAD · hammer + 2 scrap + canvas",
+    needStillMats: "Need hammer, 2 scrap + canvas on the amber ring, then E ice",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -231,6 +234,9 @@ const strings = {
     patched: "КОРПУС ЗАДЕЛАН — давление держится",
     patchedHome: "КОРПУС ЗАДЕЛАН — справа консоль (печь). Глубже слева — койка.",
     fuelStillHint: "ДИСТИЛЛЯТОР СТОИТ — E лёд в бак. Лёд это топливо, не балка.",
+    buildStill: "E  СТАВИТЬ ДИСТИЛЛЯТОР",
+    stillHint: "ДИСТИЛЛЯТОР · молоток + 2 лома + брезент",
+    needStillMats: "Нужны молоток, 2 лома и брезент на янтарном кольце, потом E лёд",
     consoleDeeper: "глубже — голубой экран",
   },
 };

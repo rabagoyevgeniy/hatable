@@ -415,12 +415,17 @@ async function bootGame() {
       persist();
       return;
     }
+    if (hit.kind === "still-hint") {
+      toast(t("needStillMats"));
+      return;
+    }
     if (hit.kind === "still-fuel") {
       const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
       takeItems(player, { [fuel]: 1 });
       hit.station.fuel += fuel === "hydrazine" ? 50 : 28;
       pickupTone(fuel);
       toast(t("fueled"));
+      persist();
       return;
     }
     if (hit.kind === "still-take") {
@@ -429,6 +434,7 @@ async function bootGame() {
       pickupTone("water");
       player.heldId = "water";
       maybeGoal();
+      persist();
       return;
     }
     if (hit.kind === "plant") {

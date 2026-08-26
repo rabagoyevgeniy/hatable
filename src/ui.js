@@ -7,7 +7,7 @@ import { nearestOutpost, resolvePlacement } from "./world.js";
 import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
 import { weatherLabel } from "./systems/weather.js";
 import { hasSave } from "./systems/save.js";
-import { pickInteriorAction } from "./systems/interact.js";
+import { pickInteriorAction, pickStillPadAction } from "./systems/interact.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -403,12 +403,15 @@ export function findInteract(player, world) {
 
   const stillRec = RECIPES.find((r) => r.station === "still");
   const stillPad = YARD_PADS.find((p) => p.station === "still");
-  if (stillRec && stillPad && !world.stations.some((s) => s.type === "still")) {
-    const padD = Math.hypot(p.x - stillPad.x, p.z - stillPad.z);
-    if (padD < 2.8 && player.tools.hammer && canAfford(player, stillRec.need)) {
-      return { kind: "build-still", label: t("buildStill") };
-    }
-  }
+  const stillAct = pickStillPadAction({
+    padD: stillPad ? Math.hypot(p.x - stillPad.x, p.z - stillPad.z) : 99,
+    gatherD,
+    hasHammer: !!player.tools.hammer,
+    canBuild: !!(stillRec && canAfford(player, stillRec.need)),
+    hasStill: world.stations.some((s) => s.type === "still"),
+  });
+  if (stillAct?.kind === "build-still") return { kind: "build-still", label: t("buildStill") };
+  if (stillAct?.kind === "still-hint") return { kind: "still-hint", label: t("stillHint") };
 
   for (const st of world.stations) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);

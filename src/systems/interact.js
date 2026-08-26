@@ -5,6 +5,7 @@ export const BUNK_RANGE = 3.0;
 export const LOCKER_RANGE = 2.8;
 export const GATHER_STEAL = 2.15;
 export const LEAK_RANGE = 3.2;
+export const STILL_PAD_RANGE = 2.8;
 
 export function pickInteriorAction({
   deskD = 99,
@@ -35,6 +36,24 @@ export function pickInteriorAction({
   }
   hits.sort((a, b) => a.d - b.d);
   return hits[0] || null;
+}
+
+/** Amber STILL ring west of the hatch — same pattern as the leak: hint until recipe, E-build when ready. */
+export function pickStillPadAction({
+  padD = 99,
+  gatherD = 99,
+  hasHammer = false,
+  canBuild = false,
+  hasStill = false,
+} = {}) {
+  if (hasStill) return null;
+  if (padD >= STILL_PAD_RANGE) return null;
+  if (canBuild && hasHammer) return { kind: "build-still", d: padD };
+  if (!hasHammer) return null;
+  // A loot pile underfoot still wins — you need those mats. Empty ring names the recipe.
+  if (gatherD + 0.45 < padD) return null;
+  if (padD + 0.2 <= gatherD) return { kind: "still-hint", d: padD };
+  return null;
 }
 
 export function dist(ax, az, bx, bz) {

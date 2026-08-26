@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
-import { pickInteriorAction, dist } from "../src/systems/interact.js";
-import { HAB_DESK, HAB_BUNK, HAB_LEAK } from "../src/data.js";
+import { pickInteriorAction, pickStillPadAction, dist } from "../src/systems/interact.js";
+import { HAB_DESK, HAB_BUNK, HAB_LEAK, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
@@ -309,7 +309,46 @@ must(patched.index === 3, "seal + hammer catch up to water");
 const loot = { index: 0, finished: false };
 advanceJournal(loot, goalsDone({ gathered: 3, tools: {}, inv: {} }, { habSealed: false }));
 must(game.includes("build-still"), "still pad builds in place like the leak patch");
+must(game.includes("still-hint"), "empty still ring names the recipe like the leak");
 must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("need: { scrap: 2, fabric: 1 }"), "still hull is scrap+canvas; ice is fuel");
+must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("x: -7.5, z: 12.6"), "still pad has starter scrap so hammer does not starve the water loop");
+const i18n = readFileSync(resolve(root, "src/i18n.js"), "utf8");
+must(i18n.includes("buildStill"), "build-still prompt is translated, not a raw key");
+must(i18n.includes("СТАВИТЬ ДИСТИЛЛЯТОР"), "Russian still-build prompt exists");
+
+const stillPad = YARD_PADS.find((p) => p.station === "still");
+must(!!stillPad, "still yard pad exists");
+const westScrap = NODE_SPAWNS.filter((n) => n.type === "scrap" && n.starter && n.x < -3);
+must(westScrap.length >= 2, "two starter scraps live at the still yard");
+for (const n of westScrap) {
+  must(dist(n.x, n.z, stillPad.x, stillPad.z) < 5, "west scrap is a short walk from the still ring");
+}
+for (const n of NODE_SPAWNS.filter((n) => n.type === "fabric")) {
+  must(dist(n.x, n.z, stillPad.x, stillPad.z) > 1.6, "canvas does not sit on the still ring");
+}
+const iceNear = NODE_SPAWNS.find((n) => n.type === "ice" && dist(n.x, n.z, stillPad.x, stillPad.z) < 4);
+must(!!iceNear, "ice for fuel sits next to the still pad");
+
+must(
+  pickStillPadAction({ padD: 0.2, gatherD: 2.5, hasHammer: true, canBuild: true }).kind === "build-still",
+  "recipe ready on the ring is E-build"
+);
+must(
+  pickStillPadAction({ padD: 0.2, gatherD: 2.5, hasHammer: true, canBuild: false }).kind === "still-hint",
+  "empty ring with hammer names 2 scrap + canvas"
+);
+must(
+  pickStillPadAction({ padD: 2.2, gatherD: 0.3, hasHammer: true, canBuild: false }) == null,
+  "standing on west scrap still gathers it"
+);
+must(
+  pickStillPadAction({ padD: 2.2, gatherD: 0.3, hasHammer: true, canBuild: true }).kind === "build-still",
+  "full recipe builds even next to leftover scrap"
+);
+must(
+  pickStillPadAction({ padD: 0.4, gatherD: 3, hasHammer: false, canBuild: true }) == null,
+  "no hammer — ring is not a still interact"
+);
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

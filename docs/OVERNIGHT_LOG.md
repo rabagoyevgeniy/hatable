@@ -136,3 +136,11 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - Playtest: hammer ate the two spawn scraps; still needs two more and the west ring was a scavenger hunt
 - Two starter scrap piles now sit with the canvas/ice on the STILL pad so ice → water is the left side of the hatch, not a second wreck tour
+
+### Cycle O — still pad is findable (prompt, not a raw key)
+
+- `buildStill` was missing from i18n — E on a ready pad showed the key `buildStill`, not «СТАВИТЬ ДИСТИЛЛЯТОР»
+- Canvas sat on the amber ring and stole E. Moved west with the extra scrap
+- Empty ring with a hammer now hints like the leak: «ДИСТИЛЛЯТОР · молоток + 2 лома + брезент»
+- `pickStillPadAction` locked in smoke (build vs hint vs gather-underfoot)
+- Fuel/take persist so a sip of ice is not lost on refresh
