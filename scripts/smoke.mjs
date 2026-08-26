@@ -366,8 +366,8 @@ must(
   pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: true }).kind === "still-take",
   "a full flask is collect, not drip"
 );
-must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("padBeacon"), "still pad has a vertical beacon, not only a floor ring");
-must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("dressYardPad"), "yard pads dress with a standing sign on mobile too");
+must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("stillPadMarker"), "still pad is a stake marker, not a floor twig");
+must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("fog: false"), "pad markers ignore Mars fog so they stay readable");
 
 const oneIce = { type: "still", fuel: 28, water: 0, runtime: 0, fault: null, repaired: false };
 const liveGrid = { hab: { gridOn: true }, science: { known: {} } };

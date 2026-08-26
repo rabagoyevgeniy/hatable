@@ -531,7 +531,7 @@ function updateScanLabels(player, world, camera, scanning) {
       if (pad) {
         targets.push({
           x: pad.x,
-          y: 1.9,
+          y: 3.2,
           z: pad.z,
           title: pad.label[lang] || pad.label.en,
           loot: true,
@@ -602,7 +602,7 @@ function updateScanLabels(player, world, camera, scanning) {
       if (d > lootRange && !scanning) continue;
       targets.push({
         x: pad.x,
-        y: 1.85,
+        y: 3.15,
         z: pad.z,
         title: pad.label[lang] || pad.label.en,
         sub: lang === "ru" ? "янтарное кольцо" : "amber ring",

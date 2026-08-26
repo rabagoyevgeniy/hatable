@@ -366,44 +366,86 @@ function makePlate(text, w, h) {
   );
 }
 
-/** Amber yard rings must read in first person on Mars dirt — not a floor decal, not desktop-only. */
+/** Yard pads must read from the hatch: a stake with volume, not a 5 cm twig in orange fog. */
 function dressYardPad(scene, p) {
   const y = heightAt(p.x, p.z);
   const hot = p.station === "still";
+  const group = new THREE.Group();
+  group.position.set(p.x, y, p.z);
+  group.name = hot ? "stillPadMarker" : "yardPadMarker";
+
+  const unlit = (color, extra = {}) =>
+    new THREE.MeshBasicMaterial({ color, fog: false, ...extra });
+
+  const plinth = new THREE.Mesh(
+    new THREE.CylinderGeometry(hot ? 1.25 : 1.05, hot ? 1.35 : 1.15, 0.22, 18),
+    unlit(0x2a1c14)
+  );
+  plinth.position.y = 0.12;
+  group.add(plinth);
+
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(hot ? 1.05 : 1.15, hot ? 1.52 : 1.42, 28),
-    new THREE.MeshBasicMaterial({
-      color: hot ? 0xfff1c2 : 0xffb15a,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: hot ? 0.92 : 0.7,
-    })
+    new THREE.RingGeometry(hot ? 1.08 : 0.95, hot ? 1.48 : 1.28, 28),
+    unlit(hot ? 0xfff4cc : 0xffc878, { side: THREE.DoubleSide, transparent: true, opacity: 0.95 })
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.set(p.x, y + 0.1, p.z);
+  ring.position.y = 0.24;
   ring.name = "padRing";
-  scene.add(ring);
+  group.add(ring);
 
   const beacon = new THREE.Mesh(
-    new THREE.CylinderGeometry(hot ? 0.055 : 0.04, hot ? 0.055 : 0.04, hot ? 2.35 : 1.7, 8),
-    new THREE.MeshBasicMaterial({ color: hot ? 0xffe27a : 0xffb15a })
+    new THREE.CylinderGeometry(hot ? 0.13 : 0.09, hot ? 0.16 : 0.11, hot ? 3.1 : 2.2, 10),
+    unlit(hot ? 0xfff0b0 : 0xffc060)
   );
-  beacon.position.set(p.x, y + (hot ? 1.22 : 0.9), p.z);
+  beacon.position.y = hot ? 1.7 : 1.25;
   beacon.name = "padBeacon";
-  scene.add(beacon);
+  group.add(beacon);
 
-  const light = new THREE.PointLight(hot ? 0xffe7a0 : 0xffb15a, hot ? 1.45 : 0.7, hot ? 16 : 10);
-  light.position.set(p.x, y + (hot ? 1.55 : 1.2), p.z);
+  const lamp = new THREE.Mesh(
+    new THREE.SphereGeometry(hot ? 0.22 : 0.14, 12, 10),
+    unlit(0xfff8dc)
+  );
+  lamp.position.y = hot ? 3.35 : 2.45;
+  lamp.name = "padLamp";
+  group.add(lamp);
+
+  const light = new THREE.PointLight(hot ? 0xfff0c0 : 0xffc878, hot ? 2.1 : 1.0, hot ? 20 : 12);
+  light.position.y = hot ? 3.2 : 2.3;
   light.name = "padLight";
-  scene.add(light);
+  group.add(light);
 
-  const sign = makePlate(p.label.ru, hot ? 1.7 : 1.35, hot ? 0.34 : 0.28);
-  sign.position.set(p.x, y + (hot ? 1.55 : 1.25), p.z);
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(hot ? 2.15 : 1.55, hot ? 0.58 : 0.4),
+    new THREE.MeshBasicMaterial({ map: padSignTexture(p.label.ru), side: THREE.DoubleSide, fog: false })
+  );
+  sign.position.set(0, hot ? 2.15 : 1.65, hot ? 0.22 : 0.18);
   sign.rotation.y = Math.atan2(-p.x, 12 - p.z);
   sign.name = "padSign";
-  scene.add(sign);
+  group.add(sign);
 
-  return { ...p, ring, beacon, light, sign, taken: false };
+  group.traverse((o) => {
+    if (o.isMesh) o.frustumCulled = false;
+  });
+  scene.add(group);
+  return { ...p, mesh: group, ring, beacon, light, sign, lamp, taken: false };
+}
+
+function padSignTexture(text) {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#1a1410";
+  ctx.fillRect(0, 0, 512, 128);
+  ctx.strokeStyle = "#ffe27a";
+  ctx.lineWidth = 8;
+  ctx.strokeRect(6, 6, 500, 116);
+  ctx.fillStyle = "#fff4dc";
+  ctx.font = "bold 52px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 256, 68);
+  return new THREE.CanvasTexture(c);
 }
 
 export function padTaken(world, pad) {
@@ -530,6 +572,7 @@ export function placeStation(world, station, x, z) {
     if (pad.beacon) pad.beacon.visible = false;
     if (pad.light) pad.light.visible = false;
     if (pad.sign) pad.sign.visible = false;
+    if (pad.lamp) pad.lamp.visible = false;
   }
   return st;
 }
