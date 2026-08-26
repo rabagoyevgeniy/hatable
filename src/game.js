@@ -657,6 +657,10 @@ async function bootGame() {
     });
     window.addEventListener("pointermove", (e) => {
       if (e.pointerId !== id) return;
+      if (e.pointerType === "mouse" && e.buttons === 0) {
+        reset();
+        return;
+      }
       setFromTouch(e);
     });
     const endPtr = (e) => {
