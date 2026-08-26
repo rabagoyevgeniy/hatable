@@ -294,6 +294,14 @@ Overnight timer still listed desk/night. Repo: First Sol gated, scanner is a mod
 - First-sol chain still leak → crop; ice and crop steps now require the scan
 - No rover. No Pointer Lock playtest
 
+### Cycle AF — copper is a recipe for the splice
+
+Overnight timer still listed desk/night. Repo: ice/soil scans unlock tools. Next understand×stabilize beat: the wreck's copper, not another XP bump.
+
+- Unidentified wire will not splice the roof cable or rebuild the still pump — F names copper first
+- First-sol array cell stays ungated (pressure/power emergency is not a science quiz)
+- Farm ident still beats a pocket sample. No rover. No Pointer Lock playtest
+
 
 
 

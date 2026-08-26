@@ -54,6 +54,7 @@ SCIENCE
   world.science.known[type] from scanner
   ice scan → still accepts ice as feedstock (not a +12% buff)
   soil scan → plot accepts the seed potato (not a growth buff)
+  wire scan → splice the roof cable / rebuild the still pump (first-sol cell replace stays ungated)
   F also identifies a sample in hand / pockets when nothing is underfoot
   solaryard → first ident of the copper/cell wreck (not XP)
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)

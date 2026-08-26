@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, isKnown } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -469,13 +469,28 @@ export function runStabilizeCoupling() {
   if (!(cable.hab.solarKw < 0.08)) fail("stabilize", `open cable should kill roof kW (${cable.hab.solarKw})`);
   notes.push("storm-snaps-cable");
 
+  const blindSplice = pickArrayAction({
+    d: 0.4,
+    gatherD: 5,
+    cableFault: true,
+    canRepairCable: true,
+    wireKnown: false,
+  });
+  if (blindSplice?.kind !== "cable-scan") fail("stabilize", `unidentified copper is not a splice, got ${blindSplice?.kind}`);
+  if (canUseWire(cable)) fail("stabilize", "unscanned wire must not splice");
+  const copper = noteScan(cable, "wire");
+  if (!copper || !String(copper.en || "").toLowerCase().includes("copper")) {
+    fail("stabilize", "wire scan should name copper");
+  }
+  if (!canUseWire(cable)) fail("stabilize", "wire scan should unlock electrical repair");
   const splice = pickArrayAction({
     d: 0.4,
     gatherD: 5,
     cableFault: true,
     canRepairCable: true,
+    wireKnown: true,
   });
-  if (splice?.kind !== "repair-cable") fail("stabilize", "array with wire is E-splice");
+  if (splice?.kind !== "repair-cable") fail("stabilize", "array with identified wire is E-splice");
   const hint = pickArrayAction({
     d: 0.4,
     gatherD: 5,
@@ -611,7 +626,26 @@ export function runStabilizeCoupling() {
   if (pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true }).kind !== "plant") {
     fail("stabilize", "identified soil lets you plant the seed");
   }
+  if (pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, fault: "pump", canRepair: true }).kind !== "pump-scan") {
+    fail("stabilize", "unidentified copper is not a pump rebuild");
+  }
+  if (canUseWire(recipe)) fail("stabilize", "unscanned wire must not repair");
+  noteScan(recipe, "wire");
+  if (!canUseWire(recipe)) fail("stabilize", "wire scan should unlock electrical repair");
+  if (
+    pickStillMachineAction({
+      d: 0.4,
+      water: 0,
+      fuel: 0,
+      fault: "pump",
+      canRepair: true,
+      wireKnown: true,
+    }).kind !== "still-repair"
+  ) {
+    fail("stabilize", "identified copper rebuilds the pump");
+  }
   notes.push("scan-unlocks-recipes");
+  notes.push("scan-unlocks-copper-repair");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

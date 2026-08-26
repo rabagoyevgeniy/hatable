@@ -83,11 +83,16 @@ export function pickStillMachineAction({
   hasHydrazine = false,
   iceKnown = false,
   hydrazineKnown = false,
+  wireKnown = false,
   canRepair = false,
 } = {}) {
   if (d > STILL_MACHINE_RANGE) return null;
   if (water >= 1) return { kind: "still-take", d };
-  if (fault === "pump") return { kind: canRepair ? "still-repair" : "still-diag", d };
+  if (fault === "pump") {
+    if (canRepair && wireKnown) return { kind: "still-repair", d };
+    if (canRepair) return { kind: "pump-scan", d };
+    return { kind: "still-diag", d };
+  }
   if (fuel > 0 && !gridOn) return { kind: "still-wait", d };
   if ((hasHydrazine && hydrazineKnown) || (hasIce && iceKnown)) return { kind: "still-fuel", d };
   if (hasIce || hasHydrazine) return { kind: "still-scan", d };
@@ -112,12 +117,17 @@ export function pickArrayAction({
   gatherD = 99,
   cableFault = false,
   canRepairCable = false,
+  wireKnown = false,
   canReplaceCell = false,
   health = 1,
 } = {}) {
   if (d >= ARRAY_RANGE) return null;
   if (gatherD + 0.35 < d) return null;
-  if (cableFault) return { kind: canRepairCable ? "repair-cable" : "cable-diag", d };
+  if (cableFault) {
+    if (canRepairCable && wireKnown) return { kind: "repair-cable", d };
+    if (canRepairCable) return { kind: "cable-scan", d };
+    return { kind: "cable-diag", d };
+  }
   if (canReplaceCell && health < 0.97) return { kind: "repair-array", d };
   return null;
 }

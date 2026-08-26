@@ -47,7 +47,7 @@ import {
   refreshContinue,
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
-import { noteScan, pickScanTarget, canFuelStill, canPlantCrop } from "./systems/science.js";
+import { noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire } from "./systems/science.js";
 
 export async function boot() {
   try {
@@ -402,9 +402,13 @@ async function bootGame() {
       toast(t("cableFailHint"));
       return;
     }
+    if (hit.kind === "cable-scan") {
+      toast(t("needWireScan"));
+      return;
+    }
     if (hit.kind === "repair-cable") {
-      if (!player.tools.hammer || !takeItems(player, { wire: 1 })) {
-        toast(t("needCableParts"));
+      if (!canUseWire(world) || !player.tools.hammer || !takeItems(player, { wire: 1 })) {
+        toast(canUseWire(world) ? t("needCableParts") : t("needWireScan"));
         return;
       }
       repairArrayCable(world.hab);
@@ -430,9 +434,13 @@ async function bootGame() {
       toast(t("pumpFailHint"));
       return;
     }
+    if (hit.kind === "pump-scan") {
+      toast(t("needWireScan"));
+      return;
+    }
     if (hit.kind === "still-repair") {
-      if (!player.tools.hammer || !takeItems(player, { wire: 1, scrap: 1 })) {
-        toast(t("needPumpParts"));
+      if (!canUseWire(world) || !player.tools.hammer || !takeItems(player, { wire: 1, scrap: 1 })) {
+        toast(canUseWire(world) ? t("needPumpParts") : t("needWireScan"));
         return;
       }
       repairStillPump(hit.station);

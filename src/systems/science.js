@@ -102,6 +102,11 @@ export function canPlantCrop(world) {
   return isKnown(world, "soil");
 }
 
+/** Copper run is electrical repair only after a scan. Leak patch stays ungated. */
+export function canUseWire(world) {
+  return isKnown(world, "wire");
+}
+
 export function noteScan(world, id) {
   if (!id) return null;
   if (!world.science) world.science = createScience();

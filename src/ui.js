@@ -441,12 +441,14 @@ export function findInteract(player, world) {
         hasHydrazine: count(player, "hydrazine") > 0,
         iceKnown: isKnown(world, "ice"),
         hydrazineKnown: isKnown(world, "hydrazine"),
+        wireKnown: isKnown(world, "wire"),
         canRepair: !!(player.tools.hammer && count(player, "wire") > 0 && count(player, "scrap") > 0),
       });
       if (act?.kind === "still-take") {
         return { kind: "still-take", station: st, label: `${t("drinkStill")}  ·  ${Math.floor(st.water)}` };
       }
       if (act?.kind === "still-repair") return { kind: "still-repair", station: st, label: t("repairPump") };
+      if (act?.kind === "pump-scan") return { kind: "pump-scan", station: st, label: t("scanWirePump") };
       if (act?.kind === "still-diag") return { kind: "still-diag", station: st, label: t("pumpFail") };
       if (act?.kind === "still-wait") return { kind: "still-wait", station: st, label: t("stillNoPower") };
       if (act?.kind === "still-fuel") return { kind: "still-fuel", station: st, label: t("fuel") };
@@ -508,10 +510,12 @@ export function findInteract(player, world) {
     gatherD,
     cableFault: !!world.hab?.cableFault,
     canRepairCable: !!(player.tools.hammer && count(player, "wire") > 0),
+    wireKnown: isKnown(world, "wire"),
     canReplaceCell: count(player, "solar") > 0,
     health: world.hab?.arrayHealth ?? 1,
   });
   if (arrayAct?.kind === "repair-cable") return { kind: "repair-cable", label: t("repairCable") };
+  if (arrayAct?.kind === "cable-scan") return { kind: "cable-scan", label: t("scanWireCable") };
   if (arrayAct?.kind === "cable-diag") return { kind: "cable-diag", label: t("cableOpen") };
   if (arrayAct?.kind === "repair-array") {
     return { kind: "repair-array", label: `${t("repairArray")}  ·  ${Math.round((world.hab?.arrayHealth || 0) * 100)}%` };

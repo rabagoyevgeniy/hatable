@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop } from "../src/systems/science.js";
+import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
@@ -425,20 +425,32 @@ must(readFileSync(resolve(root, "package.json"), "utf8").includes("first-sol.mjs
 must(game.includes("repair-cable"), "storm-snapped array cable is an E repair");
 must(i18n.includes("repairCable"), "cable splice prompt is translated");
 must(
-  pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: true }).kind === "repair-cable",
-  "wire at the roof array splices the cable"
+  pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: true }).kind === "cable-scan",
+  "unidentified copper at the roof is a scan, not a splice"
+);
+must(
+  pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: true, wireKnown: true }).kind === "repair-cable",
+  "identified wire at the roof array splices the cable"
 );
 must(
   pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: false }).kind === "cable-diag",
   "open cable without wire names the solar wreck"
 );
 must(
-  pickArrayAction({ d: 0.4, gatherD: 0.3, cableFault: true, canRepairCable: true }).kind === "repair-cable",
+  pickArrayAction({ d: 0.4, gatherD: 0.3, cableFault: true, canRepairCable: true, wireKnown: true }).kind === "repair-cable",
   "open cable at the roof wins over leftover scrap"
 );
 must(
-  pickArrayAction({ d: 3.2, gatherD: 0.2, cableFault: true, canRepairCable: true }) == null,
+  pickArrayAction({ d: 3.2, gatherD: 0.2, cableFault: true, canRepairCable: true, wireKnown: true }) == null,
   "loot underfoot away from the array still gathers"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, fault: "pump", canRepair: true }).kind === "pump-scan",
+  "unidentified copper at a dead pump is a scan"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, fault: "pump", canRepair: true, wireKnown: true }).kind === "still-repair",
+  "identified copper rebuilds the pump"
 );
 const cableRead = habReadout({ hab: { ...createHabitat(), cableFault: true }, habSealed: true }, "en");
 must(cableRead.includes("CABLE"), "console names an open array cable");
@@ -475,12 +487,16 @@ must(game.includes("pickScanTarget"), "F uses the shared scan picker");
 must(game.includes("heldId: player.heldId"), "F identifies a sample in the hand");
 must(game.includes("canFuelStill"), "still fuel requires an ice scan");
 must(game.includes("canPlantCrop"), "planting requires a soil scan");
+must(game.includes("canUseWire"), "cable splice requires a wire scan");
 must(i18n.includes("needFuelScan"), "unidentified ice toast is translated");
 must(i18n.includes("needSoilScan"), "unidentified soil toast is translated");
+must(i18n.includes("needWireScan"), "unidentified copper toast is translated");
 must(!canFuelStill({ science: { known: {} } }, "ice"), "unscanned ice is not feedstock");
 must(canFuelStill({ science: { known: { ice: true } } }, "ice"), "ice scan unlocks the still");
 must(!canPlantCrop({ science: { known: {} } }), "unscanned soil is not substrate");
 must(canPlantCrop({ science: { known: { soil: true } } }), "soil scan unlocks planting");
+must(!canUseWire({ science: { known: {} } }), "unscanned wire is not a splice");
+must(canUseWire({ science: { known: { wire: true } } }), "wire scan unlocks electrical repair");
 must(pickScanTarget({ heldId: "ice" }) === "ice", "F identifies held ice");
 must(pickScanTarget({ heldId: "ice", outpostKind: "solar", outpostD: 8 }) === "solaryard", "farm ident beats a pocket sample");
 must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes("iceBonus"), "still has no scan XP bonus");
