@@ -160,8 +160,9 @@ export const RECIPES = [
     near: "pathfinder",
     requireTool: "hammer",
     need: { comms: 1, wire: 2, scrap: 1 },
+    needScan: "comms",
     title: { en: "Pathfinder radio", ru: "Рация Pathfinder" },
-    brief: { en: "Place it at Pathfinder. Then wait for a clear day — storms bury S-band. Placing is not Hello, Earth.", ru: "Поставь у Pathfinder. Потом жди ясный день — буря хоронит S-диапазон. Поставить ≠ привет, Земля." },
+    brief: { en: "Scan the comms board (F), craft the radio, place it at Pathfinder. Then wait for a clear day — storms bury S-band.", ru: "F плату связи, скрафть рацию, поставь у Pathfinder. Потом жди ясный день — буря хоронит S-диапазон." },
   },
 ];
 
@@ -266,8 +267,8 @@ export const GOALS = [
     sol: 54,
     title: { en: "Hello, Earth", ru: "Привет, Земля" },
     brief: {
-      en: "Pathfinder is southwest. Loot the comms board, craft a radio, place it there. Then wait — a storm will bury the signal.",
-      ru: "Pathfinder на юго-западе. Возьми плату, скрафть рацию, поставь её там. Потом жди: буря похоронит сигнал.",
+      en: "Pathfinder is southwest. Loot the comms board, scan it (F), craft a radio, place it there. Then wait — a storm will bury the signal.",
+      ru: "Pathfinder на юго-западе. Возьми плату, F, скрафть рацию, поставь её там. Потом жди: буря похоронит сигнал.",
     },
     log: {
       from: "LEWIS",

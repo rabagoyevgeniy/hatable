@@ -319,6 +319,13 @@ Overnight timer still listed desk/night. Repo: Earth is delayed. Next reconnect 
 - Round trip is past the solar-wreck wire run. Clear day reaches; storm night does not
 - No rover. No Pointer Lock playtest
 
+### Cycle AI — the comms board is the radio recipe
+
+Overnight timer still listed desk/night. Repo: Pathfinder is a leash. Next reconnect beat: scan unlocks the radio, not a craft checkbox.
+
+- Unidentified comms board will not craft a radio. Hammer, still hull, and plot stay ungated for First Sol
+- F the board (S-band), then C. Repeat scan is not XP. No rover. No Pointer Lock playtest
+
 
 
 

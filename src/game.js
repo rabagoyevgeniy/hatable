@@ -47,7 +47,7 @@ import {
   refreshContinue,
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
-import { noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire } from "./systems/science.js";
+import { noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, recipeKnown } from "./systems/science.js";
 
 export async function boot() {
   try {
@@ -138,7 +138,7 @@ async function bootGame() {
     },
     lang() {
       toggleLang();
-      if (player) renderCraft(player);
+      if (player) renderCraft(player, world);
     },
     craft: onCraft,
     consume(id) {
@@ -237,13 +237,13 @@ async function bootGame() {
     }
     if (e.code === "KeyC") {
       if (craftOpen()) {
-        const rec = firstReadyRecipe(player);
+        const rec = firstReadyRecipe(player, world);
         if (rec) {
           onCraft(rec.id);
           return;
         }
       }
-      const open = toggleCraft(player);
+      const open = toggleCraft(player, world);
       if (open) document.exitPointerLock?.();
       else canvas.requestPointerLock?.();
     }
@@ -272,6 +272,10 @@ async function bootGame() {
     if (!rec) return;
     if (rec.requireTool && !player.tools[rec.requireTool]) {
       toast(t("needHammer"));
+      return;
+    }
+    if (!recipeKnown(world, rec)) {
+      toast(t("needCommsScan"));
       return;
     }
     if (!canAfford(player, rec.need)) {
@@ -662,13 +666,13 @@ async function bootGame() {
       e.preventDefault();
       if (!playing) return;
       if (craftOpen()) {
-        const rec = firstReadyRecipe(player);
+        const rec = firstReadyRecipe(player, world);
         if (rec) {
           onCraft(rec.id);
           return;
         }
       }
-      const open = toggleCraft(player);
+      const open = toggleCraft(player, world);
       if (open) document.exitPointerLock?.();
     });
     invBtn?.addEventListener("click", (e) => {

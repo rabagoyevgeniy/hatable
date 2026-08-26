@@ -58,6 +58,7 @@ SCIENCE
   F also identifies a sample in hand / pockets when nothing is underfoot
   radio listen (after place; storms / night pause S-band)
   pathfinder scan → names the S-band lander (not XP)
+  comms scan → radio recipe (hammer / still / plot stay ungated)
   contacted after RADIO_CONTACT_S of clear daylight — not on place
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
   distant (>22 m) non-starter rings stay off even in clear weather

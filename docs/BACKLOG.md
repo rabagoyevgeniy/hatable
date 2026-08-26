@@ -13,7 +13,7 @@
 ## P2
 
 - Suit tablet instead of MMO meters
-- Lab bench / extra sample recipes still wait
+- Lab bench / extra sample recipes still wait (radio now needs a comms scan)
 
 ## P3
 

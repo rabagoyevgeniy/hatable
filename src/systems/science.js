@@ -111,6 +111,16 @@ export function canUseWire(world) {
   return isKnown(world, "wire");
 }
 
+/** Comms board is a radio recipe only after a scan. Hammer / still / plot stay ungated. */
+export function canBuildRadio(world) {
+  return isKnown(world, "comms");
+}
+
+export function recipeKnown(world, rec) {
+  if (!rec?.needScan) return true;
+  return isKnown(world, rec.needScan);
+}
+
 export function noteScan(world, id) {
   if (!id) return null;
   if (!world.science) world.science = createScience();

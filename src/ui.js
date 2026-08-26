@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
-import { isKnown } from "./systems/science.js";
+import { isKnown, recipeKnown } from "./systems/science.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -75,16 +75,19 @@ export function craftOpen() {
 }
 
 /** First craftable recipe — tools before stations, so C-again makes the hammer. */
-export function firstReadyRecipe(player) {
-  const ready = (r) => canAfford(player, r.need) && (!r.requireTool || player.tools[r.requireTool]);
+export function firstReadyRecipe(player, world = null) {
+  const ready = (r) =>
+    canAfford(player, r.need) &&
+    (!r.requireTool || player.tools[r.requireTool]) &&
+    recipeKnown(world, r);
   return RECIPES.find((r) => r.kind === "tool" && ready(r)) || RECIPES.find(ready) || null;
 }
 
-export function toggleCraft(player) {
+export function toggleCraft(player, world = null) {
   $("inv").classList.add("hidden");
   $("storage").classList.add("hidden");
   $("craft").classList.toggle("hidden");
-  renderCraft(player);
+  renderCraft(player, world);
   syncMenuChrome();
   return !$("craft").classList.contains("hidden");
 }
@@ -152,13 +155,15 @@ function syncMenuChrome() {
   document.body.classList.toggle("menu-open", open);
 }
 
-export function renderCraft(player) {
+export function renderCraft(player, world = null) {
   const list = $("craft-list");
   list.innerHTML = "";
   for (const rec of RECIPES) {
     const li = document.createElement("li");
     const ok =
-      canAfford(player, rec.need) && (!rec.requireTool || player.tools[rec.requireTool]);
+      canAfford(player, rec.need) &&
+      (!rec.requireTool || player.tools[rec.requireTool]) &&
+      recipeKnown(world, rec);
     li.className = rec.id === "hammer" && ok ? "ready" : "";
     li.innerHTML = `<button class="recipe ${ok ? "" : "locked"}" data-recipe="${rec.id}">
       <span><b>${loc(rec.title)}</b><small>${needLine(rec.need)}${rec.requireTool ? (getLang() === "ru" ? " · молоток" : " · hammer") : ""}</small></span>
@@ -333,7 +338,7 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   document.body.classList.toggle("low-o2", player.oxygen < 26);
   document.body.classList.toggle("cold", player.warmth < 26);
 
-  if (!$("craft").classList.contains("hidden")) renderCraft(player);
+  if (!$("craft").classList.contains("hidden")) renderCraft(player, world);
   if (!$("inv").classList.contains("hidden")) renderInv(player);
   if (!$("storage").classList.contains("hidden")) renderStorage(world);
   if (consoleOpen()) renderHabConsole(world);

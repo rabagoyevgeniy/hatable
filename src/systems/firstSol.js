@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -618,6 +618,18 @@ export function runStabilizeCoupling() {
   }
   if (noteScan(look, "pathfinder")) fail("stabilize", "repeat Pathfinder scan is not XP");
   notes.push("scan-names-pathfinder");
+
+  const radioRec = RECIPES.find((r) => r.id === "radio");
+  if (radioRec?.needScan !== "comms") fail("stabilize", "radio recipe should require a comms scan");
+  if (canBuildRadio(look)) fail("stabilize", "unscanned comms board is not a radio");
+  if (recipeKnown(look, radioRec)) fail("stabilize", "radio must stay locked until the board is identified");
+  const board = noteScan(look, "comms");
+  if (!board || !String(board.en || "").toLowerCase().includes("s-band")) {
+    fail("stabilize", "comms scan should name S-band");
+  }
+  if (!canBuildRadio(look)) fail("stabilize", "comms scan should unlock the radio recipe");
+  if (!recipeKnown(look, radioRec)) fail("stabilize", "identified comms should unlock the radio");
+  notes.push("scan-unlocks-radio");
 
   const recipe = createHeadlessWorld();
   if (canFuelStill(recipe, "ice")) fail("stabilize", "unscanned ice is not still feedstock");
