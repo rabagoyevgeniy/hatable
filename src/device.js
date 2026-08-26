@@ -3,3 +3,24 @@ export function isMobileView() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(pointer: coarse)").matches || innerWidth < 720;
 }
+
+export function isPortraitView() {
+  if (typeof window === "undefined") return false;
+  const w = window.visualViewport?.width || innerWidth;
+  const h = window.visualViewport?.height || innerHeight;
+  return h > w;
+}
+
+/** Phones play in landscape. Portrait pauses the world and shows «Поверните телефон». */
+export function needsLandscape() {
+  return isMobileView() && isPortraitView();
+}
+
+export function syncOrientationClass() {
+  if (typeof document === "undefined") return false;
+  const lock = needsLandscape();
+  document.body.classList.toggle("need-landscape", lock);
+  const el = document.getElementById("rotate-phone");
+  if (el) el.classList.toggle("hidden", !lock);
+  return lock;
+}

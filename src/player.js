@@ -3,12 +3,20 @@ import { heightAt, normalAt } from "./noise.js";
 import { ITEMS, CONSUME, SURVIVAL, SPAWN } from "./data.js";
 import { loc } from "./i18n.js";
 import { footstep } from "./audio.js";
-import { advanceSol, isMobileView } from "./world.js";
+import { advanceSol, isMobileView, terrainSegments } from "./world.js";
 import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
 import { canEatPotato, trySleepSol, estimateRangeM, WALK_MPS } from "./systems/survival.js";
 import { habCanRefillSuit } from "./systems/habitat.js";
 import { count, totalItems, addItem, takeItems, canAfford, transfer } from "./systems/inventory.js";
+import {
+  groundYAt,
+  isSheltered,
+  resolvePlayerXZ,
+  snapToGround,
+  emergencyUnground,
+  PLAYER_RADIUS,
+} from "./systems/collision.js";
 
 export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer, estimateRangeM };
 
@@ -138,7 +146,7 @@ export function createPlayer(scene) {
     }
   });
 
-  root.position.set(SPAWN.x, heightAt(SPAWN.x, SPAWN.z) + 0.02, SPAWN.z);
+  root.position.set(SPAWN.x, groundYAt(SPAWN.x, SPAWN.z, terrainSegments(), heightAt), SPAWN.z);
   const blob = new THREE.Mesh(
     new THREE.CircleGeometry(0.62, 18),
     new THREE.MeshBasicMaterial({ color: 0x2a1008, transparent: true, opacity: 0.42, depthWrite: false })
@@ -204,7 +212,11 @@ function clamp(v) {
 }
 
 export function isInsideHab(player) {
-  return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 6.2;
+  return isSheltered(player.root.position.x, player.root.position.z);
+}
+
+function segsOf(world) {
+  return world?.terrainSegments || terrainSegments();
 }
 
 export function updatePlayer(player, dt, input, world) {
@@ -235,6 +247,7 @@ export function updatePlayer(player, dt, input, world) {
   const pos = player.root.position;
   const prevX = pos.x;
   const prevZ = pos.z;
+  const segs = segsOf(world);
   pos.x += player.vel.x * dt;
   pos.z += player.vel.z * dt;
   const r = Math.hypot(pos.x, pos.z);
@@ -242,14 +255,17 @@ export function updatePlayer(player, dt, input, world) {
     pos.x *= 270 / r;
     pos.z *= 270 / r;
   }
-  pos.y = heightAt(pos.x, pos.z);
-  if (moving) pos.y += Math.abs(Math.sin(player.walkPhase || 0)) * 0.04;
-  player.distance += Math.hypot(pos.x - prevX, pos.z - prevZ);
-  const inside = isInsideHab(player);
+  resolvePlayerXZ(pos, PLAYER_RADIUS);
+  let inside = isInsideHab(player);
   if (world.storm > 0.4 && !inside) {
     pos.x += dt * world.storm * 0.9;
     pos.z += dt * world.storm * 0.35;
+    resolvePlayerXZ(pos, PLAYER_RADIUS);
+    inside = isInsideHab(player);
   }
+  snapToGround(pos, segs, heightAt);
+  emergencyUnground(pos, segs, heightAt);
+  player.distance += Math.hypot(pos.x - prevX, pos.z - prevZ);
 
   if (player.mixer) {
     player.walkPhase += moving ? dt * (8 + speed) : 0;
@@ -261,6 +277,8 @@ export function updatePlayer(player, dt, input, world) {
     if (player.walkAction) player.walkAction.setEffectiveWeight(THREE.MathUtils.lerp(player.walkAction.getEffectiveWeight(), walkW, 1 - Math.pow(0.02, dt)));
     if (player.runAction) player.runAction.setEffectiveWeight(THREE.MathUtils.lerp(player.runAction.getEffectiveWeight(), runW, 1 - Math.pow(0.02, dt)));
     player.mixer.update(dt);
+    snapToGround(pos, segs, heightAt);
+    emergencyUnground(pos, segs, heightAt);
     if (moving && player.walkPhase - player.lastStep > 1.6) {
       player.lastStep = player.walkPhase;
       footstep(inside);
@@ -316,7 +334,7 @@ export function updatePlayer(player, dt, input, world) {
 
   const blackout = player.oxygen <= 0;
   if (blackout) {
-    player.root.position.set(SPAWN.x, heightAt(SPAWN.x, SPAWN.z), SPAWN.z);
+    player.root.position.set(SPAWN.x, groundYAt(SPAWN.x, SPAWN.z, segsOf(world), heightAt), SPAWN.z);
     player.oxygen = 38;
     player.warmth = 32;
     player.hunger = Math.max(8, player.hunger - 18);

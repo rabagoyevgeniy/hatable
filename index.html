@@ -52,6 +52,10 @@
         <p class="credit">hatable · The Martian survival · in the grain of Stranded Deep</p>
       </div>
 
+      <div id="rotate-phone" class="hidden" aria-live="assertive">
+        <p data-i18n="rotatePhone">Поверните телефон</p>
+      </div>
+
       <div id="hud" class="hidden">
         <header class="topbar">
           <div>
@@ -83,8 +87,11 @@
           <ol id="goal-list"></ol>
         </aside>
 
-        <div id="first-hint" data-i18n="firstHint">
-          1. Голубые кольца впереди — подойди, E: лом и камень. 2. C — молоток (1 лом + 1 камень). 3. Белый ящик у шлюза — шкаф.
+        <div id="first-hint">
+          <p data-i18n="firstHint">
+            1. Голубые кольца впереди — подойди, E: лом и камень. 2. C — молоток (1 лом + 1 камень). 3. Белый ящик у шлюза — шкаф.
+          </p>
+          <button type="button" id="hint-dismiss" aria-label="close">✕</button>
         </div>
 
         <div id="storm-flag" class="hidden" data-i18n="storm">ПЫЛЕВАЯ БУРЯ</div>

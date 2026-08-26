@@ -9,11 +9,13 @@ import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.j
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience, lootBeaconVisible, LOOT_RING_RANGE } from "./systems/science.js";
 import { isMobileView } from "./device.js";
+import { TERRAIN_SIZE, segsForMobile } from "./systems/collision.js";
 
 export { isMobileView };
 
-const TERRAIN_SIZE = 620;
-const SEGMENTS = 168;
+export function terrainSegments() {
+  return segsForMobile(isMobileView());
+}
 const LOOT_FIT = {
   ice: 0.88,
   scrap: 1.18,
@@ -130,6 +132,7 @@ export function createWorld(scene) {
     hab: createHabitat(),
     weather: createWeather(),
     science: createScience(),
+    terrainSegments: terrainSegments(),
   };
   world._tickWeather = tickWeather;
 
@@ -904,7 +907,7 @@ export function advanceSol(world) {
 }
 
 function makeTerrain() {
-  const segs = isMobileView() ? 48 : 168;
+  const segs = terrainSegments();
   const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, segs, segs);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;

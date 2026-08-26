@@ -3,6 +3,8 @@ import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill, switchTone } from "./audio.js";
 import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
+import { needsLandscape, syncOrientationClass } from "./device.js";
+import { isSheltered } from "./systems/collision.js";
 import { repairStillPump, stillCanRun, repairArrayCable } from "./systems/machines.js";
 import { sipHabitatTank } from "./systems/survival.js";
 import { consumeHabEvents } from "./systems/habitat.js";
@@ -63,6 +65,10 @@ async function bootGame() {
   applyDom();
   const mobile = isMobileView();
   if (mobile) document.body.classList.add("mobile");
+  syncOrientationClass();
+  window.addEventListener("resize", syncOrientationClass);
+  window.visualViewport?.addEventListener("resize", syncOrientationClass);
+  window.addEventListener("orientationchange", syncOrientationClass);
 
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({
@@ -84,7 +90,7 @@ async function bootGame() {
   if (mobile) renderer.useLegacyLights = true;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(mobile ? 64 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
+  const camera = new THREE.PerspectiveCamera(mobile ? 48 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
   camera.position.set(8.5, mobile ? 9.2 : 6.8, 24);
 
   let world;
@@ -116,6 +122,12 @@ async function bootGame() {
     playing = true;
     showHud();
     startAudio();
+    syncOrientationClass();
+    try {
+      screen.orientation?.lock?.("landscape").catch(() => {});
+    } catch {
+      /* iOS Safari ignores orientation lock; overlay handles portrait. */
+    }
     const g = currentGoal(journal);
     if (g) pushLog(goalText(g).from, goalText(g).log);
     const touchUi = document.getElementById("touch-ui");
@@ -699,17 +711,16 @@ async function bootGame() {
   }
 
   function placeCamera(dt) {
-    const inside = Math.hypot(player.root.position.x, player.root.position.z - 8) < 6.4;
-    const portrait = innerHeight > innerWidth;
-    const dist = inside ? (mobile ? 3.35 : 3.85) : mobile ? (portrait ? 6.35 : 7.2) : 9.2;
-    const height = (inside ? 1.62 : mobile ? (portrait ? 3.05 : 2.75) : 2.55) + player.pitch * (portrait ? 0.85 : 1.15);
+    const inside = isSheltered(player.root.position.x, player.root.position.z);
+    const dist = inside ? (mobile ? 4.05 : 3.85) : mobile ? 8.55 : 9.2;
+    const height = (inside ? 1.58 : mobile ? 3.22 : 2.55) + player.pitch * (mobile ? 0.7 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
       player.root.position.z + Math.cos(player.yaw) * dist
     );
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
-    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 1.32 : 1.55);
+    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 1.55 : 1.55);
     if (camera.position.y < minY) camera.position.y = minY;
     if (!inside) {
       const habDx = camera.position.x;
@@ -729,8 +740,8 @@ async function bootGame() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    const lookAhead = mobile && !inside ? 1.55 : 0;
-    const lookY = player.root.position.y + (mobile ? 1.38 : 1.32);
+    const lookAhead = mobile && !inside ? 2.35 : 0;
+    const lookY = player.root.position.y + (mobile ? 1.12 : 1.32);
     camera.lookAt(
       player.root.position.x - Math.sin(player.yaw) * lookAhead,
       lookY,
@@ -742,7 +753,8 @@ async function bootGame() {
     const w = Math.round(window.visualViewport?.width || innerWidth);
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
-    camera.fov = mobile ? (h > w ? 62 : 55) : 52;
+    syncOrientationClass();
+    camera.fov = mobile ? (h > w ? 58 : 48) : 52;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();
@@ -768,7 +780,7 @@ async function bootGame() {
       setGhost(world, null);
     }
 
-    if (playing) {
+    if (playing && !needsLandscape()) {
       const result = updatePlayer(player, dt, inputState(), world);
       if (result.blackout) toast(t("warnO2"));
       if (result.inside && !player.enteredHab) {
@@ -861,6 +873,16 @@ async function bootGame() {
       placeCamera(dt);
       if (currentGoal(journal)?.id === "escape") maybeGoal();
       updateHud({ player, world, journal, scanning, camera, inside: result.inside });
+    } else if (playing) {
+      placeCamera(dt);
+      updateHud({
+        player,
+        world,
+        journal,
+        scanning: false,
+        camera,
+        inside: isSheltered(player.root.position.x, player.root.position.z),
+      });
     } else {
       const drift = now * 0.00007;
       camera.position.set(10.5 + Math.sin(drift) * 1.4, mobile ? 7.2 : 6.55, 26 + Math.cos(drift) * 1.4);

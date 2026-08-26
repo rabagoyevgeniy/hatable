@@ -2,6 +2,19 @@
 
 Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = exists, incomplete. **NOT IMPLEMENTED** = specified, absent.
 
+## P0 HUMAN PLAYTEST BLOCKERS (2026-08-26)
+
+Human tester: the mobile build was not playable. Feature development is stopped until this gate is retested on a phone.
+
+| Blocker | Code status | Human retest |
+| --- | --- | --- |
+| 1. Mobile must be landscape | **FIXED IN CODE** — portrait overlay «Поверните телефон», gameplay paused, landscape HUD | pending |
+| 2. Player must never sink through terrain | **FIXED IN CODE** — feet follow the visual terrain mesh; emergency Y recovery | pending |
+| 3. Hab must have real collision | **FIXED IN CODE** — hull walls + airlock corridor; furniture/locker circles | pending |
+| 4. Mobile camera + UI playability | **FIXED IN CODE** — landscape FOV 48 / dist ~8.6; compact dock, 2×2 actions, dismissible hint, safe areas | pending |
+
+Harness: `scripts/playability.mjs` (mesh snap, long walk, perimeter, airlock in/out). This does **not** replace a human holding a phone.
+
 ## IMPLEMENTED
 
 - Movement, look, gather, craft, place, locker, hammer
@@ -19,6 +32,9 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
+- **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (joystick bottom-left, actions 2×2 bottom-right, compact vitals/hotbar). Camera pulled back (FOV 48, dist ~8.6). iPhone safe-area insets.
+- **Visual-terrain grounding:** player Y samples the same PlaneGeometry grid the mesh uses (mobile 80 segs, not analytic height under a coarse mesh). Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground.
+- **Hab collision:** cylinder hull blocks; airlock at +Z is the only door; locker/bunk/desk/crates are simple circle blockers. `isInsideHab` is hull+airlock, not a 6.2 m circle.
 - Hab interior furniture (bunk/desk/crates)
 - Weather state machine CLEAR / DUST / STORM (after first emergency minutes)
 - Still requires live Hab grid (night heater vs water)
@@ -33,7 +49,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples after the hull is sealed. Place ident, overlay names, loot rings, and station/locker tags share the 22 m scan pulse. Hold-F is not a planet detector. Rover identified as dead, not driven)
 - Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk; after Earth the MAV line wants a still flask + a harvested potato in **pockets**, not a desk drink, the last seed, or the Hab locker)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
-- Diegetic HUD (console exists; default HUD still has meters)
+- Diegetic HUD (console exists; default HUD still has meters; mobile landscape is compact, not a suit tablet)
 - Story / delayed Earth (radio listens on a clear day or a clear-day sleep; storms bury S-band and pause the tape, they do not rewind it. Placing is not Hello, Earth. Journal contact waits for the reply)
 
 ## NOT IMPLEMENTED

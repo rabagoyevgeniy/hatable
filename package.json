@@ -8,7 +8,7 @@
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
-    "smoke": "node scripts/smoke.mjs && node scripts/first-sol.mjs",
+    "smoke": "node scripts/smoke.mjs && node scripts/first-sol.mjs && node scripts/playability.mjs",
     "first-sol": "node scripts/first-sol.mjs",
     "meshy": "node scripts/meshy-generate.mjs",
     "meshy:motion": "node scripts/meshy-motion.mjs",

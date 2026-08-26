@@ -43,6 +43,19 @@ export function bindUi(handlers) {
     });
   });
   $("menu-scrim")?.addEventListener("click", () => closeMenus());
+  $("hint-dismiss")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const hint = $("first-hint");
+    if (!hint) return;
+    hint.classList.add("hidden");
+    hint.dataset.off = "1";
+  });
+  $("first-hint")?.addEventListener("click", (e) => {
+    if (e.target?.id === "hint-dismiss") return;
+    const hint = $("first-hint");
+    if (!hint || !document.body.classList.contains("mobile")) return;
+    hint.classList.add("collapsed");
+  });
   refreshContinue();
 }
 
@@ -57,8 +70,12 @@ export function showHud() {
   $("hud").classList.remove("hidden");
   const hint = $("first-hint");
   if (hint && document.body.classList.contains("mobile")) {
-    hint.textContent = t("firstHintTouch");
-    window.setTimeout(() => hint.classList.add("hidden"), 9000);
+    const copy = hint.querySelector("p") || hint;
+    copy.textContent = t("firstHintTouch");
+    window.setTimeout(() => {
+      hint.classList.add("hidden");
+      hint.dataset.off = "1";
+    }, 9000);
   }
 }
 
@@ -315,7 +332,9 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
     }).join("");
   }
   const hint = $("first-hint");
-  if (hint) hint.classList.toggle("hidden", player.tools.hammer || player.gathered > 0);
+  if (hint && hint.dataset.off !== "1") {
+    hint.classList.toggle("hidden", player.tools.hammer || player.gathered > 0);
+  }
 
   const leak = habStatusLine(world, getLang());
   $("hab-status").textContent = leak;
