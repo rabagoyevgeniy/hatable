@@ -197,3 +197,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - Playtest had hammer, tape, 2 canvas and stared at the exterior leak tag — never found the mouth
 - Standing «ШЛЮЗ» sign on the hatch facing spawn; outside E is «ШЛЮЗ · рваный брезент СЛЕВА внутри» unless a pile is underfoot
+
+### Cycle V playtest (browser)
+
+- From spawn the hatch mouth shows **ARES III** and **ШЛЮЗ** together; locker to the right
+- Did not finish patch this sitting (still on «Подбери лом»). Door is named; next sitting walks in and E the left tear
