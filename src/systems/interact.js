@@ -6,6 +6,19 @@ export const LOCKER_RANGE = 2.8;
 export const GATHER_STEAL = 2.15;
 export const LEAK_RANGE = 3.2;
 export const STILL_PAD_RANGE = 4.2;
+export const HATCH_RANGE = 3.4;
+
+export function pickHatchAction({
+  hatchD = 99,
+  gatherD = 99,
+  inside = false,
+  sealed = true,
+} = {}) {
+  if (inside || sealed) return null;
+  if (hatchD >= HATCH_RANGE) return null;
+  if (gatherD + 0.35 < hatchD) return null;
+  return { kind: "hatch-hint", d: hatchD };
+}
 
 export function pickInteriorAction({
   deskD = 99,

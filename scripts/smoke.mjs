@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, dist } from "../src/systems/interact.js";
-import { HAB_DESK, HAB_BUNK, HAB_LEAK, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, dist } from "../src/systems/interact.js";
+import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
@@ -172,6 +172,26 @@ must(
   }).kind === "patch",
   "aisle from hatch prefers leak while unsealed"
 );
+must(
+  pickHatchAction({
+    inside: false,
+    sealed: false,
+    hatchD: dist(0, 15.2, HAB_HATCH.x, HAB_HATCH.z),
+    gatherD: 4,
+  }).kind === "hatch-hint",
+  "outside the airlock names the door while the hull is open"
+);
+must(
+  pickHatchAction({
+    inside: false,
+    sealed: false,
+    hatchD: 2,
+    gatherD: 0.3,
+  }) == null,
+  "loot underfoot at the hatch still gathers"
+);
+must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("hatchSign"), "airlock has a standing ШЛЮЗ sign");
+must(readFileSync(resolve(root, "src/i18n.js"), "utf8").includes("hatchHint"), "airlock prompt is translated");
 must(
   pickInteriorAction({
     inside: true,

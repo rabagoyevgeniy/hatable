@@ -355,6 +355,10 @@ async function bootGame() {
       toast(t("needPatchMats"));
       return;
     }
+    if (hit.kind === "hatch-hint") {
+      toast(t("hatchHint"));
+      return;
+    }
     if (hit.kind === "patch") {
       if (!takeItems(player, { fabric: 2, tape: 1 })) {
         toast(t("needPatchMats"));

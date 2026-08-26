@@ -192,3 +192,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - C then C still makes the hammer (tool in slot 9). West walk underlined ДИСТИЛЛЯТОР in the world labels
 - 1.8s toast vanished during a «Page Unresponsive» wait — hint now also writes the 18s log card; toasts last 3.2s
+
+### Cycle V — airlock is a door you can name
+
+- Playtest had hammer, tape, 2 canvas and stared at the exterior leak tag — never found the mouth
+- Standing «ШЛЮЗ» sign on the hatch facing spawn; outside E is «ШЛЮЗ · рваный брезент СЛЕВА внутри» unless a pile is underfoot

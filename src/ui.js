@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
-import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK } from "./data.js";
+import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction } from "./systems/interact.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
 import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
 import { weatherLabel } from "./systems/weather.js";
 import { hasSave } from "./systems/save.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction } from "./systems/interact.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -493,6 +493,14 @@ export function findInteract(player, world) {
   if (arrayD < 3.4 && count(player, "solar") > 0 && (world.hab?.arrayHealth ?? 1) < 0.97) {
     return { kind: "repair-array", label: `${t("repairArray")}  ·  ${Math.round((world.hab?.arrayHealth || 0) * 100)}%` };
   }
+  const hatchD = Math.hypot(p.x - HAB_HATCH.x, p.z - HAB_HATCH.z);
+  const hatch = pickHatchAction({
+    hatchD,
+    gatherD,
+    inside,
+    sealed: !!world.habSealed,
+  });
+  if (hatch?.kind === "hatch-hint") return { kind: "hatch-hint", label: t("hatchHint") };
   if (lockerD < 3.6) return { kind: "locker", label: t("locker") };
   if (gather) return gather;
   return null;
@@ -627,6 +635,16 @@ function updateScanLabels(player, world, camera, scanning) {
         z: world.locker.z,
         title: lang === "ru" ? "ШКАФ" : "LOCKER",
         sub: "",
+        loot: true,
+      });
+    }
+    if (!world.habSealed && (Math.hypot(p.x - HAB_HATCH.x, p.z - HAB_HATCH.z) < (mobile ? 12 : 18) || scanning)) {
+      targets.push({
+        x: HAB_HATCH.x,
+        y: 2.15,
+        z: HAB_HATCH.z,
+        title: lang === "ru" ? "ШЛЮЗ" : "AIRLOCK",
+        sub: lang === "ru" ? "вход · дыра слева" : "go in · leak left",
         loot: true,
       });
     }

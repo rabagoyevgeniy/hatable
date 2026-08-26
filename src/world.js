@@ -1317,6 +1317,13 @@ function buildOutpost(data) {
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.2), orange);
     lamp.position.set(0, 2.28, 6.52);
     g.add(lamp);
+    const hatchSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.9, 0.48),
+      new THREE.MeshBasicMaterial({ map: padSignTexture("ШЛЮЗ"), side: THREE.DoubleSide, fog: false })
+    );
+    hatchSign.position.set(0, 2.05, 6.78);
+    hatchSign.name = "hatchSign";
+    g.add(hatchSign);
     const airLight = new THREE.PointLight(0xffb15a, 1.7, 20);
     airLight.position.set(0, 2.3, 6.2);
     g.add(airLight);

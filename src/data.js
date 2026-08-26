@@ -18,6 +18,8 @@ export const HAB_BUNK = { x: -1.55, z: 6.45 };
 export const HAB_ARRAY = { x: 0, z: 3.9 };
 /** Torn canvas on the left wall just inside the hatch — world XZ. */
 export const HAB_LEAK = { x: -2.15, z: 9.45 };
+/** Airlock mouth facing spawn — world XZ. */
+export const HAB_HATCH = { x: 0, z: 14.4 };
 
 export const ITEMS = {
   scrap: { color: 0xe8e2d4, beacon: 0xc5d4de, name: { en: "Scrap", ru: "Металлолом" } },
