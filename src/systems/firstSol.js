@@ -806,7 +806,11 @@ export function runStabilizeCoupling() {
   }
   noteScan(recipe, "ice");
   if (!canFuelStill(recipe, "ice")) fail("stabilize", "ice scan should unlock the still recipe");
-  if (!habReadout(recipe, "en").includes("FEEDSTOCK")) fail("stabilize", "desk should log identified ice");
+  if (habReadout(recipe, "en").includes("FEEDSTOCK")) {
+    fail("stabilize", "leaking desk is pressure, not a lab notebook");
+  }
+  recipe.habSealed = true;
+  if (!habReadout(recipe, "en").includes("FEEDSTOCK")) fail("stabilize", "sealed desk should log identified ice");
   if (
     pickStillMachineAction({
       d: 0.4,
@@ -846,6 +850,7 @@ export function runStabilizeCoupling() {
   }
   notes.push("scan-unlocks-recipes");
   notes.push("desk-is-the-lab");
+  notes.push("leaking-desk-is-not-a-lab");
   notes.push("scan-unlocks-copper-repair");
 
   const link = createHeadlessWorld();

@@ -619,9 +619,10 @@ must(i18n.includes("earthHeard"), "Earth heard toast is translated");
   must(hello.index === GOAL_IDS.indexOf("escape"), "Earth reply advances the contact card");
 }
 must(labLines({ science: { known: {} } }).length === 0, "empty desk has no lab lines");
-must(labLines({ science: { known: { ice: true } } }, "en").some((s) => s.includes("FEEDSTOCK")), "desk logs identified ice");
-must(habReadout({ hab: createHabitat(), science: { known: { soil: true } } }, "en").includes("SUBSTRATE"), "console lab shows identified soil");
-must(!habReadout({ hab: createHabitat(), science: { known: {} } }, "en").includes("FEEDSTOCK"), "unscanned desk is not a lab");
+must(labLines({ habSealed: false, science: { known: { ice: true } } }).length === 0, "leaking desk is not a lab");
+must(labLines({ habSealed: true, science: { known: { ice: true } } }, "en").some((s) => s.includes("FEEDSTOCK")), "sealed desk logs identified ice");
+must(habReadout({ habSealed: true, hab: createHabitat(), science: { known: { soil: true } } }, "en").includes("SUBSTRATE"), "console lab shows identified soil");
+must(!habReadout({ habSealed: true, hab: createHabitat(), science: { known: {} } }, "en").includes("FEEDSTOCK"), "unscanned desk is not a lab");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

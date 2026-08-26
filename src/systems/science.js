@@ -169,6 +169,7 @@ export const LAB_SAMPLES = {
 };
 
 export function labLines(world, lang = "en") {
+  if (!world?.habSealed) return [];
   const ru = lang === "ru";
   const out = [];
   for (const [id, copy] of Object.entries(LAB_SAMPLES)) {

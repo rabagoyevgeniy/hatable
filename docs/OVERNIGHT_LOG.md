@@ -425,6 +425,13 @@ Overnight timer still listed desk/night. Repo: last seed is not MAV cargo. Hold-
 - Stations, pads, locker, and hatch share the ident/pulse name gate. Scanning is not a waypoint list
 - No rover. No Pointer Lock playtest
 
+### Cycle AX — leaking desk is not a lab
+
+Overnight timer still listed desk/night. Repo: packing stays off until sealed; identified ice still printed FEEDSTOCK on a dying hull.
+
+- Lab lines wait for the patch. Pressure emergency is still pressure
+- No rover. No Pointer Lock playtest
+
 
 
 
