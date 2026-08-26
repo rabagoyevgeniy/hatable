@@ -745,6 +745,8 @@ kbd {
 
 li.ready .recipe {
   border-bottom-color: #7ee8ff;
+  padding: 14px 8px;
+  background: rgba(80, 180, 220, 0.12);
 }
 
 .item-row {

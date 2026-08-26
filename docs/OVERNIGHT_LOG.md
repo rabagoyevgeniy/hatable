@@ -168,3 +168,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 - From the Hab: cream stakes read as landmarks; HUD «ДИСТИЛЛЯТОР» sits on a pole, not bare dirt
 - Plot pads also stake — the yard is a set of posts, not one camouflaged ring
 - Next gate: actually E-build and ice-fuel now that the post is findable
+
+### Cycle S — C again crafts the hammer
+
+- Playtest of E-build died on the craft panel: C / ▶ closed the list with no toast, pockets still had scrap+rock
+- Open craft, C (or Craft) again now makes the first ready tool. Ready hammer row says «СДЕЛАТЬ»

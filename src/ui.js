@@ -69,6 +69,16 @@ export function menusOpen() {
   );
 }
 
+export function craftOpen() {
+  return !$("craft").classList.contains("hidden");
+}
+
+/** First craftable recipe — tools before stations, so C-again makes the hammer. */
+export function firstReadyRecipe(player) {
+  const ready = (r) => canAfford(player, r.need) && (!r.requireTool || player.tools[r.requireTool]);
+  return RECIPES.find((r) => r.kind === "tool" && ready(r)) || RECIPES.find(ready) || null;
+}
+
 export function toggleCraft(player) {
   $("inv").classList.add("hidden");
   $("storage").classList.add("hidden");
@@ -151,7 +161,7 @@ export function renderCraft(player) {
     li.className = rec.id === "hammer" && ok ? "ready" : "";
     li.innerHTML = `<button class="recipe ${ok ? "" : "locked"}" data-recipe="${rec.id}">
       <span><b>${loc(rec.title)}</b><small>${needLine(rec.need)}${rec.requireTool ? (getLang() === "ru" ? " · молоток" : " · hammer") : ""}</small></span>
-      <span>${ok ? "▸" : "–"}</span>
+        <span>${ok ? t("craftNow") : "–"}</span>
     </button>`;
     list.appendChild(li);
   }

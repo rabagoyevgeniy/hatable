@@ -309,6 +309,7 @@ must(patched.index === 3, "seal + hammer catch up to water");
 const loot = { index: 0, finished: false };
 advanceJournal(loot, goalsDone({ gathered: 3, tools: {}, inv: {} }, { habSealed: false }));
 must(game.includes("build-still"), "still pad builds in place like the leak patch");
+must(game.includes("firstReadyRecipe"), "C again crafts the hammer instead of only toggling the panel");
 must(game.includes("still-hint"), "empty still ring names the recipe like the leak");
 must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("need: { scrap: 2, fabric: 1 }"), "still hull is scrap+canvas; ice is fuel");
 must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("x: -7.5, z: 12.6"), "still pad has starter scrap so hammer does not starve the water loop");

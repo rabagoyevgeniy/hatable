@@ -32,6 +32,8 @@ import {
   toast,
   showEnd,
   toggleCraft,
+  craftOpen,
+  firstReadyRecipe,
   toggleInv,
   closeMenus,
   menusOpen,
@@ -236,6 +238,13 @@ async function bootGame() {
       else canvas.requestPointerLock?.();
     }
     if (e.code === "KeyC") {
+      if (craftOpen()) {
+        const rec = firstReadyRecipe(player);
+        if (rec) {
+          onCraft(rec.id);
+          return;
+        }
+      }
       const open = toggleCraft(player);
       if (open) document.exitPointerLock?.();
       else canvas.requestPointerLock?.();
@@ -605,6 +614,13 @@ async function bootGame() {
     craftBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       if (!playing) return;
+      if (craftOpen()) {
+        const rec = firstReadyRecipe(player);
+        if (rec) {
+          onCraft(rec.id);
+          return;
+        }
+      }
       const open = toggleCraft(player);
       if (open) document.exitPointerLock?.();
     });
