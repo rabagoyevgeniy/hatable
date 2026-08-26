@@ -326,6 +326,14 @@ Overnight timer still listed desk/night. Repo: Pathfinder is a leash. Next recon
 - Unidentified comms board will not craft a radio. Hammer, still hull, and plot stay ungated for First Sol
 - F the board (S-band), then C. Repeat scan is not XP. No rover. No Pointer Lock playtest
 
+### Cycle AJ — leftover wrecks have names
+
+Overnight timer still listed desk/night. Repo: radio is a recipe. F at the soil flats / rover / MAV was silent — a landmark with no ident.
+
+- Soil flats name perchlorate. Rover wreck says batteries dead, not a taxi. MAV says ascent is a project
+- Loot underfoot still wins. MAV is the longest leash: past Pathfinder, clear day reaches, storm night does not
+- Did not start driving the rover. No Pointer Lock playtest
+
 
 
 

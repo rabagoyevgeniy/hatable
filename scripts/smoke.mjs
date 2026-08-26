@@ -484,6 +484,12 @@ must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "sca
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");
 must(pickScanTarget({ outpostKind: "pathfinder", outpostD: 8 }) === "pathfinder", "scan at Pathfinder names the lander");
 must(pickScanTarget({ nodeType: "comms", nodeD: 0.8, outpostKind: "pathfinder", outpostD: 3 }) === "comms", "comms underfoot still scans as comms");
+must(pickScanTarget({ outpostKind: "farm", outpostD: 8 }) === "farm", "scan at the soil flats names the flats");
+must(pickScanTarget({ nodeType: "soil", nodeD: 0.8, outpostKind: "farm", outpostD: 3 }) === "soil", "soil underfoot still scans as soil");
+must(pickScanTarget({ outpostKind: "rover", outpostD: 8 }) === "rover", "scan at the rover wreck names the wreck");
+must(pickScanTarget({ outpostKind: "mav", outpostD: 8 }) === "mav", "scan at the MAV names the ascent vehicle");
+must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Not a taxi yet"), "rover scan refuses to be a vehicle");
+must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Ascent is a project"), "MAV scan is a project, not a ride");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("solaryard"), "solar farm has a scan ident");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Storms bury the signal"), "Pathfinder scan names the delayed uplink");
 must(game.includes("pickScanTarget"), "F uses the shared scan picker");

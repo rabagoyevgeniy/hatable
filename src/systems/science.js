@@ -65,6 +65,18 @@ export const SCAN_DB = {
     en: "Ares III Pathfinder. S-band uplink if you bring a radio. Storms bury the signal.",
     ru: "Pathfinder Арис III. S-диапазон, если принесёшь рацию. Буря хоронит сигнал.",
   },
+  farm: {
+    en: "Perchlorate flats. Crop substrate if you scan the soil and wash it.",
+    ru: "Перхлоратная низина. Субстрат, если опознать грунт и промыть.",
+  },
+  rover: {
+    en: "Ares III rover. Batteries dead. Not a taxi yet.",
+    ru: "Марсоход Арис III. Батареи мертвы. Это ещё не такси.",
+  },
+  mav: {
+    en: "Schiaparelli MAV. Ascent is a project, not a ride.",
+    ru: "МАВ Скиапарелли. Взлёт — проект, не поездка.",
+  },
 };
 
 import { STORM_GRACE_S } from "./weather.js";

@@ -30,7 +30,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 
 ## PARTIAL
 
-- Scanner science (first-scan ident including the solar farm and Pathfinder; ice/soil/wire/comms scans unlock still fuel, planting, electrical repair, and the radio recipe — not +12% XP. First-sol hammer/still/plot stay ungated. No bench lab yet)
+- Scanner science (F names solar farm, Pathfinder, soil flats, rover wreck, MAV; ice/soil/wire/comms scans unlock tools — not +12% XP. Rover is identified as dead, not driven. First-sol hammer/still/plot stay ungated. No bench lab yet)
 - Range estimate (O₂ **and** warmth round-trip; no full sunset packing list yet)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)

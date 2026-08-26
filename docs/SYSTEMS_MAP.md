@@ -58,6 +58,7 @@ SCIENCE
   F also identifies a sample in hand / pockets when nothing is underfoot
   radio listen (after place; storms / night pause S-band)
   pathfinder scan → names the S-band lander (not XP)
+  farm / rover / mav scans → name the leftover expedition (rover is not a taxi; MAV is a project)
   comms scan → radio recipe (hammer / still / plot stay ungated)
   contacted after RADIO_CONTACT_S of clear daylight — not on place
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)

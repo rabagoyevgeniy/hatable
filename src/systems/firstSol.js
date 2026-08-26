@@ -578,6 +578,16 @@ export function runStabilizeCoupling() {
   if (canRoundTrip(suit, gale, probe, HAB_POS)) fail("stabilize", "storm night must not be a safe Pathfinder walk");
   notes.push("pathfinder-is-a-longer-leash");
 
+  const pad = OUTPOSTS.find((o) => o.id === "mav");
+  if (!pad) fail("stabilize", "MAV site missing");
+  const mavTrip = roundTripM(HAB_POS, pad);
+  if (!(mavTrip > earthTrip + 80)) fail("stabilize", `MAV should sit past Pathfinder (${mavTrip.toFixed(0)} vs ${earthTrip.toFixed(0)})`);
+  if (!canRoundTrip(suit, noon, pad, HAB_POS)) {
+    fail("stabilize", `clear day should reach the MAV (range ${estimateRangeM(suit, noon).toFixed(0)} vs ${mavTrip.toFixed(0)})`);
+  }
+  if (canRoundTrip(suit, gale, pad, HAB_POS)) fail("stabilize", "storm night must not be a safe MAV walk");
+  notes.push("mav-is-the-longest-leash");
+
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");
   if (lootBeaconVisible({ starter: false, storm: 0, scanning: false, dist: 40 })) {
@@ -630,6 +640,37 @@ export function runStabilizeCoupling() {
   if (!canBuildRadio(look)) fail("stabilize", "comms scan should unlock the radio recipe");
   if (!recipeKnown(look, radioRec)) fail("stabilize", "identified comms should unlock the radio");
   notes.push("scan-unlocks-radio");
+
+  if (pickScanTarget({ outpostKind: "farm", outpostD: 8 }) !== "farm") {
+    fail("stabilize", "scan at the soil flats should name the flats");
+  }
+  if (pickScanTarget({ nodeType: "soil", nodeD: 1.2, outpostKind: "farm", outpostD: 4 }) !== "soil") {
+    fail("stabilize", "soil underfoot still identifies as soil");
+  }
+  const flats = noteScan(look, "farm");
+  if (!flats || !String(flats.en || "").toLowerCase().includes("perchlorate")) {
+    fail("stabilize", "first soil-flats scan should mention perchlorate");
+  }
+  if (noteScan(look, "farm")) fail("stabilize", "repeat flats scan is not XP");
+
+  if (pickScanTarget({ outpostKind: "rover", outpostD: 8 }) !== "rover") {
+    fail("stabilize", "scan at the rover wreck should name the wreck");
+  }
+  const wreck = noteScan(look, "rover");
+  if (!wreck || !String(wreck.en || "").toLowerCase().includes("taxi")) {
+    fail("stabilize", "rover scan should say it is not a taxi");
+  }
+  if (noteScan(look, "rover")) fail("stabilize", "repeat rover scan is not XP");
+
+  if (pickScanTarget({ outpostKind: "mav", outpostD: 8 }) !== "mav") {
+    fail("stabilize", "scan at the MAV should name the ascent vehicle");
+  }
+  const ascent = noteScan(look, "mav");
+  if (!ascent || !String(ascent.en || "").toLowerCase().includes("project")) {
+    fail("stabilize", "MAV scan should name ascent as a project");
+  }
+  if (noteScan(look, "mav")) fail("stabilize", "repeat MAV scan is not XP");
+  notes.push("scan-names-expedition-sites");
 
   const recipe = createHeadlessWorld();
   if (canFuelStill(recipe, "ice")) fail("stabilize", "unscanned ice is not still feedstock");
