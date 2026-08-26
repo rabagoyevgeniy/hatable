@@ -714,6 +714,13 @@ export function runStabilizeCoupling() {
     fail("stabilize", "without F, loot names stay inside gather sight");
   }
   notes.push("overlay-is-not-a-loot-atlas");
+  if (overlayNamesLoot(180, { scanning: true, lootRange: 22 })) {
+    fail("stabilize", "hold-F must not name a Pathfinder radio from the Hab");
+  }
+  if (!overlayNamesLoot(8, { scanning: true, lootRange: 22 })) {
+    fail("stabilize", "yard still may still be named while scanning");
+  }
+  notes.push("overlay-is-not-a-station-atlas");
   if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
     fail("stabilize", "copper underfoot still identifies as wire");
   }

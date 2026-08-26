@@ -630,7 +630,7 @@ function updateScanLabels(player, world, camera, scanning) {
     }
     for (const st of world.stations) {
       const d = Math.hypot(p.x - st.x, p.z - st.z);
-      if (d > (mobile ? 10 : 22) && !scanning) continue;
+      if (!overlayNamesLoot(d, { scanning, lootRange: mobile ? 10 : 22 })) continue;
       const names = {
         still: { ru: "Дистиллятор", en: "Still" },
         plot: { ru: "Грядка", en: "Plot" },
@@ -651,7 +651,7 @@ function updateScanLabels(player, world, camera, scanning) {
       const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
       if (occupied) continue;
       const d = Math.hypot(p.x - pad.x, p.z - pad.z);
-      if (d > lootRange && !scanning) continue;
+      if (!overlayNamesLoot(d, { scanning, lootRange })) continue;
       targets.push({
         x: pad.x,
         y: 3.15,
@@ -662,7 +662,7 @@ function updateScanLabels(player, world, camera, scanning) {
       });
     }
     const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
-    if (lockerD < (mobile ? 10 : 18) || scanning) {
+    if (overlayNamesLoot(lockerD, { scanning, lootRange: mobile ? 10 : 18 })) {
       targets.push({
         x: world.locker.x,
         y: world.locker.mesh.position.y + 2.4,
@@ -672,7 +672,7 @@ function updateScanLabels(player, world, camera, scanning) {
         loot: true,
       });
     }
-    if (!world.habSealed && (Math.hypot(p.x - HAB_HATCH.x, p.z - HAB_HATCH.z) < (mobile ? 12 : 18) || scanning)) {
+    if (!world.habSealed && overlayNamesLoot(Math.hypot(p.x - HAB_HATCH.x, p.z - HAB_HATCH.z), { scanning, lootRange: mobile ? 12 : 18 })) {
       targets.push({
         x: HAB_HATCH.x,
         y: 2.15,

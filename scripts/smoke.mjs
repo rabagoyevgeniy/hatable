@@ -511,10 +511,12 @@ must(pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE + 1, heldI
 }
 must(ui.includes("overlayNamesOutpost"), "scan overlay uses the ident-range name gate");
 must(!overlayNamesLoot(40, { scanning: true }), "hold-F is not a 40 m loot inventory");
+must(!overlayNamesLoot(180, { scanning: true, lootRange: 22 }), "hold-F does not name a Pathfinder radio from Hab");
 must(overlayNamesLoot(8), "yard loot may still be named in sight");
 must(overlayNamesLoot(LOOT_RING_RANGE - 2, { scanning: true }), "scan overlay may name loot inside ident reach");
 must(!overlayNamesLoot(20, { scanning: false, lootRange: 18 }), "without F, loot names stay inside gather sight");
 must(ui.includes("overlayNamesLoot"), "scan overlay uses the loot name gate");
+must(!ui.includes("|| scanning"), "scan overlay does not name locker/stations across the map");
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");
 must(pickScanTarget({ outpostKind: "pathfinder", outpostD: 8 }) === "pathfinder", "scan at Pathfinder names the lander");
 must(pickScanTarget({ nodeType: "comms", nodeD: 0.8, outpostKind: "pathfinder", outpostD: 3 }) === "comms", "comms underfoot still scans as comms");

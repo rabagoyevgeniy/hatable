@@ -105,7 +105,7 @@ export function overlayNamesOutpost(world, kind, dist, { scanning = false, overl
   return outpostOverlayNamed(world, kind, dist);
 }
 
-/** Overlay may name a loot pile only within ident/ring reach. Scanning is not a 48 m inventory. */
+/** Overlay may name a nearby tag only within ident/ring reach. Scanning is not a planet inventory (loot, stations, pads, locker). */
 export function overlayNamesLoot(dist, { scanning = false, lootRange = 18 } = {}) {
   if (scanning) return dist < LOOT_RING_RANGE;
   return dist <= lootRange;

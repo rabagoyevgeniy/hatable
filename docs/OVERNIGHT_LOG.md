@@ -418,6 +418,13 @@ Overnight timer still listed desk/night. Repo: MAV packing wanted a potato. The 
 - Desk NO CARGO and the escape card both wait for a harvested copy. No rover
 - No Pointer Lock playtest
 
+### Cycle AW — overlay is not a station atlas
+
+Overnight timer still listed desk/night. Repo: last seed is not MAV cargo. Hold-F still captioned Radio / Locker across the map.
+
+- Stations, pads, locker, and hatch share the ident/pulse name gate. Scanning is not a waypoint list
+- No rover. No Pointer Lock playtest
+
 
 
 

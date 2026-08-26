@@ -71,6 +71,7 @@ SCIENCE
   place ident uses the same 22 m as loot rings — F names the wreck you can see, not the horizon
   scan overlay names a wreck only within that 22 m, or after F; hold-F is not a horizon atlas (Hab stays named)
   scan overlay names loot only within that 22 m; 3D rings match the pulse, not a planet detector
+  scan overlay names stations / pads / locker / hatch with the same reach — hold-F is not a radio atlas
 
 WORLD
   nodes (loot), stations, locker, outposts
