@@ -432,6 +432,13 @@ Overnight timer still listed desk/night. Repo: packing stays off until sealed; i
 - Lab lines wait for the patch. Pressure emergency is still pressure
 - No rover. No Pointer Lock playtest
 
+### Cycle AY — overnight prompt matches the repo
+
+Timer still listed desk/night. Repo: First Sol is closed in sim; scanner is not an atlas; range includes gut; leaking desk is not packing/lab; MAV wants harvested cargo.
+
+- Next high-value is not another micro-gate. Suit tablet needs a real player. Storm→wire and still E-build need human eyes. Rover waits
+- No Pointer Lock playtest
+
 
 
 

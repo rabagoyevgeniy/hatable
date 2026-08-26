@@ -6,15 +6,16 @@
 
 ## P1
 
-- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable coupling)
-- Optional human playtest: E-build still on the stake → ice fuel → drip → tank sip (harness already covers the sim)
-- After a storm: wait for a clear day, walk the solar wreck for wire, splice at the roof — range line now refuses a storm-night suicide run. No rover
+- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable + scanner/desk/MAV couplings)
+- Optional human playtest (not the hanging Pointer Lock agent): E-build still on the stake → ice fuel → drip → tank sip; storm → clear day → solar wreck wire → splice; Pathfinder walk; desk packing/lab after seal
+- Do not add more scan-gates (fabric / tape / hammer) or overlay-name checklists. Scanner reach is 22 m
 
 ## P2
 
-- Suit tablet instead of MMO meters
+- Suit tablet instead of MMO meters — only if a real player can verify in the browser
 
 ## P3
 
-- Rover, escape as a project
+- Rover (scan ident says not a taxi — do not start driving)
+- Escape as an engineering project (MAV is a cargo walk after Earth, not a vehicle)
 - Original IP rename of Martian-adjacent names
