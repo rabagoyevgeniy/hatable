@@ -29,7 +29,7 @@ Loop: observe problem → understand cause → prepare → leave safety → scav
 
 Leak + power emergency. Patch pressure. Salvage. Trickle-charge a damaged array. Night kills solar. Battery is the lifeline. Ice → water. First crop is a moment, not a click.
 
-Closed when `scripts/first-sol.mjs` stays green (leak → repair → power → sleep → still → ice → water → drink → crop). Ice must be scanned before it fuels the still; soil must be scanned before the last potato goes in the dirt. After that, deepen **stabilize** (storm → solar → battery → heater/grid → crops; storms scar the array and can snap the roof cable). Fetching splice wire is a daylight walk, not a storm-night stroll. Pathfinder is a longer leash than the solar wreck; placing the radio is not Hello, Earth. Suit range is O₂ ∩ warmth ∩ thirst ∩ hunger — a dry mouth is not a full tank. The scanner names a wreck you can walk to, not the horizon, and does not print a 48 m loot inventory or light the far wreck. Rover waits.
+Closed when `scripts/first-sol.mjs` stays green (leak → repair → power → sleep → still → ice → water → drink → crop). Ice must be scanned before it fuels the still; soil must be scanned before the last potato goes in the dirt. After that, deepen **stabilize** (storm → solar → battery → heater/grid → crops; storms scar the array and can snap the roof cable). Fetching splice wire is a daylight walk, not a storm-night stroll. Pathfinder is a longer leash than the solar wreck; placing the radio is not Hello, Earth. Suit range is O₂ ∩ warmth ∩ thirst ∩ hunger — a dry mouth is not a full tank; leftover tank sips pack the walk. The scanner names a wreck you can walk to, not the horizon, and does not print a 48 m loot inventory or light the far wreck. Rover waits.
 
 ## Constraints
 

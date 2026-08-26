@@ -619,6 +619,35 @@ export function runStabilizeCoupling() {
     fail("stabilize", "thirsty desk should refuse Pathfinder");
   }
   notes.push("range-includes-gut");
+  const camp = createHeadlessWorld();
+  camp.habSealed = true;
+  camp.daylight = 0.9;
+  camp.hab.waterTank = 2.2;
+  applyWeatherState(camp, "clear");
+  const walker = { oxygen: 100, warmth: 70, thirst: 22, hunger: 80 };
+  if (canRoundTrip(walker, camp, probe, HAB_POS)) {
+    fail("stabilize", "two tank sips need a dry starting mouth");
+  }
+  if (!sipHabitatTank(camp, walker).ok || !sipHabitatTank(camp, walker).ok) {
+    fail("stabilize", "leftover tank should still have sips");
+  }
+  if (!canRoundTrip(walker, camp, probe, HAB_POS)) {
+    fail("stabilize", "desk sips should put Pathfinder back in range");
+  }
+  if (!packingLines(walker, camp, "en").some((l) => l.includes("PATHFINDER") && l.includes("IN RANGE"))) {
+    fail("stabilize", "packing list should follow the tank sip");
+  }
+  const dryTank = createHeadlessWorld();
+  dryTank.habSealed = true;
+  dryTank.daylight = 0.9;
+  dryTank.hab.waterTank = 0.2;
+  applyWeatherState(dryTank, "clear");
+  const parched = { oxygen: 100, warmth: 70, thirst: 22, hunger: 80 };
+  if (sipHabitatTank(dryTank, parched).ok) fail("stabilize", "empty tank is not a sip");
+  if (canRoundTrip(parched, dryTank, probe, HAB_POS)) {
+    fail("stabilize", "an empty tank must not magically pack the walk");
+  }
+  notes.push("desk-sip-packs-the-walk");
 
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");

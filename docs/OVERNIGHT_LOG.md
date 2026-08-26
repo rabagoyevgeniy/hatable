@@ -390,6 +390,13 @@ Overnight timer still listed desk/night. Repo: scanner reach closed. Packing lis
 - Round-trip range is min(O₂, warmth, thirst, hunger). Dry mouth refuses Pathfinder on a clear day. No new HUD meters
 - No rover. No Pointer Lock playtest
 
+### Cycle AS — desk sip packs the walk
+
+Overnight timer still listed desk/night. Repo: range includes gut. Thirsty packing refused Pathfinder, but the leftover tank was not the fix in the harness.
+
+- Two console sips put Pathfinder back in range. An empty tank does not. No new HUD meters
+- No rover. No Pointer Lock playtest
+
 
 
 

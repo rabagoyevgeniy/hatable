@@ -6,7 +6,7 @@ import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStil
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
-import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines } from "../src/systems/survival.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
 import { goalsDone, advanceJournal } from "../src/systems/goals.js";
@@ -560,6 +560,13 @@ must(ui.includes("packingLines"), "Hab console shows a packing list, not a new H
   must(
     packingLines({ oxygen: 100, warmth: 70, thirst: 22 }, noon, "en").some((l) => l.includes("PATHFINDER") && l.includes("OUT OF RANGE")),
     "thirsty packing refuses Pathfinder"
+  );
+  const walker = { oxygen: 100, warmth: 70, thirst: 22, hunger: 80 };
+  const camp = { habSealed: true, daylight: 0.9, storm: 0.05, hab: { waterTank: 2.2 } };
+  must(sipHabitatTank(camp, walker).ok && sipHabitatTank(camp, walker).ok, "leftover tank has sips");
+  must(
+    packingLines(walker, camp, "en").some((l) => l.includes("PATHFINDER") && l.includes("IN RANGE")),
+    "desk sips put Pathfinder back in range"
   );
 }
 must(i18n.includes("radioListening"), "radio listening toast is translated");
