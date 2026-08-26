@@ -110,3 +110,11 @@ Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
 - After patching the left wall, E is no longer a dead zone: desk range covers the leak so the console opens
 - Toast: справа консоль (печь), глубже слева койка
 - Locker at the hatch still wins; leaking aisle still prefers the tear
+
+### Cycle K playtest
+
+- Toast after patch: «КОРПУС ЗАДЕЛАН — справа консоль (печь). Глубже слева — койка.»
+- E at the left wall opened СИСТЕМЫ HAB without hunting the desk
+- Bunk sleep: «СОН — сола меньше до Гермеса», Sol 19→20, O₂ 100, warmth 86; food/water spent
+
+First-Sol path leak → seal → console → sleep is playable. Rover still waits.
