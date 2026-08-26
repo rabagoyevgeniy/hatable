@@ -5,7 +5,7 @@
  */
 
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
-import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
+import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
@@ -510,6 +510,41 @@ export function runStabilizeCoupling() {
     fail("stabilize", `offline still must not delay dawn recovery (${stillTicks} vs ${bareTicks})`);
   }
   notes.push("dead-still-does-not-phantom-load");
+
+  const liveAir = createHeadlessWorld();
+  liveAir.habSealed = true;
+  liveAir.hab.battery = 1;
+  liveAir.hab.heaterOn = false;
+  liveAir.hab.pressure = 0.9;
+  liveAir.clock = 0.78;
+  tickTime(liveAir, 0);
+  applyWeatherState(liveAir, "clear");
+  for (let i = 0; i < 200; i++) tickHabitat(liveAir, 1);
+  if (!habCanRefillSuit(liveAir)) fail("stabilize", "a live-grid night should still refill the suit");
+  if (!(liveAir.hab.pressure > HAB_REFILL_P)) fail("stabilize", "life support should hold pressure above refill");
+
+  const deadAir = createHeadlessWorld();
+  deadAir.habSealed = true;
+  deadAir.hab.battery = 0;
+  deadAir.hab.gridOn = false;
+  deadAir.hab.heaterOn = false;
+  deadAir.hab.lightsOn = false;
+  deadAir.hab.cableFault = true;
+  deadAir.hab.pressure = 0.62;
+  deadAir.clock = 0.78;
+  tickTime(deadAir, 0);
+  applyWeatherState(deadAir, "clear");
+  if (!habCanRefillSuit(deadAir)) fail("stabilize", "fresh dead-grid seal should still be above refill");
+  for (let i = 0; i < 280; i++) tickHabitat(deadAir, 1);
+  if (deadAir.hab.gridOn) fail("stabilize", "night cable-cut blackout should stay dead");
+  if (habCanRefillSuit(deadAir)) fail("stabilize", "dead grid must bleed Hab pressure below suit refill");
+  if (!(deadAir.hab.pressure >= HAB_DEAD_P_FLOOR - 0.001)) {
+    fail("stabilize", "dead-grid pressure should floor, not vacuum");
+  }
+  if (habCanRefillSuit({ habSealed: false, hab: { pressure: 0.9 } })) {
+    fail("stabilize", "a leaking hull must not refill the suit");
+  }
+  notes.push("dead-grid-bleeds-suit-refill");
 
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {

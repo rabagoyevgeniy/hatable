@@ -7,6 +7,7 @@ import { advanceSol, isMobileView } from "./world.js";
 import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
 import { canEatPotato, trySleepSol, estimateRangeM, WALK_MPS } from "./systems/survival.js";
+import { habCanRefillSuit } from "./systems/habitat.js";
 import { count, totalItems, addItem, takeItems, canAfford, transfer } from "./systems/inventory.js";
 
 export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer, estimateRangeM };
@@ -285,9 +286,8 @@ export function updatePlayer(player, dt, input, world) {
 
   const night = world.daylight < 0.28;
   const hab = world.hab;
-  const pressureOk = world.habSealed && hab && hab.pressure > 0.48;
   if (inside) {
-    if (pressureOk) player.oxygen = clamp(player.oxygen + dt * 8);
+    if (habCanRefillSuit(world)) player.oxygen = clamp(player.oxygen + dt * 8);
     else player.oxygen = clamp(player.oxygen - dt * (hab ? Math.max(0.08, (1 - hab.pressure) * 0.42) : 0.28));
     const tC = hab ? hab.insideC : 8;
     const targetW = Math.max(14, Math.min(96, 50 + tC * 2));

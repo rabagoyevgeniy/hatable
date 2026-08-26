@@ -467,6 +467,13 @@ Overnight: hunt couplings, no new HUD. Grid death already froze the still, the f
 - Fueled still loads the battery only while `gridOn`. Dawn recovery is not slower because an offline machine is sitting in the yard. Live grid still draws. No rover
 - No Pointer Lock playtest
 
+### Cycle BD — dead grid steals the indoor refill
+
+Overnight: hunt couplings, no new HUD. A patched hull is not free O₂ if life support is dark. Dead-grid bleed already floored at 0.42; the suit refill asked for > 0.48.
+
+- `habCanRefillSuit` is sealed ∩ pressure. Night blackout crosses that line; a leaking hull never refills. No new HUD. No rover
+- No Pointer Lock playtest
+
 
 
 

@@ -5,6 +5,13 @@ import { tickStormDamage } from "./weather.js";
 import { tickRadio, radioPlaced, labLines } from "./science.js";
 
 export const SOL_SECONDS = 220;
+/** Suit O₂ refills inside only above this. Dead-grid bleed floors below it. */
+export const HAB_REFILL_P = 0.48;
+export const HAB_DEAD_P_FLOOR = 0.42;
+
+export function habCanRefillSuit(world) {
+  return !!(world?.habSealed && world.hab && world.hab.pressure > HAB_REFILL_P);
+}
 /** Sleep jump toward harvest. Four watered Sols can finish. */
 export const CROP_SLEEP = 0.52;
 /** Realtime trickle — standing a Sol is not a harvest. */
@@ -98,7 +105,7 @@ export function tickHabitat(world, dt) {
     h.pressure = Math.min(1, h.pressure + 0.018 * dt);
     h.oxygenTank = Math.min(100, h.oxygenTank + 0.85 * dt);
   } else {
-    h.pressure = Math.max(0.42, h.pressure - 0.0009 * dt);
+    h.pressure = Math.max(HAB_DEAD_P_FLOOR, h.pressure - 0.0009 * dt);
   }
 
   h.outsideC = -64 + day * 52 - storm * 16;

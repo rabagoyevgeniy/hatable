@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
@@ -294,6 +294,26 @@ must(!stillCanRun({ type: "still", fuel: 28, fault: null }, { hab: { gridOn: fal
   must(sipHabitatTank({ hab: { waterTank: 2.2 } }, p).ok, "leftover tank sips when the grid is dead");
   must(p.thirst > 40, "dead-grid sip still wets the mouth");
 }
+must(habCanRefillSuit({ habSealed: true, hab: { pressure: 0.9 } }), "sealed high pressure refills the suit");
+must(!habCanRefillSuit({ habSealed: true, hab: { pressure: HAB_REFILL_P } }), "refill needs pressure above the threshold");
+must(!habCanRefillSuit({ habSealed: false, hab: { pressure: 0.9 } }), "leaking hull does not refill the suit");
+{
+  const deadAir = { hab: createHabitat(), habSealed: true, daylight: 0, storm: 0, clock: 0.78, stations: [] };
+  deadAir.hab.battery = 0;
+  deadAir.hab.gridOn = false;
+  deadAir.hab.heaterOn = false;
+  deadAir.hab.lightsOn = false;
+  deadAir.hab.cableFault = true;
+  deadAir.hab.pressure = 0.62;
+  tickTime(deadAir, 0);
+  tickHabitat(deadAir, 0);
+  must(habCanRefillSuit(deadAir), "fresh dead-grid seal starts above refill");
+  for (let i = 0; i < 280; i++) tickHabitat(deadAir, 1);
+  must(!deadAir.hab.gridOn, "night cable-cut stays dead");
+  must(!habCanRefillSuit(deadAir), "dead grid bleeds pressure below suit refill");
+  must(deadAir.hab.pressure >= HAB_DEAD_P_FLOOR - 0.001, "dead-grid pressure floors");
+}
+must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("habCanRefillSuit"), "suit refill uses Hab pressure, not a sealed flag");
 
 const ration = createHabitat();
 must(ration.waterTank < 3, "Hab tank is leftover sips, not a still");

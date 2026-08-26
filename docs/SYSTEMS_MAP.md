@@ -19,7 +19,7 @@ HABITAT (world.hab)
   leak until seal station
     → pressure
     → Hab O₂ tank
-    → suit O₂ while inside (refill only if sealed AND pressure > 0.48)
+    → suit O₂ while inside (refill only if sealed AND pressure > 0.48; dead grid bleeds a sealed hull below that)
   solar (damaged roof arrayHealth + placed panels)
     → battery (kWh compressed per Sol)
     → gridOn
