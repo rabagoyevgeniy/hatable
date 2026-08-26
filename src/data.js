@@ -127,9 +127,9 @@ export const RECIPES = [
     kind: "place",
     station: "still",
     requireTool: "hammer",
-    need: { scrap: 2, fabric: 1, ice: 1 },
+    need: { scrap: 2, fabric: 1 },
     title: { en: "Water still", ru: "Дистиллятор" },
-    brief: { en: "2 scrap, canvas, ice (cyan pile by the STILL ring). Place on the amber ring west of the airlock.", ru: "2 лома, брезент, лёд (голубая куча у кольца ДИСТИЛЛЯТОР). Ставь на янтарное кольцо слева от шлюза." },
+    brief: { en: "2 scrap + canvas. Place on the amber STILL ring west of the airlock, then E ice to fuel it.", ru: "2 лома + брезент. Ставь на янтарное кольцо ДИСТИЛЛЯТОР слева от шлюза, потом E лёд — заправка." },
   },
   {
     id: "plot",
@@ -220,8 +220,8 @@ export const GOALS = [
     sol: 26,
     title: { en: "Make water", ru: "Добудь воду" },
     brief: {
-      en: "Hab tank is leftover — a few sips at the desk console. Then ice on the still pad west of the hatch, craft the still, fuel it. Thirst kills first. Potatoes dry you out.",
-      ru: "Бак Hab — остаток: несколько глотков с консоли. Потом лёд у кольца ДИСТИЛЛЯТОР слева от шлюза, скрафть дистиллятор, заправь. Жажда убивает первой. Картошка сушит.",
+      en: "Hab tank is leftover — a few sips at the desk. Craft/E-build the still (scrap + canvas) on the amber ring, then fuel with ice. Thirst kills first.",
+      ru: "Бак Hab — остаток на консоли. Дистиллятор (лом + брезент) на янтарном кольце, заправь льдом. Жажда убивает первой.",
     },
     log: {
       from: "WATNEY",

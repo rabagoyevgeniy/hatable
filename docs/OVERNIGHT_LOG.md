@@ -130,3 +130,4 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - On the amber STILL ring with hammer + 2 scrap + canvas + ice, E places the distiller (craft-then-place still works)
 - Ice on the west pad is gather until you have the recipe; then the ring is the interact
+- Ice is **fuel**, not a construction part — building no longer eats the first ice so the still sits dry

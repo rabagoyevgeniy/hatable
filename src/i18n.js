@@ -114,7 +114,7 @@ const strings = {
     leakHint: "LEAK · 2 canvas + tape from locker",
     patched: "HULL SEALED — pressure holding",
     patchedHome: "HULL SEALED — RIGHT: console (heater). Deeper left: bunk.",
-    buildStill: "E  BUILD STILL",
+    fuelStillHint: "STILL UP — E ice into it. Ice is fuel, not a girder.",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -230,7 +230,7 @@ const strings = {
     leakHint: "УТЕЧКА · 2 брезента + скотч из шкафа",
     patched: "КОРПУС ЗАДЕЛАН — давление держится",
     patchedHome: "КОРПУС ЗАДЕЛАН — справа консоль (печь). Глубже слева — койка.",
-    buildStill: "E  СТАВИТЬ ДИСТИЛЛЯТОР",
+    fuelStillHint: "ДИСТИЛЛЯТОР СТОИТ — E лёд в бак. Лёд это топливо, не балка.",
     consoleDeeper: "глубже — голубой экран",
   },
 };

@@ -309,7 +309,7 @@ must(patched.index === 3, "seal + hammer catch up to water");
 const loot = { index: 0, finished: false };
 advanceJournal(loot, goalsDone({ gathered: 3, tools: {}, inv: {} }, { habSealed: false }));
 must(game.includes("build-still"), "still pad builds in place like the leak patch");
-must(ui.includes("build-still"), "still pad prompt exists");
+must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("need: { scrap: 2, fabric: 1 }"), "still hull is scrap+canvas; ice is fuel");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));
