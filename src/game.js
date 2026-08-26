@@ -63,22 +63,25 @@ export async function boot() {
 
 async function bootGame() {
   applyDom();
-  const mobile = isMobileView();
-  if (mobile) document.body.classList.add("mobile");
-  syncOrientationClass();
-  window.addEventListener("resize", syncOrientationClass);
-  window.visualViewport?.addEventListener("resize", syncOrientationClass);
-  window.addEventListener("orientationchange", syncOrientationClass);
+  const bootMobile = isMobileView();
+  if (bootMobile) document.body.classList.add("mobile");
+  function syncPlayChrome() {
+    document.body.classList.toggle("mobile", isMobileView());
+    syncOrientationClass();
+    const touchUi = document.getElementById("touch-ui");
+    if (touchUi && playing) touchUi.classList.toggle("hidden", !isMobileView());
+  }
 
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: !mobile,
+    antialias: !bootMobile,
     alpha: false,
     powerPreference: "high-performance",
     stencil: false,
     failIfMajorPerformanceCaveat: false,
   });
+  const mobile = bootMobile;
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 2));
   renderer.setSize(innerWidth, innerHeight);
   renderer.setClearColor(mobile ? 0xd48958 : 0xc47a4a, 1);
@@ -108,6 +111,10 @@ async function bootGame() {
   let touchScan = false;
   let saveAcc = 0;
   let scanAcc = 0;
+  syncPlayChrome();
+  window.addEventListener("resize", syncPlayChrome);
+  window.visualViewport?.addEventListener("resize", syncPlayChrome);
+  window.addEventListener("orientationchange", syncPlayChrome);
 
   function beginPlay(load) {
     if (load) {
@@ -122,7 +129,7 @@ async function bootGame() {
     playing = true;
     showHud();
     startAudio();
-    syncOrientationClass();
+    syncPlayChrome();
     try {
       screen.orientation?.lock?.("landscape").catch(() => {});
     } catch {
@@ -755,7 +762,7 @@ async function bootGame() {
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
     syncOrientationClass();
-    camera.fov = mobile ? (h > w ? 58 : 46) : 52;
+    camera.fov = isMobileView() ? (h > w ? 58 : 46) : 52;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();

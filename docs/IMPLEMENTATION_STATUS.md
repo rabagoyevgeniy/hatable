@@ -32,7 +32,7 @@ Harness: `scripts/playability.mjs` (mesh snap, long walk, perimeter, airlock in/
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
-- **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (joystick bottom-left, actions 2×2 bottom-right, compact vitals/hotbar). Camera pulled back (FOV 48, dist ~8.6). iPhone safe-area insets.
+- **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (joystick bottom-left, actions 2×2 bottom-right, compact vitals/hotbar). Camera pulled back (FOV 46, dist ~9.2). iPhone safe-area insets.
 - **Visual-terrain grounding:** player Y samples the same PlaneGeometry grid the mesh uses (mobile 80 segs, not analytic height under a coarse mesh). Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground.
 - **Hab collision:** cylinder hull blocks; airlock at +Z is the only door; locker/bunk/desk/crates are simple circle blockers. `isInsideHab` is hull+airlock, not a 6.2 m circle.
 - Hab interior furniture (bunk/desk/crates)

@@ -41,8 +41,8 @@ must(css.includes("grid-template-columns: 1fr 1fr"), "landscape actions are a pa
 must(css.includes("safe-area-inset-top"), "Dynamic Island inset");
 
 const game = readFileSync(resolve(root, "src/game.js"), "utf8");
-must(game.includes("needsLandscape()"), "portrait pauses gameplay");
-must(game.includes("camera.fov = mobile ? (h > w ? 58 : 46)"), "landscape mobile FOV");
+must(game.includes("syncPlayChrome"), "phone class and overlay follow resize/orientation");
+must(game.includes("h > w ? 58 : 46"), "landscape mobile FOV");
 must(game.includes("9.2"), "landscape camera is pulled back");
 
 const playerSrc = readFileSync(resolve(root, "src/player.js"), "utf8");
