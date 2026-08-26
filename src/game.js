@@ -4,7 +4,7 @@ import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill,
 import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { needsLandscape, syncOrientationClass } from "./device.js";
-import { isSheltered } from "./systems/collision.js";
+import { isSheltered, meshHeightAt } from "./systems/collision.js";
 import { repairStillPump, stillCanRun, repairArrayCable } from "./systems/machines.js";
 import { sipHabitatTank } from "./systems/survival.js";
 import { consumeHabEvents } from "./systems/habitat.js";
@@ -90,7 +90,7 @@ async function bootGame() {
   if (mobile) renderer.useLegacyLights = true;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(mobile ? 48 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
+  const camera = new THREE.PerspectiveCamera(mobile ? 46 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
   camera.position.set(8.5, mobile ? 9.2 : 6.8, 24);
 
   let world;
@@ -712,15 +712,16 @@ async function bootGame() {
 
   function placeCamera(dt) {
     const inside = isSheltered(player.root.position.x, player.root.position.z);
-    const dist = inside ? (mobile ? 4.05 : 3.85) : mobile ? 8.55 : 9.2;
-    const height = (inside ? 1.58 : mobile ? 3.22 : 2.55) + player.pitch * (mobile ? 0.7 : 1.15);
+    const dist = inside ? (mobile ? 4.15 : 3.85) : 9.2;
+    const height = (inside ? 1.62 : mobile ? 3.85 : 2.55) + player.pitch * (mobile ? 0.55 : 1.15);
     const target = new THREE.Vector3(
       player.root.position.x + Math.sin(player.yaw) * dist,
       player.root.position.y + height,
       player.root.position.z + Math.cos(player.yaw) * dist
     );
     camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
-    const minY = heightAt(camera.position.x, camera.position.z) + (mobile ? 1.55 : 1.55);
+    const segs = world.terrainSegments || 168;
+    const minY = meshHeightAt(camera.position.x, camera.position.z, segs, heightAt) + (mobile ? 2.15 : 1.55);
     if (camera.position.y < minY) camera.position.y = minY;
     if (!inside) {
       const habDx = camera.position.x;
@@ -740,8 +741,8 @@ async function bootGame() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    const lookAhead = mobile && !inside ? 2.35 : 0;
-    const lookY = player.root.position.y + (mobile ? 1.12 : 1.32);
+    const lookAhead = mobile && !inside ? 0.9 : 0;
+    const lookY = player.root.position.y + (mobile ? 1.22 : 1.32);
     camera.lookAt(
       player.root.position.x - Math.sin(player.yaw) * lookAhead,
       lookY,
@@ -754,7 +755,7 @@ async function bootGame() {
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
     syncOrientationClass();
-    camera.fov = mobile ? (h > w ? 58 : 48) : 52;
+    camera.fov = mobile ? (h > w ? 58 : 46) : 52;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();

@@ -9,12 +9,16 @@ import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.j
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience, lootBeaconVisible, LOOT_RING_RANGE } from "./systems/science.js";
 import { isMobileView } from "./device.js";
-import { TERRAIN_SIZE, segsForMobile } from "./systems/collision.js";
+import { TERRAIN_SIZE, segsForMobile, meshHeightAt } from "./systems/collision.js";
 
 export { isMobileView };
 
 export function terrainSegments() {
   return segsForMobile(isMobileView());
+}
+
+function visualY(x, z) {
+  return meshHeightAt(x, z, terrainSegments(), heightAt);
 }
 const LOOT_FIT = {
   ice: 0.88,
@@ -150,7 +154,7 @@ export function spawnNode(world, type, x, z, extra = {}) {
   group.add(lootMesh(type, def.color, wreck));
   addLootMarker(group, { starter, wreck, color: def.beacon || 0xffe0a8 });
 
-  group.position.set(x, heightAt(x, z) + (wreck ? 0.02 : starter ? 0.05 : 0.02), z);
+  group.position.set(x, visualY(x, z) + (wreck ? 0.02 : starter ? 0.05 : 0.02), z);
   group.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
@@ -816,7 +820,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     if (node.taken) continue;
     const bob = node.needHammer ? 0 : 0.035 * Math.sin(performance.now() / 420 + node.mesh.position.x);
     const lift = node.needHammer ? 0.02 : node.starter ? 0.05 : 0.02;
-    node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + lift + bob;
+    node.mesh.position.y = visualY(node.mesh.position.x, node.mesh.position.z) + lift + bob;
   }
 
   for (const pad of world.pads || []) {
