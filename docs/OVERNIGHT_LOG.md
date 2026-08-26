@@ -249,6 +249,17 @@ Overnight timer still listed desk/night. Repo: cable is a diagnosis. Next P1 was
 - Harness: clear day reaches the solar-wreck wire; storm night does not. Distance is the splice cost
 - No rover. No Pointer Lock playtest
 
+### Cycle AA — range is the walk you actually do
+
+Overnight timer still listed desk/night. Repo: wire run exists but `WALK_MPS` was 3.05 while the body wishes 5.8.
+
+- One walk constant for body and the range line
+- Storm above 0.4 derates the estimate the way wind shoves you
+- Starve / freezing slowdowns are in the number, not only in the legs
+- Harness still: clear day reaches wire; storm night does not
+- No rover. No Pointer Lock playtest
+
+
 
 
 

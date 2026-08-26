@@ -61,8 +61,8 @@ export function trySleepSol(player, world, advance = advanceSolSim) {
   return "slept";
 }
 
-/** Match the walk speed baked into the old O₂ range line. */
-export const WALK_MPS = 3.05;
+/** Flat-ground wish speed — same number the body uses. */
+export const WALK_MPS = 5.8;
 
 export function suitDrainRates(world) {
   const storm = world.storm || 0;
@@ -73,13 +73,22 @@ export function suitDrainRates(world) {
   };
 }
 
+export function walkMetersPerSecond(player, world) {
+  const storm = world.storm || 0;
+  let walk = WALK_MPS;
+  if ((player.hunger ?? 100) < 18 || (player.thirst ?? 100) < 18) walk *= SURVIVAL.starveSlow;
+  if ((player.warmth ?? 100) < 12) walk *= 0.7;
+  if (storm > 0.4) walk *= Math.max(0.45, 1 - (storm - 0.4) * 0.5);
+  return walk;
+}
+
 /** Round-trip metres you can survive on current O₂ and warmth. */
 export function estimateRangeM(player, world) {
   const rates = suitDrainRates(world);
   const o2Seconds = (player.oxygen ?? 0) / Math.max(0.08, rates.o2);
   const warmthSeconds = (player.warmth ?? 0) / Math.max(0.08, rates.warmth);
   const seconds = Math.min(o2Seconds, warmthSeconds);
-  return (seconds * WALK_MPS) / 2;
+  return (seconds * walkMetersPerSecond(player, world)) / 2;
 }
 
 export function roundTripM(from, to) {

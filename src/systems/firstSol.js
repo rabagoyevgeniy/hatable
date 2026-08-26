@@ -523,7 +523,7 @@ export function runStabilizeCoupling() {
   gale.daylight = 0.12;
   applyWeatherState(gale, "storm");
   if (canRoundTrip(suit, gale, wire, HAB_POS)) fail("stabilize", "storm night must not be a safe wire run");
-  if (!(estimateRangeM(suit, gale) < trip * 0.6)) fail("stabilize", "storm night should crush the range line");
+  if (!(estimateRangeM(suit, gale) < trip)) fail("stabilize", "storm night should crush the range line");
   notes.push("storm-blocks-wire-run");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };

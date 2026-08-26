@@ -448,6 +448,7 @@ must(
     estimateRangeM({ oxygen: 100, warmth: 70 }, { habSealed: true, daylight: 0.12, storm: 0.78 }),
   "storm night cuts suit range vs a clear day"
 );
+must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("WALK_MPS"), "body speed and range line share one walk constant");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

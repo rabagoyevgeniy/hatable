@@ -6,7 +6,7 @@ import { footstep } from "./audio.js";
 import { advanceSol, isMobileView } from "./world.js";
 import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
-import { canEatPotato, trySleepSol, estimateRangeM } from "./systems/survival.js";
+import { canEatPotato, trySleepSol, estimateRangeM, WALK_MPS } from "./systems/survival.js";
 import { count, totalItems, addItem, takeItems, canAfford, transfer } from "./systems/inventory.js";
 
 export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer, estimateRangeM };
@@ -225,7 +225,7 @@ export function updatePlayer(player, dt, input, world) {
   const n = normalAt(player.root.position.x, player.root.position.z);
   const slope = 1 - n[1];
   const speed =
-    5.8 *
+    WALK_MPS *
     (1 - slope * 1.1) *
     (player.hunger < 18 || player.thirst < 18 ? SURVIVAL.starveSlow : 1) *
     (player.warmth < 12 ? 0.7 : 1);
