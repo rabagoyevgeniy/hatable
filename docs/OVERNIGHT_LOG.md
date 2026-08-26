@@ -404,6 +404,13 @@ Overnight timer still listed desk/night. Repo: desk sip packs the walk. Reconnec
 - Sleeping a clear noon finishes the listen and names EARTH on the desk. Placing the radio does not complete «Hello, Earth»
 - No rover. No Pointer Lock playtest
 
+### Cycle AU — MAV packing wants cargo
+
+Overnight timer still listed desk/night. Repo: journal waits for Earth. Escape still needs water + potato, but the desk treated range as the win.
+
+- After Earth, the MAV line is NO CARGO until pockets hold water and a potato. Storm night still refuses the walk. No rover
+- No Pointer Lock playtest
+
 
 
 

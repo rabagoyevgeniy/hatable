@@ -926,5 +926,18 @@ export function runStabilizeCoupling() {
   }
   notes.push("journal-waits-for-earth");
 
+  const earthPack = packingLines(suit, { ...noon, contacted: true }, "en");
+  if (!earthPack.some((l) => l.includes("MAV") && l.includes("NO CARGO"))) {
+    fail("stabilize", "after Earth the MAV walk needs water and a potato");
+  }
+  const loaded = { ...suit, inv: { water: 1, potato: 1 } };
+  if (!packingLines(loaded, { ...noon, contacted: true }, "en").some((l) => l.includes("MAV") && l.includes("IN RANGE"))) {
+    fail("stabilize", "cargo plus a clear day should pack the MAV");
+  }
+  if (packingLines(loaded, gale, "en").some((l) => l.includes("MAV") && l.includes("IN RANGE"))) {
+    fail("stabilize", "cargo does not make a storm-night MAV walk safe");
+  }
+  notes.push("mav-pack-needs-cargo");
+
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

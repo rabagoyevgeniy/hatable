@@ -568,6 +568,16 @@ must(ui.includes("packingLines"), "Hab console shows a packing list, not a new H
     packingLines(walker, camp, "en").some((l) => l.includes("PATHFINDER") && l.includes("IN RANGE")),
     "desk sips put Pathfinder back in range"
   );
+  must(
+    packingLines(suit, { ...noon, contacted: true }, "en").some((l) => l.includes("MAV") && l.includes("NO CARGO")),
+    "after Earth the MAV line wants cargo, not only range"
+  );
+  must(
+    packingLines({ ...suit, inv: { water: 1, potato: 1 } }, { ...noon, contacted: true }, "en").some(
+      (l) => l.includes("MAV") && l.includes("IN RANGE")
+    ),
+    "water and a potato pack the MAV on a clear day"
+  );
 }
 must(i18n.includes("radioListening"), "radio listening toast is translated");
 must(i18n.includes("earthHeard"), "Earth heard toast is translated");

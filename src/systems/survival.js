@@ -126,7 +126,12 @@ export function packingLines(player, world, lang = "en") {
     const ok = range + 0.01 >= trip;
     const km = trip < 100 ? "<0.1" : (trip / 1000).toFixed(1);
     const name = ru ? d.ru : d.en;
-    const flag = ok ? (ru ? "ДОСЯГАЕМ" : "IN RANGE") : ru ? "ДАЛЕКО" : "OUT OF RANGE";
+    let flag = ok ? (ru ? "ДОСЯГАЕМ" : "IN RANGE") : ru ? "ДАЛЕКО" : "OUT OF RANGE";
+    if (ok && d.id === "mav" && world.contacted) {
+      const water = player.inv?.water || 0;
+      const potato = player.inv?.potato || 0;
+      if (water < 1 || potato < 1) flag = ru ? "НЕТ ГРУЗА" : "NO CARGO";
+    }
     out.push(`${name}  ${km} km  ${flag}`);
   }
   return out;
