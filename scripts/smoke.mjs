@@ -288,6 +288,12 @@ must(still.water === waterAtFail, "failed pump makes no water");
 must(!stillCanRun(still, gridWorld), "faulted still is offline");
 repairStillPump(still);
 must(stillCanRun(still, gridWorld), "repaired pump runs again");
+must(!stillCanRun({ type: "still", fuel: 28, fault: null }, { hab: { gridOn: false } }), "dead grid takes the still offline");
+{
+  const p = { thirst: 20 };
+  must(sipHabitatTank({ hab: { waterTank: 2.2 } }, p).ok, "leftover tank sips when the grid is dead");
+  must(p.thirst > 40, "dead-grid sip still wets the mouth");
+}
 
 const ration = createHabitat();
 must(ration.waterTank < 3, "Hab tank is leftover sips, not a still");

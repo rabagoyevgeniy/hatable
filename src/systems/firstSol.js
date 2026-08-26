@@ -421,6 +421,19 @@ export function runStabilizeCoupling() {
   }
   notes.push("grid-death-freezes-crop");
 
+  const blackout = createHeadlessWorld();
+  blackout.habSealed = true;
+  blackout.hab.gridOn = false;
+  blackout.hab.waterTank = 2.2;
+  const deadStill = placeStationSim(blackout, "still", -7.5, 12.6);
+  deadStill.fuel = 28;
+  if (stillCanRun(deadStill, blackout)) fail("stabilize", "dead grid must take the still offline");
+  const sipper = createHeadlessPlayer();
+  sipper.thirst = 20;
+  if (!sipHabitatTank(blackout, sipper).ok) fail("stabilize", "leftover tank must still sip when the grid is dead");
+  if (!(sipper.thirst > 40)) fail("stabilize", "dead-grid sip should still wet the mouth");
+  notes.push("dead-grid-tank-still-sips");
+
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {
     fail("stabilize", "dry soil should grow slower than watered");

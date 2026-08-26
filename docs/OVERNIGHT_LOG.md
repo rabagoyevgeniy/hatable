@@ -446,6 +446,13 @@ Overnight timer: hunt couplings, no new HUD. Desk drink packs thirst for Pathfin
 - Hydrated + harvested without `inv.water` stays NO CARGO. No rover
 - No Pointer Lock playtest
 
+### Cycle BA — dead grid kills the still, not the leftover tank
+
+Overnight: hunt couplings, no new HUD. Storm → battery → grid death already froze crops; the still went with it, but the tank sip did not.
+
+- Fueled still is offline without `gridOn`. Desk leftover sips still wet the mouth. No rover
+- No Pointer Lock playtest
+
 
 
 
