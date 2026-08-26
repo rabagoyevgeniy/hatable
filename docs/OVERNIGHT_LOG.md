@@ -151,3 +151,9 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 - Ice ~3.3 m from the pad still gathers (drip range is tight)
 - One ice ≈ one flask + extra sips in the Hab tank (smoke). Toast after fuel names the tank
 - Pump still survives a single ice; two ices approach the pump fail clock
+
+### Cycle Q — still pad readable from the hatch
+
+- Playtest with hammer: amber floor ring vanished into Mars dirt; mobile hid the plate
+- Empty pads now have a cream ring, a standing «ДИСТИЛЛЯТОР» sign, a pole beacon and a point light (still is hottest)
+- Scan names empty amber rings. Taken pads dim and drop the beacon

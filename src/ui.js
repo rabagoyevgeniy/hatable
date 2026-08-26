@@ -526,6 +526,17 @@ function updateScanLabels(player, world, camera, scanning) {
         title: lang === "ru" ? "ШКАФ" : "LOCKER",
         loot: true,
       });
+    } else if (hit?.kind === "build-still" || hit?.kind === "still-hint") {
+      const pad = YARD_PADS.find((p) => p.station === "still");
+      if (pad) {
+        targets.push({
+          x: pad.x,
+          y: 1.9,
+          z: pad.z,
+          title: pad.label[lang] || pad.label.en,
+          loot: true,
+        });
+      }
     } else if (hit?.station) {
       targets.push({
         x: hit.station.x,
@@ -584,6 +595,20 @@ function updateScanLabels(player, world, camera, scanning) {
             : "";
       targets.push({ x: st.x, y: st.mesh.position.y + 2.2, z: st.z, title, sub, loot: true });
     }
+    for (const pad of world.pads || YARD_PADS) {
+      const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
+      if (occupied) continue;
+      const d = Math.hypot(p.x - pad.x, p.z - pad.z);
+      if (d > lootRange && !scanning) continue;
+      targets.push({
+        x: pad.x,
+        y: 1.85,
+        z: pad.z,
+        title: pad.label[lang] || pad.label.en,
+        sub: lang === "ru" ? "янтарное кольцо" : "amber ring",
+        loot: true,
+      });
+    }
     const lockerD = Math.hypot(p.x - world.locker.x, p.z - world.locker.z);
     if (lockerD < (mobile ? 10 : 18) || scanning) {
       targets.push({
@@ -622,20 +647,6 @@ function updateScanLabels(player, world, camera, scanning) {
         sub: world.hab ? `P ${(world.hab.pressure * 100).toFixed(0)}%` : "",
         loot: true,
       });
-    }
-    if (player.placing) {
-      for (const pad of YARD_PADS) {
-        const occupied = world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
-        if (occupied) continue;
-        targets.push({
-          x: pad.x,
-          y: 1.8,
-          z: pad.z,
-          title: pad.label[lang] || pad.label.en,
-          sub: "",
-          loot: true,
-        });
-      }
     }
   }
 

@@ -12,7 +12,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Roof array condition + cell replacement with salvaged solar
 - Sleep advances Sol and ticks habitat/weather/crops
 - Versioned localStorage save: Continue / New Game / autosave
-- Still (ice/hydrazine → water **if grid is live**; E on the amber pad with mats, or craft-then-place). Pad prompt is translated; empty ring names the recipe like the leak; dripping still names the tank/flask instead of leftover scrap
+- Still (ice/hydrazine → water **if grid is live**; E on the amber pad with mats, or craft-then-place). Pad is a standing sign + beacon, not a camouflaged floor ring. Drip prompt names tank/flask.
 - Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest (watering is not a click)
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)

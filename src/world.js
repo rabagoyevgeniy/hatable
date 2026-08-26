@@ -89,22 +89,7 @@ export function createWorld(scene) {
   const ghost = new THREE.Group();
   scene.add(ghost);
 
-  const pads = YARD_PADS.map((p) => {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(1.15, 1.42, 28),
-      new THREE.MeshBasicMaterial({ color: 0xffb15a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.set(p.x, heightAt(p.x, p.z) + 0.07, p.z);
-    scene.add(ring);
-    if (!mobile) {
-      const plate = makePlate(p.label.ru, 1.6, 0.28);
-      plate.position.set(p.x, heightAt(p.x, p.z) + 0.04, p.z + 0.02);
-      plate.rotation.x = -Math.PI / 2;
-      scene.add(plate);
-    }
-    return { ...p, ring, taken: false };
-  });
+  const pads = YARD_PADS.map((p) => dressYardPad(scene, p));
 
   const outposts = OUTPOSTS.map((data) => {
     const group = buildOutpost(data);
@@ -381,6 +366,46 @@ function makePlate(text, w, h) {
   );
 }
 
+/** Amber yard rings must read in first person on Mars dirt — not a floor decal, not desktop-only. */
+function dressYardPad(scene, p) {
+  const y = heightAt(p.x, p.z);
+  const hot = p.station === "still";
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(hot ? 1.05 : 1.15, hot ? 1.52 : 1.42, 28),
+    new THREE.MeshBasicMaterial({
+      color: hot ? 0xfff1c2 : 0xffb15a,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: hot ? 0.92 : 0.7,
+    })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(p.x, y + 0.1, p.z);
+  ring.name = "padRing";
+  scene.add(ring);
+
+  const beacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(hot ? 0.055 : 0.04, hot ? 0.055 : 0.04, hot ? 2.35 : 1.7, 8),
+    new THREE.MeshBasicMaterial({ color: hot ? 0xffe27a : 0xffb15a })
+  );
+  beacon.position.set(p.x, y + (hot ? 1.22 : 0.9), p.z);
+  beacon.name = "padBeacon";
+  scene.add(beacon);
+
+  const light = new THREE.PointLight(hot ? 0xffe7a0 : 0xffb15a, hot ? 1.45 : 0.7, hot ? 16 : 10);
+  light.position.set(p.x, y + (hot ? 1.55 : 1.2), p.z);
+  light.name = "padLight";
+  scene.add(light);
+
+  const sign = makePlate(p.label.ru, hot ? 1.7 : 1.35, hot ? 0.34 : 0.28);
+  sign.position.set(p.x, y + (hot ? 1.55 : 1.25), p.z);
+  sign.rotation.y = Math.atan2(-p.x, 12 - p.z);
+  sign.name = "padSign";
+  scene.add(sign);
+
+  return { ...p, ring, beacon, light, sign, taken: false };
+}
+
 export function padTaken(world, pad) {
   return world.stations.some((s) => s.type === pad.station && Math.hypot(s.x - pad.x, s.z - pad.z) < 2.2);
 }
@@ -501,7 +526,10 @@ export function placeStation(world, station, x, z) {
   const pad = (world.pads || []).find((p) => p.station === station && Math.hypot(p.x - x, p.z - z) < 2.2);
   if (pad) {
     pad.taken = true;
-    if (pad.ring) pad.ring.material.opacity = 0.18;
+    if (pad.ring) pad.ring.material.opacity = 0.16;
+    if (pad.beacon) pad.beacon.visible = false;
+    if (pad.light) pad.light.visible = false;
+    if (pad.sign) pad.sign.visible = false;
   }
   return st;
 }
@@ -738,6 +766,14 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     const bob = node.needHammer ? 0 : 0.035 * Math.sin(performance.now() / 420 + node.mesh.position.x);
     const lift = node.needHammer ? 0.02 : node.starter ? 0.05 : 0.02;
     node.mesh.position.y = heightAt(node.mesh.position.x, node.mesh.position.z) + lift + bob;
+  }
+
+  for (const pad of world.pads || []) {
+    if (pad.taken) continue;
+    const hot = pad.station === "still";
+    const wave = Math.sin(performance.now() / (hot ? 260 : 420));
+    if (pad.ring?.material) pad.ring.material.opacity = (hot ? 0.78 : 0.55) + 0.2 * wave;
+    if (pad.light) pad.light.intensity = (hot ? 1.3 : 0.65) + 0.4 * wave;
   }
 
   const hab = world.outposts.find((o) => o.kind === "hab");
