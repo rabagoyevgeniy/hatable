@@ -453,6 +453,13 @@ Overnight: hunt couplings, no new HUD. Storm → battery → grid death already 
 - Fueled still is offline without `gridOn`. Desk leftover sips still wet the mouth. No rover
 - No Pointer Lock playtest
 
+### Cycle BB — dead grid does not steal a full flask
+
+Overnight: hunt couplings, no new HUD. Tank sips survived grid death; water already in the still flask is physical too.
+
+- E on a full flask is still-take even when `gridOn` is false. Empty fueled still waits. No rover
+- No Pointer Lock playtest
+
 
 
 

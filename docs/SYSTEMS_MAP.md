@@ -37,7 +37,7 @@ HABITAT (world.hab)
   potatoes
     → eat one; last tuber is seed until harvest
     → eating dries thirst; tank sip at console, then ice → still
-    → dead grid takes the still offline; leftover tank sips still work
+    → dead grid takes the still offline; leftover tank sips still work; a full flask is still collectable
   plot
     → grow = light × temp × moisture
     → sleep uses a day of light (not wake-up night)

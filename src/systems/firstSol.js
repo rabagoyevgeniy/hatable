@@ -433,6 +433,13 @@ export function runStabilizeCoupling() {
   if (!sipHabitatTank(blackout, sipper).ok) fail("stabilize", "leftover tank must still sip when the grid is dead");
   if (!(sipper.thirst > 40)) fail("stabilize", "dead-grid sip should still wet the mouth");
   notes.push("dead-grid-tank-still-sips");
+  if (pickStillMachineAction({ d: 0.4, water: 2, fuel: 28, gridOn: false }).kind !== "still-take") {
+    fail("stabilize", "a full flask is physical — dead grid must not steal it");
+  }
+  if (pickStillMachineAction({ d: 0.4, water: 0, fuel: 28, gridOn: false }).kind !== "still-wait") {
+    fail("stabilize", "fueled still without grid is a wait, not a drip");
+  }
+  notes.push("dead-grid-flask-still-takes");
 
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {

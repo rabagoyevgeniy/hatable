@@ -430,6 +430,14 @@ must(
   pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: true }).kind === "still-take",
   "a full flask is collect, not drip"
 );
+must(
+  pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: false }).kind === "still-take",
+  "a full flask is physical — dead grid does not steal it"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 10, gridOn: false }).kind === "still-wait",
+  "fueled still without grid is a wait, not a drip"
+);
 must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("stillPadMarker"), "still pad is a stake marker, not a floor twig");
 must(readFileSync(resolve(root, "src/world.js"), "utf8").includes("fog: false"), "pad markers ignore Mars fog so they stay readable");
 
