@@ -113,6 +113,7 @@ const strings = {
     needPatchMats: "Need 2 canvas + 1 tape (locker) at the leak",
     leakHint: "LEAK · 2 canvas + tape from locker",
     patched: "HULL SEALED — pressure holding",
+    patchedHome: "HULL SEALED — RIGHT: console (heater). Deeper left: bunk.",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -227,6 +228,7 @@ const strings = {
     needPatchMats: "Нужны 2 брезента и скотч из шкафа — у дыры",
     leakHint: "УТЕЧКА · 2 брезента + скотч из шкафа",
     patched: "КОРПУС ЗАДЕЛАН — давление держится",
+    patchedHome: "КОРПУС ЗАДЕЛАН — справа консоль (печь). Глубже слева — койка.",
     consoleDeeper: "глубже — голубой экран",
   },
 };

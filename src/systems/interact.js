@@ -1,6 +1,6 @@
 /** Pure interior action picking — no Three.js. */
 
-export const DESK_RANGE = 3.6;
+export const DESK_RANGE = 3.9;
 export const BUNK_RANGE = 3.0;
 export const LOCKER_RANGE = 2.8;
 export const GATHER_STEAL = 2.15;

@@ -104,3 +104,9 @@ Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
 - Watering a plot only restores moisture; it no longer adds 10% grow
 - Realtime growth is a trickle (a standing Sol is not a harvest); four watered sleeps still finish
 - Ripe plot shows three tubers and prompt «УРОЖАЙ · 3 КАРТОФЕЛИНЫ»; first pick is a named toast and saves
+
+### Cycle K — seal hands you the console, then the bunk
+
+- After patching the left wall, E is no longer a dead zone: desk range covers the leak so the console opens
+- Toast: справа консоль (печь), глубже слева койка
+- Locker at the hatch still wins; leaking aisle still prefers the tear

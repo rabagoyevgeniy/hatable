@@ -306,7 +306,7 @@ async function bootGame() {
       player.placing = null;
       setGhost(world, null);
       deliverTone();
-      toast(`${t("placed")} · ${loc(rec.title)}`);
+      toast(rec.station === "seal" ? t("patchedHome") : `${t("placed")} · ${loc(rec.title)}`);
       maybeGoal();
       persist();
       return;
@@ -355,7 +355,7 @@ async function bootGame() {
       player.placing = null;
       setGhost(world, null);
       deliverTone();
-      toast(t("patched"));
+      toast(t("patchedHome"));
       maybeGoal();
       persist();
       return;

@@ -194,6 +194,19 @@ must(
   }).kind === "locker",
   "airlock locker still wins outside leak range"
 );
+must(
+  pickInteriorAction({
+    inside: true,
+    sealed: true,
+    leakD: 0,
+    deskD: dist(HAB_LEAK.x, HAB_LEAK.z, HAB_DESK.x, HAB_DESK.z),
+    bunkD: dist(HAB_LEAK.x, HAB_LEAK.z, HAB_BUNK.x, HAB_BUNK.z),
+    lockerD: 9,
+  }).kind === "console",
+  "after sealing the left wall, E still opens the console not a dead zone"
+);
+
+must(game.includes("patchedHome"), "seal toast points to console and bunk");
 
 const leakingNight = {
   clock: 0.78,
