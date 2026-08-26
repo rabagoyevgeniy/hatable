@@ -421,6 +421,31 @@ export function runStabilizeCoupling() {
   }
   notes.push("grid-death-freezes-crop");
 
+  const shedHeat = createHeadlessWorld();
+  shedHeat.habSealed = true;
+  shedHeat.hab.gridOn = true;
+  shedHeat.hab.battery = 1;
+  shedHeat.hab.heaterOn = true;
+  shedHeat.hab.insideC = 18;
+  shedHeat.clock = 0.25;
+  tickTime(shedHeat, 0);
+  applyWeatherState(shedHeat, "clear");
+  const fHeat = cropSleepFactors(shedHeat);
+  const heatJump = CROP_SLEEP * fHeat.light * fHeat.temp * 1;
+  shedHeat.hab.heaterOn = false;
+  for (let i = 0; i < 50; i++) tickHabitat(shedHeat, 1);
+  if (!shedHeat.hab.gridOn) fail("stabilize", "heater-off at noon should keep a live grid");
+  if (!(shedHeat.hab.insideC < 12)) fail("stabilize", "heater-off should cool the Hab");
+  const fCool = cropSleepFactors(shedHeat);
+  const coolJump = CROP_SLEEP * fCool.light * fCool.temp * 1;
+  if (!(coolJump < heatJump * 0.98)) {
+    fail("stabilize", `heater-off should slow the greenhouse (${coolJump} vs ${heatJump})`);
+  }
+  if (!(coolJump > deadJump)) {
+    fail("stabilize", `a live-grid cool Hab should still beat Mars-outside (${coolJump} vs ${deadJump})`);
+  }
+  notes.push("heater-off-cools-greenhouse");
+
   const blackout = createHeadlessWorld();
   blackout.habSealed = true;
   blackout.hab.gridOn = false;

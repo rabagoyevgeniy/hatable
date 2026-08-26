@@ -72,6 +72,7 @@ export function cropFactors(world) {
 /**
  * A slept Sol is a day of growth, not the night you wake into.
  * Storm cuts light. Dead grid / unsealed hull uses Mars-outside cold.
+ * Heater-off cools inside °C on a live grid — the plot feels that, not a buff.
  */
 export function cropSleepFactors(world) {
   return cropFactors({ ...world, daylight: 0.85 });

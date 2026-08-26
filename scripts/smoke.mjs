@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad, cropSleepFactors, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather, applyWeatherState } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
@@ -333,6 +333,20 @@ must(!heaterDrawsLoad({ heaterOn: false, insideC: 4 }, 1), "heater off draws not
   tickTime(shedDawn, 0);
   for (let i = 0; i < 220; i++) tickHabitat(shedDawn, 1);
   must(shedDawn.hab.gridOn, "shedding the heater lets noon recover a dead battery");
+}
+{
+  const warmHouse = { hab: createHabitat(), habSealed: true, daylight: 0.85, storm: 0.05, clock: 0.25, stations: [] };
+  warmHouse.hab.gridOn = true;
+  warmHouse.hab.battery = 1;
+  warmHouse.hab.heaterOn = true;
+  warmHouse.hab.insideC = 18;
+  tickTime(warmHouse, 0);
+  const heatT = cropSleepFactors(warmHouse).temp;
+  warmHouse.hab.heaterOn = false;
+  for (let i = 0; i < 50; i++) tickHabitat(warmHouse, 1);
+  must(!!warmHouse.hab.gridOn, "heater-off noon keeps a live grid");
+  must(warmHouse.hab.insideC < 12, "heater-off cools the Hab");
+  must(cropSleepFactors(warmHouse).temp < heatT * 0.98, "heater-off cools the greenhouse");
 }
 {
   const liveBunk = { hunger: 64, thirst: 62, oxygen: 40, warmth: 20 };

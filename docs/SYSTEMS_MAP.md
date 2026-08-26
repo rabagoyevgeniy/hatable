@@ -42,7 +42,7 @@ HABITAT (world.hab)
     → grow = light × temp × moisture
     → sleep uses a day of light (not wake-up night)
     → temp = Hab inside °C if sealed + gridOn, else outside
-    → storm cuts light; dead grid freezes the greenhouse
+    → storm cuts light; dead grid freezes the greenhouse; heater-off on a live grid cools inside °C and the plot feels it
 
 PLAYER
   suit O₂, hunger, thirst, warmth

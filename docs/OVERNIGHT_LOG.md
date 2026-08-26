@@ -502,6 +502,13 @@ Overnight: not another grid or locker lock. Storms already buried Earth; they di
 - Half listen + storm + clear finishes without starting over. `listenS` holds. No new HUD. No rover
 - No Pointer Lock playtest
 
+### Cycle BI — heater-off cools the greenhouse
+
+Overnight: not another dead-grid / locker / S-band lock. First Sol already traded heater for night battery. The plot uses Hab inside °C while sealed ∩ live grid — that air cools when the stove is off.
+
+- Live grid + heater-off slows sleep growth vs a warm house, and still beats Mars-outside. No new HUD. No rover
+- No Pointer Lock playtest
+
 
 
 

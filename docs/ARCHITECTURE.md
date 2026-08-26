@@ -8,7 +8,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `world.js` | scene, terrain, outposts, stations, clock visuals |
 | `player.js` | body, suit vitals, O₂ range; re-exports pocket helpers |
 | `systems/inventory.js` | count / add / take / afford (no Three) |
-| `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep Sol, crop factors; still load only while `gridOn`; dead-grid pressure bleed vs suit refill; cold heater load can hold a noon blackout |
+| `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep Sol, crop factors; still load only while `gridOn`; dead-grid pressure bleed vs suit refill; cold heater load can hold a noon blackout; heater-off cools greenhouse inside °C |
 | `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState`; storm array/cable damage |
 | `systems/science.js` | scan discoveries; ice/soil/wire/comms scans unlock tools; desk lab lines; overlay names gated to ident reach (wrecks and loot); S-band listen after radio (storms pause, do not rewind) |
 | `systems/machines.js` | station records, still pump, headless `placeStationSim` |
