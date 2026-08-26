@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
-import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill, switchTone } from "./audio.js";
+import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStillSpatial, switchTone } from "./audio.js";
 import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { needsLandscape, syncOrientationClass } from "./device.js";
@@ -93,7 +93,7 @@ async function bootGame() {
   if (mobile) renderer.useLegacyLights = true;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(mobile ? 46 : 52, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
+  const camera = new THREE.PerspectiveCamera(mobile ? 42 : 48, innerWidth / innerHeight, 0.12, mobile ? 720 : 900);
   camera.position.set(8.5, mobile ? 9.2 : 6.8, 24);
 
   let world;
@@ -107,6 +107,7 @@ async function bootGame() {
   let lookX = 0;
   let last = performance.now();
   const touchMove = { x: 0, y: 0 };
+  const touchLook = { x: 0, y: 0 };
   const coarse = isMobileView();
   let touchScan = false;
   let saveAcc = 0;
@@ -235,8 +236,8 @@ async function bootGame() {
 
   document.addEventListener("mousemove", (e) => {
     if (document.pointerLockElement !== canvas || !playing) return;
-    player.yaw -= e.movementX * 0.0022;
-    player.pitch = THREE.MathUtils.clamp(player.pitch + e.movementY * 0.0016, -0.35, 0.85);
+    player.camYaw -= e.movementX * 0.0022;
+    player.pitch = THREE.MathUtils.clamp(player.pitch + e.movementY * 0.0016, -0.28, 0.72);
     lookX = e.movementX;
   });
 
@@ -488,6 +489,10 @@ async function bootGame() {
       toast(t("stillDripHint"));
       return;
     }
+    if (hit.kind === "still-need-ice") {
+      toast(t("stillNeedIceHint"));
+      return;
+    }
     if (hit.kind === "still-scan") {
       toast(t("needFuelScan"));
       return;
@@ -585,8 +590,8 @@ async function bootGame() {
     const id = player.heldId || pocketSlots(player)[0]?.[0];
     if (!id || count(player, id) < 1) return;
     player.inv[id] -= 1;
-    const x = player.root.position.x - Math.sin(player.yaw) * 1.7;
-    const z = player.root.position.z - Math.cos(player.yaw) * 1.7;
+    const x = player.root.position.x - Math.sin(player.facingYaw ?? player.yaw) * 1.7;
+    const z = player.root.position.z - Math.cos(player.facingYaw ?? player.yaw) * 1.7;
     spawnNode(world, id, x, z);
     pickupTone(id);
     toast(t("dropped"));
@@ -595,88 +600,76 @@ async function bootGame() {
 
   function inputState() {
     return {
-      forward: keys.has("KeyW") || keys.has("ArrowUp") || touchMove.y < -0.28,
-      back: keys.has("KeyS") || keys.has("ArrowDown") || touchMove.y > 0.28,
-      left: keys.has("KeyA") || keys.has("ArrowLeft") || touchMove.x < -0.28,
-      right: keys.has("KeyD") || keys.has("ArrowRight") || touchMove.x > 0.28,
+      forward: keys.has("KeyW") || keys.has("ArrowUp"),
+      back: keys.has("KeyS") || keys.has("ArrowDown"),
+      left: keys.has("KeyA") || keys.has("ArrowLeft"),
+      right: keys.has("KeyD") || keys.has("ArrowRight"),
+      moveX: touchMove.x,
+      moveY: touchMove.y,
+      camYaw: player.camYaw,
       lookX,
     };
   }
 
+  function bindStick(el, knob, store, onEnd) {
+    if (!el) return;
+    let id = null;
+    const dead = 0.14;
+    function setFromTouch(t) {
+      const r = el.getBoundingClientRect();
+      const max = r.width * 0.42;
+      let dx = t.clientX - (r.left + r.width / 2);
+      let dy = t.clientY - (r.top + r.height / 2);
+      const len = Math.hypot(dx, dy) || 1;
+      const s = Math.min(1, len / max);
+      dx = (dx / len) * s;
+      dy = (dy / len) * s;
+      const mag = Math.hypot(dx, dy);
+      if (mag < dead) {
+        store.x = 0;
+        store.y = 0;
+      } else {
+        const adj = Math.min(1, (mag - dead) / (1 - dead));
+        store.x = (dx / mag) * adj;
+        store.y = (dy / mag) * adj;
+      }
+      if (knob) knob.style.transform = `translate(${dx * max}px, ${dy * max}px)`;
+    }
+    function reset() {
+      id = null;
+      store.x = 0;
+      store.y = 0;
+      if (knob) knob.style.transform = "translate(0, 0)";
+      onEnd?.();
+    }
+    el.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.setPointerCapture(e.pointerId);
+      id = e.pointerId;
+      setFromTouch(e);
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== id) return;
+      setFromTouch(e);
+    });
+    el.addEventListener("pointerup", (e) => {
+      if (e.pointerId !== id) return;
+      reset();
+    });
+    el.addEventListener("pointercancel", (e) => {
+      if (e.pointerId !== id) return;
+      reset();
+    });
+  }
+
   function bindTouch() {
-    const joy = document.getElementById("joy");
-    const knob = document.getElementById("joy-knob");
+    bindStick(document.getElementById("joy"), document.getElementById("joy-knob"), touchMove);
+    bindStick(document.getElementById("look-joy"), document.getElementById("look-knob"), touchLook);
     const use = document.getElementById("btn-use");
     const craftBtn = document.getElementById("btn-craft-touch");
     const invBtn = document.getElementById("btn-inv-touch");
     const scanBtn = document.getElementById("btn-scan-touch");
-    let joyId = null;
-    let lookId = null;
-    let lookLast = { x: 0, y: 0 };
-
-    function setJoy(dx, dy) {
-      const max = 46;
-      const len = Math.hypot(dx, dy) || 1;
-      const s = Math.min(1, len / max);
-      touchMove.x = (dx / len) * s;
-      touchMove.y = (dy / len) * s;
-      if (knob) knob.style.transform = `translate(${touchMove.x * max}px, ${touchMove.y * max}px)`;
-    }
-
-    function resetJoy() {
-      joyId = null;
-      touchMove.x = 0;
-      touchMove.y = 0;
-      if (knob) knob.style.transform = "translate(0, 0)";
-    }
-
-    joy?.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        const t = e.changedTouches[0];
-        joyId = t.identifier;
-        const r = joy.getBoundingClientRect();
-        setJoy(t.clientX - (r.left + r.width / 2), t.clientY - (r.top + r.height / 2));
-      },
-      { passive: false }
-    );
-    window.addEventListener(
-      "touchmove",
-      (e) => {
-        for (const t of e.changedTouches) {
-          if (t.identifier === joyId && joy) {
-            const r = joy.getBoundingClientRect();
-            setJoy(t.clientX - (r.left + r.width / 2), t.clientY - (r.top + r.height / 2));
-          }
-          if (t.identifier === lookId) {
-            player.yaw -= (t.clientX - lookLast.x) * 0.0048;
-            player.pitch = THREE.MathUtils.clamp(player.pitch + (t.clientY - lookLast.y) * 0.0034, -0.35, 0.85);
-            lookLast = { x: t.clientX, y: t.clientY };
-          }
-        }
-      },
-      { passive: true }
-    );
-    window.addEventListener("touchend", (e) => {
-      for (const t of e.changedTouches) {
-        if (t.identifier === joyId) resetJoy();
-        if (t.identifier === lookId) lookId = null;
-      }
-    });
-
-    canvas.addEventListener(
-      "touchstart",
-      (e) => {
-        if (!playing || menusOpen()) return;
-        const t = e.changedTouches[0];
-        if (t.target.closest?.("#touch-ui")) return;
-        lookId = t.identifier;
-        lookLast = { x: t.clientX, y: t.clientY };
-      },
-      { passive: true }
-    );
-
     use?.addEventListener("click", (e) => {
       e.preventDefault();
       if (playing && !menusOpen()) interact();
@@ -717,26 +710,44 @@ async function bootGame() {
     window.addEventListener("mouseup", () => holdScan(false));
   }
 
+  function applyLookStick(dt) {
+    const curve = (v) => Math.sign(v) * Math.pow(Math.abs(v), 1.35);
+    const ax = curve(touchLook.x) * 2.55;
+    const ay = curve(touchLook.y) * 1.65;
+    player.lookVelX = THREE.MathUtils.damp(player.lookVelX || 0, ax, 8.5, dt);
+    player.lookVelY = THREE.MathUtils.damp(player.lookVelY || 0, ay, 8.5, dt);
+    player.camYaw = (player.camYaw || 0) + player.lookVelX * dt;
+    player.pitch = THREE.MathUtils.clamp((player.pitch || 0) + player.lookVelY * dt, -0.22, 0.62);
+  }
+
   function placeCamera(dt) {
     const inside = isSheltered(player.root.position.x, player.root.position.z);
-    const dist = inside ? (mobile ? 4.15 : 3.85) : 9.2;
-    const height = (inside ? 1.62 : mobile ? 3.85 : 2.55) + player.pitch * (mobile ? 0.55 : 1.15);
-    const target = new THREE.Vector3(
-      player.root.position.x + Math.sin(player.yaw) * dist,
+    const camYaw = player.camYaw || 0;
+    const dist = inside ? 6.1 : 15.4;
+    const height = (inside ? 2.15 : 5.05) + player.pitch * (inside ? 1.4 : 3.4);
+    const desired = new THREE.Vector3(
+      player.root.position.x + Math.sin(camYaw) * dist,
       player.root.position.y + height,
-      player.root.position.z + Math.cos(player.yaw) * dist
+      player.root.position.z + Math.cos(camYaw) * dist
     );
-    camera.position.lerp(target, 1 - Math.pow(0.00025, dt));
+    camera.position.lerp(desired, 1 - Math.pow(0.012, dt));
     const segs = world.terrainSegments || 168;
-    const minY = meshHeightAt(camera.position.x, camera.position.z, segs, heightAt) + (mobile ? 2.15 : 1.55);
+    const minY = meshHeightAt(camera.position.x, camera.position.z, segs, heightAt) + (inside ? 1.35 : 1.85);
     if (camera.position.y < minY) camera.position.y = minY;
     if (!inside) {
-      const habDx = camera.position.x;
+      const habDx = camera.position.x - 0;
       const habDz = camera.position.z - 8;
       const habR = Math.hypot(habDx, habDz);
-      if (habR < 5.1 && camera.position.y < 4.2) {
-        camera.position.x = (habDx / (habR || 1)) * 5.1;
-        camera.position.z = 8 + (habDz / (habR || 1)) * 5.1;
+      if (habR < 8.2 && camera.position.y < 6.4) {
+        camera.position.x = (habDx / (habR || 1)) * 8.2;
+        camera.position.z = 8 + (habDz / (habR || 1)) * 8.2;
+      }
+      const labDx = camera.position.x + 12.35;
+      const labDz = camera.position.z - 8;
+      const labR = Math.hypot(labDx, labDz);
+      if (labR < 3.9 && camera.position.y < 4.6) {
+        camera.position.x = -12.35 + (labDx / (labR || 1)) * 3.9;
+        camera.position.z = 8 + (labDz / (labR || 1)) * 3.9;
       }
     }
     const lx = world.locker.x;
@@ -748,13 +759,8 @@ async function bootGame() {
       camera.position.x = lx + (ldx / (lr || 1)) * 1.7;
       camera.position.z = lz + (ldz / (lr || 1)) * 1.7;
     }
-    const lookAhead = mobile && !inside ? 0.9 : 0;
-    const lookY = player.root.position.y + (mobile ? 1.22 : 1.32);
-    camera.lookAt(
-      player.root.position.x - Math.sin(player.yaw) * lookAhead,
-      lookY,
-      player.root.position.z - Math.cos(player.yaw) * lookAhead
-    );
+    const lookY = player.root.position.y + (inside ? 1.28 : 1.18);
+    camera.lookAt(player.root.position.x, lookY, player.root.position.z);
   }
 
   function fitCanvas() {
@@ -762,7 +768,7 @@ async function bootGame() {
     const h = Math.round(window.visualViewport?.height || innerHeight);
     if (w < 8 || h < 8) return;
     syncOrientationClass();
-    camera.fov = isMobileView() ? (h > w ? 58 : 46) : 52;
+    camera.fov = isMobileView() ? (h > w ? 52 : 42) : 48;
     camera.aspect = w / h;
     camera.far = mobile ? 720 : 900;
     camera.updateProjectionMatrix();
@@ -789,6 +795,7 @@ async function bootGame() {
     }
 
     if (playing && !needsLandscape()) {
+      applyLookStick(dt);
       const result = updatePlayer(player, dt, inputState(), world);
       if (result.blackout) toast(t("warnO2"));
       if (result.inside && !player.enteredHab) {
@@ -819,10 +826,17 @@ async function bootGame() {
           maybeGoal();
         }
       }
-      tickStill(
-        dt,
-        world.stations.some((s) => stillCanRun(s, world))
-      );
+      {
+        const still = world.stations.find((s) => s.type === "still");
+        const running = !!(still && stillCanRun(still, world));
+        const dx = still ? still.x - camera.position.x : 0;
+        const dz = still ? still.z - camera.position.z : 1;
+        const dist = still ? Math.hypot(player.root.position.x - still.x, player.root.position.z - still.z) : 99;
+        const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        const toLen = Math.hypot(dx, dz) || 1;
+        const pan = running ? (dx / toLen) * camRight.x + (dz / toLen) * camRight.z : 0;
+        tickStillSpatial({ running, dist, pan });
+      }
       setAmbience({
         storm: world.storm,
         inside: result.inside,

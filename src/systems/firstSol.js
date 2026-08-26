@@ -4,7 +4,7 @@
  * Uses the live sim modules. No Three.js.
  */
 
-import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
+import { RECIPES, YARD_PADS, HAB_LEAK, HAB_DESK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./science.js";
@@ -87,12 +87,14 @@ export function runFirstSol() {
     if (!(world.hab.pressure < p0 - 0.005)) {
       fail("leak", `pressure did not fall (${p0} → ${world.hab.pressure})`);
     }
+    const aisleX = HAB_LEAK.x + 1.15;
+    const aisleZ = HAB_LEAK.z;
     const aisle = pickInteriorAction({
       inside: true,
       sealed: false,
       canPatch: false,
-      leakD: dist(0, 10.2, HAB_LEAK.x, HAB_LEAK.z),
-      deskD: dist(0, 10.2, 1.55, 9.2),
+      leakD: dist(aisleX, aisleZ, HAB_LEAK.x, HAB_LEAK.z),
+      deskD: dist(aisleX, aisleZ, HAB_DESK.x, HAB_DESK.z),
       lockerD: 9,
       bunkD: 9,
     });

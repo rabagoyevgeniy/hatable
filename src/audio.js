@@ -5,6 +5,8 @@ let humGain;
 let hissGain;
 let breathGain;
 let heaterGain;
+let stillGain;
+let stillPanner;
 let master;
 let dripTimer = 0;
 
@@ -105,6 +107,26 @@ export function startAudio() {
     hissGain.connect(master);
     hiss.start();
 
+    const stillFilter = ctx.createBiquadFilter();
+    stillFilter.type = "bandpass";
+    stillFilter.frequency.value = 420;
+    stillFilter.Q.value = 1.1;
+    stillGain = ctx.createGain();
+    stillGain.gain.value = 0;
+    stillPanner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const stillNoise = ctx.createBufferSource();
+    stillNoise.buffer = noiseBuffer;
+    stillNoise.loop = true;
+    stillNoise.connect(stillFilter);
+    stillFilter.connect(stillGain);
+    if (stillPanner) {
+      stillGain.connect(stillPanner);
+      stillPanner.connect(master);
+    } else {
+      stillGain.connect(master);
+    }
+    stillNoise.start();
+
     const breath = ctx.createOscillator();
     breath.type = "sine";
     breath.frequency.value = 9;
@@ -188,6 +210,17 @@ export function tickStill(dt, running) {
   if (dripTimer > 1.15) {
     dripTimer = 0;
     dripTone();
+  }
+}
+
+/** Spatial still pump: louder when close, panned by camera, silent when off. */
+export function tickStillSpatial({ running = false, dist = 99, pan = 0 } = {}) {
+  if (!stillGain) return;
+  const vol = running ? Math.max(0, 0.12 * Math.pow(Math.max(0, 1 - dist / 26), 1.6)) : 0;
+  swell(stillGain, vol, 0.12);
+  if (stillPanner) {
+    const p = Math.max(-0.85, Math.min(0.85, pan));
+    stillPanner.pan.setTargetAtTime(p, ctx.currentTime, 0.08);
   }
 }
 

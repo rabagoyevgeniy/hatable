@@ -9,17 +9,18 @@ export const OUTPOSTS = [
   { id: "mav", kind: "mav", x: 196, z: -158, name: { en: "Schiaparelli MAV", ru: "МАВ Скиапарелли" }, short: { en: "MAV", ru: "МАВ" } },
 ];
 
-export const SPAWN = { x: 1.2, z: 18.5 };
+export const SPAWN = { x: 1.5, z: 27.2 };
 
 /** Hab origin and interior interact points (world XZ). */
 export const HAB_POS = { x: 0, z: 8 };
-export const HAB_DESK = { x: 1.55, z: 9.2 };
-export const HAB_BUNK = { x: -1.55, z: 6.45 };
-export const HAB_ARRAY = { x: 0, z: 3.9 };
+export const HAB_DESK = { x: 3.55, z: 10.35 };
+export const HAB_BUNK = { x: -3.45, z: 4.15 };
+export const HAB_ARRAY = { x: 0, z: 2.2 };
 /** Torn canvas on the left wall just inside the hatch — world XZ. */
-export const HAB_LEAK = { x: -2.15, z: 9.45 };
+export const HAB_LEAK = { x: -4.55, z: 12.55 };
 /** Airlock mouth facing spawn — world XZ. */
-export const HAB_HATCH = { x: 0, z: 14.4 };
+export const HAB_HATCH = { x: 0, z: 19.45 };
+export const LOCKER_POS = { x: 4.15, z: 18.35 };
 
 export const ITEMS = {
   scrap: { color: 0xe8e2d4, beacon: 0xc5d4de, name: { en: "Scrap", ru: "Металлолом" } },
@@ -58,10 +59,10 @@ export const SURVIVAL = {
 };
 
 export const NODE_SPAWNS = [
-  { type: "scrap", x: 0.5, z: 16.2, starter: true },
-  { type: "scrap", x: 2.6, z: 15.6, starter: true },
-  { type: "rock", x: 1.4, z: 16.8, starter: true },
-  { type: "rock", x: -4.5, z: 20 },
+  { type: "scrap", x: 0.6, z: 24.6, starter: true },
+  { type: "scrap", x: 2.8, z: 24.1, starter: true },
+  { type: "rock", x: 1.5, z: 25.4, starter: true },
+  { type: "rock", x: -6.2, z: 24.5 },
   { type: "rock", x: 16, z: 22 },
   { type: "fabric", x: -8.2, z: 13.5 },
   { type: "scrap", x: -7.5, z: 12.6, starter: true },
@@ -100,10 +101,10 @@ export const NODE_SPAWNS = [
 ];
 
 export const YARD_PADS = [
-  { id: "still", station: "still", x: -6.4, z: 10.6, label: { en: "STILL PAD", ru: "ДИСТИЛЛЯТОР" } },
-  { id: "plot", station: "plot", x: -9.2, z: 5.4, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
-  { id: "plot2", station: "plot", x: -11.6, z: 9.4, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
-  { id: "solar", station: "solar", x: 7.6, z: 3.8, label: { en: "SOLAR PAD", ru: "ПАНЕЛИ" } },
+  { id: "still", station: "still", x: -11.8, z: 17.4, label: { en: "STILL PAD", ru: "ДИСТИЛЛЯТОР" } },
+  { id: "plot", station: "plot", x: -15.6, z: 3.2, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
+  { id: "plot2", station: "plot", x: -18.2, z: 7.4, label: { en: "PLOT PAD", ru: "ГРЯДКА" } },
+  { id: "solar", station: "solar", x: 13.6, z: 2.6, label: { en: "SOLAR PAD", ru: "ПАНЕЛИ" } },
 ];
 
 export const LOCKER_START = { potato: 2, tape: 1 };
@@ -167,10 +168,10 @@ export const RECIPES = [
 ];
 
 export const GOAL_DEST = {
-  gather: { x: 1.4, z: 16.4 },
+  gather: { x: 1.5, z: 24.8 },
   hammer: { x: 0, z: 8 },
-  seal: { x: -2.15, z: 9.45 },
-  water: { x: -6.4, z: 10.6 },
+  seal: { x: -4.55, z: 12.55 },
+  water: { x: -11.8, z: 17.4 },
   farm: { x: -18, z: 13 },
   power: { x: 48, z: 108 },
   contact: { x: -138, z: -92 },

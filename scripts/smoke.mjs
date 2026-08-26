@@ -4,7 +4,7 @@ import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habSta
 import { createWeather, tickWeather, applyWeatherState } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
-import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
+import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, LOCKER_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank, hasMavCargo, trySleepSol } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
@@ -21,7 +21,9 @@ function must(cond, msg) {
 const game = readFileSync(resolve(root, "src/game.js"), "utf8");
 must(game.includes("const result = trySleep(player, world)"), "sleep must call trySleep");
 must(game.includes("preloadRest()"), "far Meshy models load in background");
-must(game.includes("btn-scan-touch"), "phone scan button wired");
+must(game.includes("look-joy"), "right stick is wired");
+must(game.includes("applyLookStick"), "right stick orbits camera");
+must(game.includes("tickStillSpatial"), "still hiss is spatial");
 must(game.includes("queuedStart"), "WAKE UP during load must queue");
 must(game.includes("applySave"), "continue applies save");
 must(game.includes("still-repair"), "pump repair interaction");
@@ -140,7 +142,7 @@ must(habStatusLine(worldSim, "en").length > 3, "status line exists");
 simulateSleep(worldSim, 96);
 must(worldSim.clock !== 0.25, "sleep advances clock");
 
-const locker = { x: 3.1, z: 12.3 };
+const locker = { x: LOCKER_POS.x, z: LOCKER_POS.z };
 must(
   pickInteriorAction({
     inside: true,
@@ -153,8 +155,8 @@ must(
 must(
   pickInteriorAction({
     inside: true,
-    deskD: dist(2.21, 10.51, HAB_DESK.x, HAB_DESK.z),
-    lockerD: dist(2.21, 10.51, locker.x, locker.z),
+    deskD: dist(HAB_DESK.x - 0.6, HAB_DESK.z, HAB_DESK.x, HAB_DESK.z),
+    lockerD: dist(HAB_DESK.x - 0.6, HAB_DESK.z, locker.x, locker.z),
     bunkD: 9,
   }).kind === "console",
   "two steps inward prefers Hab console"
@@ -165,9 +167,9 @@ must(
     inside: true,
     sealed: false,
     canPatch: true,
-    leakD: dist(0, 10.2, HAB_LEAK.x, HAB_LEAK.z),
-    deskD: dist(0, 10.2, HAB_DESK.x, HAB_DESK.z),
-    lockerD: dist(0, 10.2, locker.x, locker.z),
+    leakD: dist(HAB_LEAK.x + 1.1, HAB_LEAK.z, HAB_LEAK.x, HAB_LEAK.z),
+    deskD: dist(HAB_LEAK.x + 1.1, HAB_LEAK.z, HAB_DESK.x, HAB_DESK.z),
+    lockerD: dist(HAB_LEAK.x + 1.1, HAB_LEAK.z, locker.x, locker.z),
     bunkD: 9,
   }).kind === "patch",
   "aisle from hatch prefers leak while unsealed"
@@ -176,7 +178,7 @@ must(
   pickHatchAction({
     inside: false,
     sealed: false,
-    hatchD: dist(0, 15.2, HAB_HATCH.x, HAB_HATCH.z),
+    hatchD: dist(HAB_HATCH.x, HAB_HATCH.z + 2.1, HAB_HATCH.x, HAB_HATCH.z),
     gatherD: 4,
   }).kind === "hatch-hint",
   "outside the airlock names the door while the hull is open"
@@ -222,9 +224,20 @@ must(
     leakD: 0,
     deskD: dist(HAB_LEAK.x, HAB_LEAK.z, HAB_DESK.x, HAB_DESK.z),
     bunkD: dist(HAB_LEAK.x, HAB_LEAK.z, HAB_BUNK.x, HAB_BUNK.z),
-    lockerD: 9,
+    lockerD: dist(HAB_LEAK.x, HAB_LEAK.z, locker.x, locker.z),
+  })?.kind !== "patch",
+  "after sealing, the tear is not a patch prompt"
+);
+must(
+  pickInteriorAction({
+    inside: true,
+    sealed: true,
+    leakD: dist(HAB_DESK.x, HAB_DESK.z, HAB_LEAK.x, HAB_LEAK.z),
+    deskD: 0,
+    bunkD: dist(HAB_DESK.x, HAB_DESK.z, HAB_BUNK.x, HAB_BUNK.z),
+    lockerD: dist(HAB_DESK.x, HAB_DESK.z, locker.x, locker.z),
   }).kind === "console",
-  "after sealing the left wall, E still opens the console not a dead zone"
+  "desk still opens console after sealing"
 );
 
 must(game.includes("patchedHome"), "seal toast points to console and bunk");
@@ -494,6 +507,14 @@ must(
 must(
   pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true, iceKnown: true }).kind === "still-fuel",
   "identified ice in pockets at the machine is fuel"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: false }).kind === "still-need-ice",
+  "empty still at arm's length asks for ice"
+);
+must(
+  pickStillMachineAction({ d: 3.31, water: 0, fuel: 0, gridOn: true, hasIce: false }) == null,
+  "ice pile ~3.3 m from the still still gathers"
 );
 must(
   pickPlotPlantAction({ planted: false, hasPotato: true }).kind === "plot-scan",

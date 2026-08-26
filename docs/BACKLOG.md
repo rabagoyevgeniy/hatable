@@ -1,33 +1,39 @@
 # Backlog
 
-## P0 HUMAN PLAYTEST BLOCKERS
+## P0 PLAYER CONTROL & WORLD SCALE (CURRENT GATE)
 
-Human playtest failed. **No new gameplay systems** until a human can walk Mars on a phone, read the view, enter the Hab through the airlock, and trust the ground.
+Human playtest failed again. **Gameplay expansion is frozen** until a human can say:
 
-Closed in code this gate (awaiting human retest):
+> «Мне приятно просто бегать по Марсу и крутить камерой. Я понимаю, где моя база. Я вижу, куда я иду. Я не проваливаюсь под землю.»
 
-1. **Mobile must be landscape** — portrait pauses and shows «Поверните телефон»; HUD is a landscape layout (joystick BL, actions BR, compact vitals), not a stretched portrait UI.
-2. **Player must never sink through terrain** — feet snap to the *visual* mesh, not a finer analytic height; spawn/reload/recovery cannot put the player underground.
-3. **Hab must have real collision** — exterior hull blocks; airlock corridor is the only entrance/exit; locker + major furniture are solid.
-4. **Mobile camera + UI playability** — landscape FOV/distance so the character does not dominate; quest text is a dismissible chip; bars/buttons do not cover the world; iPhone safe areas.
+Closed in code this pass (awaiting **human** retest — harness is not a phone):
 
-Do not reopen these as content work. The next milestone is a human retest, not more systems.
+1. **Terrain grounding** — player Y uses the same PlaneGeometry bilinear as the rendered mesh (Three.js `iy=0 → worldZ = −half`). Feet sit on `terrainHeight + footOffset`. Emergency snap if underground. Spawn / save / blackout use the same snap. Camera offset is not a sink hide.
+2. **Dual-stick mobile** — left stick: camera-relative move. Right stick: camera orbit (dead zone, curve, damp, pitch limits). No random full-screen drag.
+3. **Third-person camera** — behind + slightly above. Character faces travel when moving; orbit does not spin the body while idle. Landscape FOV 42, follow distance ~15.4 m. Character should occupy ~10–18% of screen height.
+4. **Buttons** — large Interact above the look stick; Scan / Craft / Inventory smaller. iPhone safe areas.
+5. **Station scale** — living module + dedicated airlock + lab tube + greenhouse silhouette + yard solar / antenna / beacon. Not a 300% tent scale.
+6. **Distiller communication** — spatial hiss (distance + pan), silent when off; steam / lamp / spin when working. Prompt: NEED ICE → LOAD ICE → COLLECT WATER. QA plates (LEAK / HAB / ДИСТИЛЛЯТОР) stay until the replacement is understandable.
+
+Human gate for the next build: spawn, walk 3–5 minutes without sinking, both sticks, face away while running forward, enter/exit Hab, walk the station, find the still by sight + sound, understand ice → water without a manual.
+
+**STOP.** Do not start Rover. Do not add survival systems. Do not add scan-gates.
 
 ## P0
 
-- Human retest of the four blockers above (phone landscape, walk without sinking, Hab perimeter, airlock in/out)
+- Human retest of the control/scale pass above
 - Do not break gather / craft / mobile / journal
 - Do not add rover, suit-tablet, or new survival couplings until that retest
 
 ## P1
 
-- Do not break `npm run smoke` / `npm run first-sol` / `npm run` playability (leak → crop + storm/grid/cable/still-load/pressure-refill/heater-dawn/heater-crop/bunk-O₂ + scanner/desk/MAV/locker-pockets/S-band-tape + ground/Hab/landscape)
-- Optional human playtest after the P0 gate: E-build still on the stake → ice fuel → drip → tank sip; storm → clear day → solar wreck wire → splice; Pathfinder walk; desk packing/lab after seal
-- Do not add more scan-gates (fabric / tape / hammer) or overlay-name checklists. Scanner reach is 22 m
+- Do not break `npm run smoke` / `npm run first-sol` / playability
+- Optional after the P0 gate: pinch zoom; E-build still on the stake → ice fuel → drip; storm wire splice
+- Do not add more scan-gates (fabric / tape / hammer). Scanner reach is 22 m
 
 ## P2
 
-- Suit tablet instead of MMO meters — only if a real player can verify in the browser **after** the landscape/ground/Hab gate
+- Suit tablet instead of MMO meters — only if a real player can verify in the browser **after** this control gate
 
 ## P3
 

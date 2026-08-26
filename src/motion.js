@@ -65,6 +65,19 @@ export function tickMotion(world, dt) {
       st.mesh.rotation.y += dt * (spinning ? 0.7 : 0.12);
       const globe = st.mesh.getObjectByName("stillGlobe");
       if (globe) globe.rotation.y += dt * 1.4;
+      const steam = st.mesh.getObjectByName("stillSteam");
+      if (steam) {
+        steam.visible = spinning;
+        if (spinning && steam.geometry?.attributes?.position) {
+          const pos = steam.geometry.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            let y = pos.getY(i) + dt * (0.85 + (i % 4) * 0.12);
+            if (y > 2.2) y = 0.04 * Math.random();
+            pos.setY(i, y);
+          }
+          pos.needsUpdate = true;
+        }
+      }
     } else if (st.type === "solar") {
       const ang = (world.clock || 0) * Math.PI * 2;
       st.mesh.rotation.y = Math.atan2(Math.sin(ang), Math.cos(ang)) * 0.35;

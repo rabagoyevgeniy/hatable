@@ -345,7 +345,8 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   $("location-label").textContent =
     near.dist < SCAN_PLACE_RANGE ? near.outpost.short[getLang()] : getLang() === "ru" ? "ПУСТЫНЯ" : "OPEN DESERT";
 
-  const deg = ((-player.yaw * 180) / Math.PI + 360) % 360;
+  const yaw = player.camYaw ?? player.yaw;
+  const deg = ((-yaw * 180) / Math.PI + 360) % 360;
   const dirs = getLang() === "ru" ? ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const dir = dirs[Math.round(deg / 45) % 8];
   $("compass-dir").textContent = dir;
@@ -481,6 +482,7 @@ export function findInteract(player, world) {
       if (act?.kind === "still-wait") return { kind: "still-wait", station: st, label: t("stillNoPower") };
       if (act?.kind === "still-fuel") return { kind: "still-fuel", station: st, label: t("fuel") };
       if (act?.kind === "still-scan") return { kind: "still-scan", station: st, label: t("scanIceFuel") };
+      if (act?.kind === "still-need-ice") return { kind: "still-need-ice", station: st, label: t("stillNeedIce") };
       if (act?.kind === "still-drip") return { kind: "still-drip", station: st, label: t("stillDrip") };
     }
     if (st.type === "plot") {

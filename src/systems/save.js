@@ -1,6 +1,6 @@
 import { heightAt } from "../noise.js";
 import { goalsDone, advanceJournal } from "./goals.js";
-import { groundYAt, segsForMobile } from "./collision.js";
+import { snapToGround, segsForMobile } from "./collision.js";
 import { isMobileView } from "../device.js";
 
 const KEY = "stranded-mars-save-v1";
@@ -30,7 +30,8 @@ export function collectSave(player, world, journal) {
     player: {
       x: player.root.position.x,
       z: player.root.position.z,
-      yaw: player.yaw,
+      yaw: player.camYaw ?? player.yaw,
+      facingYaw: player.facingYaw,
       inv: { ...player.inv },
       tools: { ...player.tools },
       oxygen: player.oxygen,
@@ -108,8 +109,11 @@ export function readSave() {
 export function applySave(data, { player, world, journal, placeStation, updatePlotVisual }) {
   if (!data) return;
   const p = data.player;
-  player.root.position.set(p.x, groundYAt(p.x, p.z, segsForMobile(isMobileView()), heightAt), p.z);
+  player.root.position.set(p.x, 0, p.z);
+  snapToGround(player.root.position, segsForMobile(isMobileView()), heightAt);
   player.yaw = p.yaw || 0;
+  player.camYaw = p.yaw || 0;
+  player.facingYaw = p.facingYaw ?? Math.PI;
   player.inv = { ...player.inv, ...p.inv };
   player.tools = { ...player.tools, ...p.tools };
   player.oxygen = p.oxygen;

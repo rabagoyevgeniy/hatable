@@ -2,18 +2,22 @@
 
 Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = exists, incomplete. **NOT IMPLEMENTED** = specified, absent.
 
-## P0 HUMAN PLAYTEST BLOCKERS (2026-08-26)
+## P0 PLAYER CONTROL & WORLD SCALE (2026-08-26, second human fail)
 
-Human tester: the mobile build was not playable. Feature development is stopped until this gate is retested on a phone.
+Feature development is frozen. The previous landscape/ground/Hab pass was **not** accepted: feet still sank (Z mapping was mirrored vs Three.js PlaneGeometry), camera/UI still felt like a debug overlay, Hab still read as a tent.
 
-| Blocker | Code status | Human retest |
+| Item | Code status | Human retest |
 | --- | --- | --- |
-| 1. Mobile must be landscape | **FIXED IN CODE** — portrait overlay «Поверните телефон», gameplay paused, landscape HUD | pending |
-| 2. Player must never sink through terrain | **FIXED IN CODE** — feet follow the visual terrain mesh; emergency Y recovery | pending |
-| 3. Hab must have real collision | **FIXED IN CODE** — hull walls + airlock corridor; furniture/locker circles | pending |
-| 4. Mobile camera + UI playability | **FIXED IN CODE** — landscape FOV 48 / dist ~8.6; compact dock, 2×2 actions, dismissible hint, safe areas | pending |
+| 1. Terrain grounding | **FIXED IN CODE** — bilinear matches `PlaneGeometry` (`iy=0 → −half`); `FOOT_OFFSET`; emergency unground; spawn/save/blackout snap | pending |
+| 2. Dual-stick | **FIXED IN CODE** — left move (camera-relative), right orbit (dead zone / curve / damp / pitch clamp). No screen-drag look | pending |
+| 3. Third-person | **FIXED IN CODE** — camera behind+above (~15.4 m, FOV 42 landscape); facing follows movement only | pending |
+| 4. Buttons | **FIXED IN CODE** — large Interact + smaller Scan/Craft/Inv above the look stick; safe areas | pending |
+| 5. Station scale + silhouette | **FIXED IN CODE** — living cylinder, airlock, lab+tube, greenhouse, yard solar, antenna, night beacon | pending |
+| 6. Distiller see+hear | **FIXED IN CODE** — spatial hiss; steam/lamp when running; NEED ICE → LOAD ICE → COLLECT WATER | pending |
 
-Harness: `scripts/playability.mjs` (mesh snap, long walk, perimeter, airlock in/out). This does **not** replace a human holding a phone.
+Harness: `scripts/playability.mjs` (mesh Z mapping, foot offset, long walk, cell cross, perimeter, airlock). This does **not** replace a human holding a phone.
+
+**Do not begin Rover or new survival/scan-gates until a human approves this pass.**
 
 ## IMPLEMENTED
 
@@ -32,9 +36,10 @@ Harness: `scripts/playability.mjs` (mesh snap, long walk, perimeter, airlock in/
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
-- **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (joystick bottom-left, actions 2×2 bottom-right, compact vitals/hotbar). Camera pulled back (FOV 46, dist ~9.2). iPhone safe-area insets.
-- **Visual-terrain grounding:** player Y samples the same PlaneGeometry grid the mesh uses (mobile 80 segs, not analytic height under a coarse mesh). Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground.
-- **Hab collision:** cylinder hull blocks; airlock at +Z is the only door; locker/bunk/desk/crates are simple circle blockers. `isInsideHab` is hull+airlock, not a 6.2 m circle.
+- **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (left move stick, right look stick, large Interact). Camera behind the astronaut (FOV 42, dist ~15.4). iPhone safe-area insets.
+- **Visual-terrain grounding:** player Y samples the same PlaneGeometry bilinear the mesh uses (mobile 96 segs). Three.js vertex Z is `iy * cell - half`. Feet sit on mesh + 7 cm. Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground. Camera does not hide sink.
+- **Hab station:** living module (~6.8 m radius) + dedicated airlock + west lab/tube + greenhouse silhouette + yard solar + antenna + night beacon. Hull walls block; airlock at +Z is the only door; lab tube is a second interior. Locker/bunk/desk/crates are circle blockers.
+- **Distiller:** spatial pump hiss (distance + stereo pan), silent when off; steam/lamp/spin when working. Prompts: ICE → WATER / LOAD ICE / COLLECT WATER. QA plates remain.
 - Hab interior furniture (bunk/desk/crates)
 - Weather state machine CLEAR / DUST / STORM (after first emergency minutes)
 - Still requires live Hab grid (night heater vs water)

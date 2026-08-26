@@ -373,7 +373,7 @@ export function packedYard() {
     roughness: 0.98,
     metalness: 0.02,
   });
-  const m = new THREE.Mesh(new THREE.CircleGeometry(18, 40), mat);
+  const m = new THREE.Mesh(new THREE.CircleGeometry(32, 48), mat);
   m.rotation.x = -Math.PI / 2;
   m.position.y = 0.04;
   m.receiveShadow = true;

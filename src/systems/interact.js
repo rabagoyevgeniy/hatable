@@ -97,6 +97,9 @@ export function pickStillMachineAction({
   if ((hasHydrazine && hydrazineKnown) || (hasIce && iceKnown)) return { kind: "still-fuel", d };
   if (hasIce || hasHydrazine) return { kind: "still-scan", d };
   if (fuel > 0 && gridOn && d < STILL_DRIP_RANGE) return { kind: "still-drip", d };
+  if (fuel <= 0 && !hasIce && !hasHydrazine && d < STILL_DRIP_RANGE) {
+    return { kind: "still-need-ice", d };
+  }
   return null;
 }
 

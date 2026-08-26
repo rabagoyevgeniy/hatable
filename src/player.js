@@ -10,12 +10,12 @@ import { canEatPotato, trySleepSol, estimateRangeM, WALK_MPS } from "./systems/s
 import { habCanRefillSuit } from "./systems/habitat.js";
 import { count, totalItems, addItem, takeItems, canAfford, transfer } from "./systems/inventory.js";
 import {
-  groundYAt,
   isSheltered,
   resolvePlayerXZ,
   snapToGround,
   emergencyUnground,
   PLAYER_RADIUS,
+  lerpAngle,
 } from "./systems/collision.js";
 
 export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer, estimateRangeM };
@@ -146,7 +146,8 @@ export function createPlayer(scene) {
     }
   });
 
-  root.position.set(SPAWN.x, groundYAt(SPAWN.x, SPAWN.z, terrainSegments(), heightAt), SPAWN.z);
+  root.position.set(SPAWN.x, 0, SPAWN.z);
+  snapToGround(root.position, terrainSegments(), heightAt);
   const blob = new THREE.Mesh(
     new THREE.CircleGeometry(0.62, 18),
     new THREE.MeshBasicMaterial({ color: 0x2a1008, transparent: true, opacity: 0.42, depthWrite: false })
@@ -167,7 +168,11 @@ export function createPlayer(scene) {
     legL,
     legR,
     yaw: 0,
-    pitch: isMobileView() ? 0.08 : 0.18,
+    camYaw: 0,
+    facingYaw: Math.PI,
+    lookVelX: 0,
+    lookVelY: 0,
+    pitch: isMobileView() ? 0.12 : 0.18,
     vel: new THREE.Vector3(),
     inv,
     tools: { hammer: false },
@@ -191,6 +196,7 @@ export function createPlayer(scene) {
     walkAction,
     idleAction,
     runAction,
+    animatedRoot: animated?.root || null,
   };
 }
 
@@ -220,16 +226,20 @@ function segsOf(world) {
 }
 
 export function updatePlayer(player, dt, input, world) {
-  let mx = 0;
-  let mz = 0;
+  let mx = input.moveX || 0;
+  let mz = input.moveY || 0;
   if (input.forward) mz -= 1;
   if (input.back) mz += 1;
   if (input.left) mx -= 1;
   if (input.right) mx += 1;
-  const moving = mx !== 0 || mz !== 0;
-  const yaw = player.yaw;
-  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-  const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  mx = Math.max(-1, Math.min(1, mx));
+  mz = Math.max(-1, Math.min(1, mz));
+  const stick = Math.min(1, Math.hypot(mx, mz));
+  const moving = stick > 0.12;
+  const camYaw = input.camYaw ?? player.camYaw ?? player.yaw ?? 0;
+  player.camYaw = camYaw;
+  const forward = new THREE.Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+  const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw));
   const wish = new THREE.Vector3();
   wish.addScaledVector(forward, -mz);
   wish.addScaledVector(right, mx);
@@ -239,10 +249,12 @@ export function updatePlayer(player, dt, input, world) {
   const slope = 1 - n[1];
   const speed =
     WALK_MPS *
+    (0.35 + stick * 0.65) *
     (1 - slope * 1.1) *
     (player.hunger < 18 || player.thirst < 18 ? SURVIVAL.starveSlow : 1) *
     (player.warmth < 12 ? 0.7 : 1);
-  player.vel.lerp(wish.multiplyScalar(Math.max(0.8, speed)), 1 - Math.pow(0.0008, dt));
+  const targetVel = wish.clone().multiplyScalar(moving ? Math.max(0.8, speed) : 0);
+  player.vel.lerp(targetVel, 1 - Math.pow(0.0008, dt));
 
   const pos = player.root.position;
   const prevX = pos.x;
@@ -267,6 +279,13 @@ export function updatePlayer(player, dt, input, world) {
   emergencyUnground(pos, segs, heightAt);
   player.distance += Math.hypot(pos.x - prevX, pos.z - prevZ);
 
+  if (moving && player.vel.lengthSq() > 0.12) {
+    const targetFace = Math.atan2(player.vel.x, player.vel.z);
+    player.facingYaw = lerpAngle(player.facingYaw ?? Math.PI, targetFace, 1 - Math.pow(0.012, dt));
+  }
+  player.yaw = player.facingYaw;
+  player.root.rotation.y = player.facingYaw;
+
   if (player.mixer) {
     player.walkPhase += moving ? dt * (8 + speed) : 0;
     const spd = player.vel.length();
@@ -277,6 +296,13 @@ export function updatePlayer(player, dt, input, world) {
     if (player.walkAction) player.walkAction.setEffectiveWeight(THREE.MathUtils.lerp(player.walkAction.getEffectiveWeight(), walkW, 1 - Math.pow(0.02, dt)));
     if (player.runAction) player.runAction.setEffectiveWeight(THREE.MathUtils.lerp(player.runAction.getEffectiveWeight(), runW, 1 - Math.pow(0.02, dt)));
     player.mixer.update(dt);
+    if (player.animatedRoot) {
+      player.animatedRoot.position.y = 0;
+      player.animatedRoot.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(player.animatedRoot);
+      const dip = box.min.y - pos.y;
+      if (dip < -0.01) player.animatedRoot.position.y = -dip;
+    }
     snapToGround(pos, segs, heightAt);
     emergencyUnground(pos, segs, heightAt);
     if (moving && player.walkPhase - player.lastStep > 1.6) {
@@ -300,7 +326,7 @@ export function updatePlayer(player, dt, input, world) {
     player.armL.rotation.x *= 0.8;
     player.armR.rotation.x *= 0.8;
   }
-  player.root.rotation.y = yaw;
+  player.root.rotation.y = player.facingYaw ?? Math.PI;
 
   const night = world.daylight < 0.28;
   const hab = world.hab;
@@ -334,7 +360,8 @@ export function updatePlayer(player, dt, input, world) {
 
   const blackout = player.oxygen <= 0;
   if (blackout) {
-    player.root.position.set(SPAWN.x, groundYAt(SPAWN.x, SPAWN.z, segsOf(world), heightAt), SPAWN.z);
+    player.root.position.set(SPAWN.x, 0, SPAWN.z);
+    snapToGround(player.root.position, segsOf(world), heightAt);
     player.oxygen = 38;
     player.warmth = 32;
     player.hunger = Math.max(8, player.hunger - 18);
