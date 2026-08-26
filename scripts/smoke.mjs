@@ -350,6 +350,10 @@ must(
   pickStillPadAction({ padD: 0.4, gatherD: 3, hasHammer: false, canBuild: true }) == null,
   "no hammer — ring is not a still interact"
 );
+must(
+  pickStillPadAction({ padD: 3.6, gatherD: 5, hasHammer: true, canBuild: false }).kind === "still-hint",
+  "within a few metres of the pole names the still, not only the exact plinth"
+);
 
 must(
   pickStillMachineAction({ d: 0.4, water: 0, fuel: 28, gridOn: true }).kind === "still-drip",

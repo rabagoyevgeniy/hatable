@@ -178,3 +178,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - C → список, кнопка «СДЕЛАТЬ»; C ещё раз → тост «ГОТОВО · Грубый молоток», молоток в карманах
 - Страница иногда «Unresponsive» в этом раннере; стройка still на шесте не дошла — следующий проход
+
+### Cycle T — still interact reaches the pole you can see
+
+- Follow-up: hammer in pockets, cream pole on screen, prompt still «СОБРАТЬ · Камень» because E only armed on the 1.25 m plinth
+- Pad range matches the machine (4.2 m): walk to the stake you can see, not a hidden tile under it

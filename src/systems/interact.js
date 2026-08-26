@@ -5,7 +5,7 @@ export const BUNK_RANGE = 3.0;
 export const LOCKER_RANGE = 2.8;
 export const GATHER_STEAL = 2.15;
 export const LEAK_RANGE = 3.2;
-export const STILL_PAD_RANGE = 2.8;
+export const STILL_PAD_RANGE = 4.2;
 
 export function pickInteriorAction({
   deskD = 99,
