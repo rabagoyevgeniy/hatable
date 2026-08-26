@@ -259,6 +259,16 @@ Overnight timer still listed desk/night. Repo: wire run exists but `WALK_MPS` wa
 - Harness still: clear day reaches wire; storm night does not
 - No rover. No Pointer Lock playtest
 
+### Cycle AB — dust eats the debug rings
+
+Overnight timer still listed desk/night. Repo: stabilize leash is honest. Next vision beat is **understand** (scanner), not rover.
+
+- Loot rings vanish in dust/storm unless you hold F / Scan. The pile is still there; the cheat stick is not
+- Starter cyan rings stay for the first ~280 s leak emergency
+- Wire at the solar wreck is not starter — after a storm you scan for it, you do not follow a glowing cookie
+- No rover. No Pointer Lock playtest
+
+
 
 
 

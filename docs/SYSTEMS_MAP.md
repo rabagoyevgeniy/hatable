@@ -54,6 +54,7 @@ SCIENCE
   world.science.known[type] from scanner
   ice → still efficiency
   soil → crop rate
+  dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
 
 WORLD
   nodes (loot), stations, locker, outposts

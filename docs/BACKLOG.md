@@ -12,7 +12,7 @@
 
 ## P2
 
-- Scanner as a mode that replaces debug loot rings
+- Scanner as a mode: dust already hides loot rings — next is dropping rings in clear weather too / lab from samples
 - Suit tablet instead of MMO meters
 - Delayed Earth after radio
 

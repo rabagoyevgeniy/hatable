@@ -30,7 +30,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 
 ## PARTIAL
 
-- Scanner science (first-scan ident, no lab / recipes from samples yet)
+- Scanner science (first-scan ident; dust hides debug loot rings unless you scan; no lab / recipes from samples yet)
 - Range estimate (O₂ **and** warmth round-trip; no full sunset packing list yet)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)
