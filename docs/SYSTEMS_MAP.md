@@ -62,7 +62,7 @@ SCIENCE
   wire scan → splice the roof cable / rebuild the still pump (first-sol cell replace stays ungated)
   F also identifies a sample in hand / pockets when nothing is underfoot
   desk console lists identified samples (ice/soil/wire/comms) — the lab is the desk, not a new panel; packing and lab stay off until the hull is sealed
-  radio listen (after place; storms / night pause S-band)
+  radio listen (after place; storms / night pause S-band — they do not rewind `listenS`)
   pathfinder scan → names the S-band lander (not XP)
   farm / rover / mav scans → name the leftover expedition (rover is not a taxi; MAV is a project)
   comms scan → radio recipe (hammer / still / plot stay ungated)

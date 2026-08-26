@@ -235,6 +235,7 @@ export function tickRadio(world, dt) {
   if (!world || world.contacted) return;
   if (!radioPlaced(world)) return;
   if (!world.radio) world.radio = { listenS: 0 };
+  // Storms and night bury the signal. They pause the clock; they do not wipe the tape.
   if (!radioCanListen(world)) return;
   world.radio.listenS += dt;
   if (world.radio.listenS >= RADIO_CONTACT_S) {

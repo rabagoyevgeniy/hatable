@@ -6,7 +6,7 @@
 
 ## P1
 
-- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable/still-load/pressure-refill/heater-dawn/bunk-O₂ + scanner/desk/MAV/locker-pockets couplings)
+- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable/still-load/pressure-refill/heater-dawn/bunk-O₂ + scanner/desk/MAV/locker-pockets/S-band-tape couplings)
 - Optional human playtest (not the hanging Pointer Lock agent): E-build still on the stake → ice fuel → drip → tank sip; storm → clear day → solar wreck wire → splice; Pathfinder walk; desk packing/lab after seal
 - Do not add more scan-gates (fabric / tape / hammer) or overlay-name checklists. Scanner reach is 22 m
 

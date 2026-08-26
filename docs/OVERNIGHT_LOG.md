@@ -495,6 +495,13 @@ Overnight: hunt a different coupling, not another grid-death lock. MAV cargo and
 - Empty pockets at the MAV with a full locker stay NO CARGO / not escape. Plot E waters only with a flask in hand. No new HUD. No rover
 - No Pointer Lock playtest
 
+### Cycle BH — storm pauses S-band, it does not rewind
+
+Overnight: not another grid or locker lock. Storms already buried Earth; they did not say whether a half-heard reply survived the dust.
+
+- Half listen + storm + clear finishes without starting over. `listenS` holds. No new HUD. No rover
+- No Pointer Lock playtest
+
 
 
 

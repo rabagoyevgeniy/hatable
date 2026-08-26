@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
-import { createWeather, tickWeather } from "../src/systems/weather.js";
+import { createWeather, tickWeather, applyWeatherState } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
@@ -660,6 +660,7 @@ must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Not
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Ascent is a project"), "MAV scan is a project, not a ride");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("solaryard"), "solar farm has a scan ident");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Storms bury the signal"), "Pathfinder scan names the delayed uplink");
+must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("they do not wipe the tape"), "storms pause S-band, they do not rewind");
 must(game.includes("pickScanTarget"), "F uses the shared scan picker");
 must(game.includes("heldId: player.heldId"), "F identifies a sample in the hand");
 must(game.includes("canFuelStill"), "still fuel requires an ice scan");
@@ -739,6 +740,31 @@ must(i18n.includes("earthHeard"), "Earth heard toast is translated");
   must(radioCanListen(uplink), "clear noon can listen");
   for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(uplink, 1);
   must(!!uplink.contacted, "clear-day S-band listen reaches Earth");
+}
+{
+  const tape = {
+    clock: 0.25,
+    daylight: 1,
+    storm: 0,
+    contacted: false,
+    stations: [],
+    hab: createHabitat(),
+    radio: { listenS: 0 },
+    habSealed: true,
+  };
+  tickTime(tape, 0);
+  applyWeatherState(tape, "clear");
+  placeStationSim(tape, "radio", -138, -92);
+  const half = Math.floor(RADIO_CONTACT_S / 2);
+  for (let i = 0; i < half; i++) tickHabitat(tape, 1);
+  const saved = tape.radio.listenS;
+  applyWeatherState(tape, "storm");
+  for (let i = 0; i < RADIO_CONTACT_S + 4; i++) tickHabitat(tape, 1);
+  must(!tape.contacted, "storm does not finish a half-heard reply");
+  must(Math.abs(tape.radio.listenS - saved) < 0.01, "storm pauses S-band, does not rewind the tape");
+  applyWeatherState(tape, "clear");
+  for (let i = 0; i < RADIO_CONTACT_S - half + 4; i++) tickHabitat(tape, 1);
+  must(!!tape.contacted, "resumed listen reaches Earth without starting over");
 }
 {
   const placed = { contacted: false, stations: [{ type: "radio" }] };

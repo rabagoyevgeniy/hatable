@@ -1058,6 +1058,30 @@ export function runStabilizeCoupling() {
   if (buried.contacted) fail("stabilize", "a storm must not deliver Earth");
   notes.push("storm-buries-sband");
 
+  const tape = createHeadlessWorld();
+  tape.habSealed = true;
+  tape.clock = 0.25;
+  tickTime(tape, 0);
+  applyWeatherState(tape, "clear");
+  placeStationSim(tape, "radio", -138, -92);
+  const half = Math.floor(RADIO_CONTACT_S / 2);
+  for (let i = 0; i < half; i++) tickHabitat(tape, 1);
+  if (tape.contacted) fail("stabilize", "half a listen is not Earth yet");
+  const saved = tape.radio.listenS;
+  if (!(saved >= half - 0.5)) fail("stabilize", `listen should have advanced, got ${saved}`);
+  applyWeatherState(tape, "storm");
+  if (radioCanListen(tape)) fail("stabilize", "storm must pause an in-progress listen");
+  for (let i = 0; i < RADIO_CONTACT_S + 4; i++) tickHabitat(tape, 1);
+  if (tape.contacted) fail("stabilize", "a storm must not finish a half-heard reply");
+  if (Math.abs((tape.radio.listenS || 0) - saved) > 0.01) {
+    fail("stabilize", `storm must pause S-band, not rewind it (${tape.radio.listenS} vs ${saved})`);
+  }
+  applyWeatherState(tape, "clear");
+  if (!radioCanListen(tape)) fail("stabilize", "clear day should resume the same listen");
+  for (let i = 0; i < RADIO_CONTACT_S - half + 4; i++) tickHabitat(tape, 1);
+  if (!tape.contacted) fail("stabilize", "resumed listen should reach Earth without starting over");
+  notes.push("storm-pauses-sband-not-rewind");
+
   const dusk = createHeadlessWorld();
   dusk.habSealed = true;
   dusk.clock = 0.78;
