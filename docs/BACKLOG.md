@@ -7,7 +7,7 @@
 ## P1
 
 - Keep leak / power / water / first harvest stable — no rover until that holds
-- Playtest still: hammer → west scrap/canvas → E-build on amber ring → ice fuel → drip
+- Confirm still playtest: hammer → west scrap/canvas → E-build → ice fuel → drip prompt → tank sip
 
 ## P2
 

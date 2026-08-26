@@ -419,6 +419,10 @@ async function bootGame() {
       toast(t("needStillMats"));
       return;
     }
+    if (hit.kind === "still-drip") {
+      toast(t("stillDripHint"));
+      return;
+    }
     if (hit.kind === "still-fuel") {
       const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
       takeItems(player, { [fuel]: 1 });

@@ -7,7 +7,7 @@ import { nearestOutpost, resolvePlacement } from "./world.js";
 import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
 import { weatherLabel } from "./systems/weather.js";
 import { hasSave } from "./systems/save.js";
-import { pickInteriorAction, pickStillPadAction } from "./systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction } from "./systems/interact.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -417,21 +417,24 @@ export function findInteract(player, world) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);
     if (d > 4.2) continue;
     if (st.type === "still") {
-      if (st.water >= 1) {
+      const act = pickStillMachineAction({
+        d,
+        water: st.water || 0,
+        fuel: st.fuel || 0,
+        fault: st.fault || null,
+        gridOn: !!world.hab?.gridOn,
+        hasIce: count(player, "ice") > 0,
+        hasHydrazine: count(player, "hydrazine") > 0,
+        canRepair: !!(player.tools.hammer && count(player, "wire") > 0 && count(player, "scrap") > 0),
+      });
+      if (act?.kind === "still-take") {
         return { kind: "still-take", station: st, label: `${t("drinkStill")}  ·  ${Math.floor(st.water)}` };
       }
-      if (st.fault === "pump") {
-        if (player.tools.hammer && count(player, "wire") > 0 && count(player, "scrap") > 0) {
-          return { kind: "still-repair", station: st, label: t("repairPump") };
-        }
-        return { kind: "still-diag", station: st, label: t("pumpFail") };
-      }
-      if (st.fuel > 0 && !world.hab?.gridOn) {
-        return { kind: "still-wait", station: st, label: t("stillNoPower") };
-      }
-      if (count(player, "ice") > 0 || count(player, "hydrazine") > 0) {
-        return { kind: "still-fuel", station: st, label: t("fuel") };
-      }
+      if (act?.kind === "still-repair") return { kind: "still-repair", station: st, label: t("repairPump") };
+      if (act?.kind === "still-diag") return { kind: "still-diag", station: st, label: t("pumpFail") };
+      if (act?.kind === "still-wait") return { kind: "still-wait", station: st, label: t("stillNoPower") };
+      if (act?.kind === "still-fuel") return { kind: "still-fuel", station: st, label: t("fuel") };
+      if (act?.kind === "still-drip") return { kind: "still-drip", station: st, label: t("stillDrip") };
     }
     if (st.type === "plot") {
       if (!st.planted && count(player, "potato") > 0) return { kind: "plant", station: st, label: t("plant") };

@@ -144,3 +144,10 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 - Empty ring with a hammer now hints like the leak: «ДИСТИЛЛЯТОР · молоток + 2 лома + брезент»
 - `pickStillPadAction` locked in smoke (build vs hint vs gather-underfoot)
 - Fuel/take persist so a sip of ice is not lost on refresh
+
+### Cycle P — still dripping is the interact, not leftover scrap
+
+- After ice fuel, E at the machine is «ДИСТИЛЛЯТОР КАПАЕТ · бак Hab / колба» instead of gathering a nearby pile while the flask fills
+- Ice ~3.3 m from the pad still gathers (drip range is tight)
+- One ice ≈ one flask + extra sips in the Hab tank (smoke). Toast after fuel names the tank
+- Pump still survives a single ice; two ices approach the pump fail clock

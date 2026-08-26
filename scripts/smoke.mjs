@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
-import { pickInteriorAction, pickStillPadAction, dist } from "../src/systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
@@ -349,6 +349,38 @@ must(
   pickStillPadAction({ padD: 0.4, gatherD: 3, hasHammer: false, canBuild: true }) == null,
   "no hammer — ring is not a still interact"
 );
+
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 28, gridOn: true }).kind === "still-drip",
+  "fueled still at the machine shows drip, not leftover scrap"
+);
+must(
+  pickStillMachineAction({ d: 3.31, water: 0, fuel: 0, gridOn: true, hasIce: false }) == null,
+  "ice pile ~3.3 m from the still still gathers"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true }).kind === "still-fuel",
+  "ice in pockets at the machine is fuel"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: true }).kind === "still-take",
+  "a full flask is collect, not drip"
+);
+must(game.includes("still-drip"), "drip prompt is wired");
+must(i18n.includes("stillDrip"), "drip prompt is translated");
+
+const oneIce = { type: "still", fuel: 28, water: 0, runtime: 0, fault: null, repaired: false };
+const liveGrid = { hab: { gridOn: true }, science: { known: {} } };
+for (let i = 0; i < 28; i++) tickStillMachine(oneIce, 1, liveGrid);
+must(oneIce.water >= 1, "one ice (28s fuel) yields a collectable flask");
+must(oneIce.water < 1.6, "one ice is about one bottle, not a tank");
+must(oneIce.fault == null, "one ice does not kill the pump");
+const tankWorld = { hab: createHabitat(), habSealed: true, daylight: 1, storm: 0, stations: [{ type: "still", fuel: 28, fault: null }] };
+tankWorld.hab.gridOn = true;
+tankWorld.hab.heaterOn = false;
+const tankBefore = tankWorld.hab.waterTank;
+for (let i = 0; i < 28; i++) tickHabitat(tankWorld, 1);
+must(tankWorld.hab.waterTank > tankBefore + 0.4, "fueled still also fills the Hab tank at the desk");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

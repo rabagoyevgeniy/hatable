@@ -56,6 +56,29 @@ export function pickStillPadAction({
   return null;
 }
 
+export const STILL_MACHINE_RANGE = 4.2;
+/** Close enough that leftover scrap does not steal E while the flask fills. Ice at ~3.3 m still gathers. */
+export const STILL_DRIP_RANGE = 2.4;
+
+export function pickStillMachineAction({
+  d = 99,
+  water = 0,
+  fuel = 0,
+  fault = null,
+  gridOn = false,
+  hasIce = false,
+  hasHydrazine = false,
+  canRepair = false,
+} = {}) {
+  if (d > STILL_MACHINE_RANGE) return null;
+  if (water >= 1) return { kind: "still-take", d };
+  if (fault === "pump") return { kind: canRepair ? "still-repair" : "still-diag", d };
+  if (fuel > 0 && !gridOn) return { kind: "still-wait", d };
+  if (hasIce || hasHydrazine) return { kind: "still-fuel", d };
+  if (fuel > 0 && gridOn && d < STILL_DRIP_RANGE) return { kind: "still-drip", d };
+  return null;
+}
+
 export function dist(ax, az, bx, bz) {
   return Math.hypot(ax - bx, az - bz);
 }
