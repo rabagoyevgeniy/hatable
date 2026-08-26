@@ -62,6 +62,8 @@ export const NODE_SPAWNS = [
   { type: "rock", x: -4.5, z: 20 },
   { type: "rock", x: 16, z: 22 },
   { type: "fabric", x: -6.1, z: 11.4 },
+  { type: "scrap", x: -7.5, z: 12.6, starter: true },
+  { type: "scrap", x: -4.9, z: 14.1, starter: true },
   { type: "fabric", x: -8.5, z: 12 },
   { type: "fabric", x: -11, z: 9 },
   { type: "fabric", x: -7.2, z: 7.4 },
