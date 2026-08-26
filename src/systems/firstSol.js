@@ -590,6 +590,8 @@ export function runStabilizeCoupling() {
   if (canRoundTrip(suit, gale, pad, HAB_POS)) fail("stabilize", "storm night must not be a safe MAV walk");
   notes.push("mav-is-the-longest-leash");
 
+  const leakPack = packingLines(suit, { ...noon, habSealed: false }, "en");
+  if (leakPack.length) fail("stabilize", "leaking desk is pressure, not a packing list");
   const packClear = packingLines(suit, noon, "en");
   if (!packClear.some((l) => l.includes("WIRE") && l.includes("IN RANGE"))) {
     fail("stabilize", `clear-day desk should list the wire run as in range (${packClear.join(" | ")})`);

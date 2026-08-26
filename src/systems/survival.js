@@ -113,6 +113,7 @@ export function packingDestinations() {
 
 export function packingLines(player, world, lang = "en") {
   if (!player || !world) return [];
+  if (!world.habSealed) return [];
   const ru = lang === "ru";
   const range = estimateRangeM(player, world);
   const out = [];

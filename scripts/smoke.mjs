@@ -532,6 +532,7 @@ must(ui.includes("packingLines"), "Hab console shows a packing list, not a new H
   const gale = { habSealed: true, daylight: 0.12, storm: 0.78 };
   const clearPack = packingLines(suit, noon, "en");
   must(clearPack.some((l) => l.includes("WIRE") && l.includes("IN RANGE")), "clear-day packing lists the wire run");
+  must(packingLines(suit, { ...noon, habSealed: false }, "en").length === 0, "leaking desk has no packing list");
   const stormPack = packingLines(suit, gale, "en");
   must(stormPack.some((l) => l.includes("MAV") && l.includes("OUT OF RANGE")), "storm-night packing refuses the MAV");
 }

@@ -355,6 +355,13 @@ Overnight timer still listed desk/night. Range line existed; the packing list di
 - Hab console lists wire / Pathfinder / MAV as IN RANGE or OUT OF RANGE from current O₂ and warmth. Storm night refuses the long walks
 - No new HUD meters. No rover. No Pointer Lock playtest
 
+### Cycle AN — leaking desk is not a packing list
+
+Overnight timer still listed desk/night. Repo: packing list shipped. A leaking Hab console naming the MAV is clutter.
+
+- Packing lines stay off until the hull is sealed. Pressure emergency is still pressure
+- No rover. No Pointer Lock playtest
+
 
 
 
