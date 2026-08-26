@@ -86,6 +86,25 @@ export const DUST_HIDES_BEACONS = 0.42;
 export const LOOT_RING_RANGE = 22;
 export const SCAN_PLACE_RANGE = LOOT_RING_RANGE;
 
+export function outpostIdentId(kind) {
+  if (!kind) return null;
+  return kind === "solar" ? "solaryard" : kind;
+}
+
+/** Overlay may paint a place-name only within ident reach, or after F. Hab is home. Scanning is not a horizon atlas. */
+export function outpostOverlayNamed(world, kind, dist, range = SCAN_PLACE_RANGE) {
+  if (!kind) return false;
+  if (kind === "hab") return true;
+  if (isKnown(world, outpostIdentId(kind))) return true;
+  return dist < range;
+}
+
+/** Same gate the HUD uses: in overlay reach AND named. Hold-F does not label the MAV from the Hab. */
+export function overlayNamesOutpost(world, kind, dist, { scanning = false, overlayRange = 42 } = {}) {
+  if (!(scanning || dist < overlayRange)) return false;
+  return outpostOverlayNamed(world, kind, dist);
+}
+
 /** Debug loot rings. Dust eats them; distance eats them; hold F / Scan to see. */
 export function lootBeaconVisible({
   starter = false,

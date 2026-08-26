@@ -362,6 +362,13 @@ Overnight timer still listed desk/night. Repo: packing list shipped. A leaking H
 - Packing lines stay off until the hull is sealed. Pressure emergency is still pressure
 - No rover. No Pointer Lock playtest
 
+### Cycle AO — overlay is not a horizon atlas
+
+Overnight timer still listed desk/night. Repo: ident reach is 22 m, but hold-F painted Pathfinder / MAV names out to 42 m.
+
+- Overlay names a wreck only within ident reach, or after F. Hab stays home. Scanning is not an atlas
+- No rover. No Pointer Lock playtest
+
 
 
 

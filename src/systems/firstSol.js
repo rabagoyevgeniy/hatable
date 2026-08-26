@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines } from "./survival.js";
@@ -633,6 +633,27 @@ export function runStabilizeCoupling() {
     fail("stabilize", "beyond ring range a pocket sample wins; the farm is not a horizon cheat");
   }
   notes.push("ident-matches-ring-range");
+  const atlas = createHeadlessWorld();
+  if (overlayNamesOutpost(atlas, "pathfinder", LOOT_RING_RANGE + 8, { scanning: true })) {
+    fail("stabilize", "hold-F must not name Pathfinder from the horizon");
+  }
+  if (overlayNamesOutpost(atlas, "mav", 200, { scanning: true })) {
+    fail("stabilize", "hold-F must not name the MAV from the Hab");
+  }
+  if (!overlayNamesOutpost(atlas, "pathfinder", LOOT_RING_RANGE - 2)) {
+    fail("stabilize", "within ident reach the overlay may name the lander you can see");
+  }
+  if (!overlayNamesOutpost(atlas, "hab", 40, { scanning: true })) {
+    fail("stabilize", "home is not a discovery");
+  }
+  if (overlayNamesOutpost(atlas, "pathfinder", 30)) {
+    fail("stabilize", "unknown Pathfinder at 30 m should stay OPEN DESERT on the overlay");
+  }
+  noteScan(atlas, "pathfinder");
+  if (!overlayNamesOutpost(atlas, "pathfinder", 40, { scanning: true })) {
+    fail("stabilize", "after F, overlay may remember Pathfinder at range");
+  }
+  notes.push("overlay-is-not-a-horizon-atlas");
   if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
     fail("stabilize", "copper underfoot still identifies as wire");
   }

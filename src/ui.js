@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
-import { isKnown, recipeKnown } from "./systems/science.js";
+import { isKnown, recipeKnown, SCAN_PLACE_RANGE, overlayNamesOutpost } from "./systems/science.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -324,7 +324,7 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
 
   const near = nearestOutpost(world, player.root.position);
   $("location-label").textContent =
-    near.dist < 22 ? near.outpost.short[getLang()] : getLang() === "ru" ? "ПУСТЫНЯ" : "OPEN DESERT";
+    near.dist < SCAN_PLACE_RANGE ? near.outpost.short[getLang()] : getLang() === "ru" ? "ПУСТЫНЯ" : "OPEN DESERT";
 
   const deg = ((-player.yaw * 180) / Math.PI + 360) % 360;
   const dirs = getLang() === "ru" ? ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -605,16 +605,15 @@ function updateScanLabels(player, world, camera, scanning) {
     const outpostRange = mobile ? 28 : 42;
     for (const o of world.outposts) {
       const d = Math.hypot(p.x - o.x, p.z - o.z);
-      if (scanning || d < outpostRange) {
-        targets.push({
-          x: o.x,
-          y: o.group.position.y + 4.6,
-          z: o.z,
-          title: o.short[lang],
-          sub: loc(o.name),
-          far: d > 22,
-        });
-      }
+      if (!overlayNamesOutpost(world, o.kind, d, { scanning, overlayRange: outpostRange })) continue;
+      targets.push({
+        x: o.x,
+        y: o.group.position.y + 4.6,
+        z: o.z,
+        title: o.short[lang],
+        sub: loc(o.name),
+        far: d > SCAN_PLACE_RANGE,
+      });
     }
     for (const n of world.nodes) {
       if (n.taken) continue;
