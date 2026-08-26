@@ -10,7 +10,7 @@ import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
-import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
+import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines } from "./survival.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal } from "./goals.js";
 
@@ -589,6 +589,22 @@ export function runStabilizeCoupling() {
   }
   if (canRoundTrip(suit, gale, pad, HAB_POS)) fail("stabilize", "storm night must not be a safe MAV walk");
   notes.push("mav-is-the-longest-leash");
+
+  const packClear = packingLines(suit, noon, "en");
+  if (!packClear.some((l) => l.includes("WIRE") && l.includes("IN RANGE"))) {
+    fail("stabilize", `clear-day desk should list the wire run as in range (${packClear.join(" | ")})`);
+  }
+  if (!packClear.some((l) => l.includes("PATHFINDER") && l.includes("IN RANGE"))) {
+    fail("stabilize", "clear-day desk should list Pathfinder as in range");
+  }
+  const packStorm = packingLines(suit, gale, "en");
+  if (!packStorm.some((l) => l.includes("PATHFINDER") && l.includes("OUT OF RANGE"))) {
+    fail("stabilize", "storm-night desk should refuse Pathfinder");
+  }
+  if (!packStorm.some((l) => l.includes("MAV") && l.includes("OUT OF RANGE"))) {
+    fail("stabilize", "storm-night desk should refuse the MAV walk");
+  }
+  notes.push("console-packing-list");
 
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");

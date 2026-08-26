@@ -1,6 +1,6 @@
 /** First-Sol gut: leftover tank, seed potato, sleep, tank sip. No Three.js. */
 
-import { SURVIVAL } from "../data.js";
+import { SURVIVAL, HAB_POS, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { advanceSolSim } from "./habitat.js";
 
 export const TANK_SIP_L = 0.4;
@@ -97,4 +97,32 @@ export function roundTripM(from, to) {
 
 export function canRoundTrip(player, world, dest, from = { x: 0, z: 8 }) {
   return estimateRangeM(player, world) + 0.01 >= roundTripM(from, dest);
+}
+
+/** Desk packing list: round-trips you can survive right now. No new HUD meters. */
+export function packingDestinations() {
+  const wire = NODE_SPAWNS.find((n) => n.type === "wire" && n.x > 40 && n.z > 90);
+  const pathfinder = OUTPOSTS.find((o) => o.id === "pathfinder");
+  const mav = OUTPOSTS.find((o) => o.id === "mav");
+  return [
+    { id: "wire", dest: wire, en: "WIRE", ru: "ПРОВОД" },
+    { id: "pathfinder", dest: pathfinder, en: "PATHFINDER", ru: "PATHFINDER" },
+    { id: "mav", dest: mav, en: "MAV", ru: "МАВ" },
+  ].filter((d) => d.dest);
+}
+
+export function packingLines(player, world, lang = "en") {
+  if (!player || !world) return [];
+  const ru = lang === "ru";
+  const range = estimateRangeM(player, world);
+  const out = [];
+  for (const d of packingDestinations()) {
+    const trip = roundTripM(HAB_POS, d.dest);
+    const ok = range + 0.01 >= trip;
+    const km = trip < 100 ? "<0.1" : (trip / 1000).toFixed(1);
+    const name = ru ? d.ru : d.en;
+    const flag = ok ? (ru ? "ДОСЯГАЕМ" : "IN RANGE") : ru ? "ДАЛЕКО" : "OUT OF RANGE";
+    out.push(`${name}  ${km} km  ${flag}`);
+  }
+  return out;
 }

@@ -49,6 +49,7 @@ PLAYER
   round-trip range = min(O₂ time, warmth time) × actual walk / 2
   walk speed shared with the body; storm shove derates the estimate
   solar-wreck wire is outside a storm-night leash
+  desk packing list: wire / Pathfinder / MAV in-range vs out (storm night refuses the long walks)
 
 SCIENCE
   world.science.known[type] from scanner

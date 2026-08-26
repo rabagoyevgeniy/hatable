@@ -7,6 +7,7 @@ import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } 
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
 import { habReadout, habStatusLine, cropFactors } from "./systems/habitat.js";
+import { packingLines } from "./systems/survival.js";
 import { weatherLabel } from "./systems/weather.js";
 import { hasSave } from "./systems/save.js";
 
@@ -124,14 +125,14 @@ export function closeMenus() {
   syncMenuChrome();
 }
 
-export function toggleHabConsole(world) {
+export function toggleHabConsole(world, player = null) {
   $("craft").classList.add("hidden");
   $("inv").classList.add("hidden");
   $("storage").classList.add("hidden");
   const el = $("hab-console");
   if (!el) return false;
   el.classList.toggle("hidden");
-  if (!el.classList.contains("hidden")) renderHabConsole(world);
+  if (!el.classList.contains("hidden")) renderHabConsole(world, player);
   syncMenuChrome();
   return !el.classList.contains("hidden");
 }
@@ -140,9 +141,12 @@ export function consoleOpen() {
   return $("hab-console") && !$("hab-console").classList.contains("hidden");
 }
 
-export function renderHabConsole(world) {
+export function renderHabConsole(world, player = null) {
   const pre = $("hab-readout");
-  if (pre) pre.textContent = habReadout(world, getLang());
+  if (pre) {
+    const pack = packingLines(player, world, getLang());
+    pre.textContent = pack.length ? `${habReadout(world, getLang())}\n${pack.join("\n")}` : habReadout(world, getLang());
+  }
   const heat = $("hab-heater");
   const lights = $("hab-lights");
   if (heat) heat.textContent = world.hab?.heaterOn ? t("heaterOn") : t("heaterOff");
@@ -341,7 +345,7 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
   if (!$("craft").classList.contains("hidden")) renderCraft(player, world);
   if (!$("inv").classList.contains("hidden")) renderInv(player);
   if (!$("storage").classList.contains("hidden")) renderStorage(world);
-  if (consoleOpen()) renderHabConsole(world);
+  if (consoleOpen()) renderHabConsole(world, player);
 
   updateScanLabels(player, world, camera, scanning);
   updatePrompt(player, world);

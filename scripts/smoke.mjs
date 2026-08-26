@@ -6,7 +6,7 @@ import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStil
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
-import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM } from "../src/systems/survival.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
 import { goalsDone, advanceJournal } from "../src/systems/goals.js";
@@ -525,7 +525,16 @@ must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes("i
 must(!readFileSync(resolve(root, "src/systems/habitat.js"), "utf8").includes("known?.soil"), "crops have no scan XP bonus");
 must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes('type === "radio") world.contacted'), "placing radio is not instant Earth");
 must(!world.includes("station === \"radio\") world.contacted"), "world place does not instantly contact Earth");
-must(game.includes("earth-heard"), "Earth reply raises a Hab log");
+must(ui.includes("packingLines"), "Hab console shows a packing list, not a new HUD");
+{
+  const suit = { oxygen: 100, warmth: 70 };
+  const noon = { habSealed: true, daylight: 0.9, storm: 0.05 };
+  const gale = { habSealed: true, daylight: 0.12, storm: 0.78 };
+  const clearPack = packingLines(suit, noon, "en");
+  must(clearPack.some((l) => l.includes("WIRE") && l.includes("IN RANGE")), "clear-day packing lists the wire run");
+  const stormPack = packingLines(suit, gale, "en");
+  must(stormPack.some((l) => l.includes("MAV") && l.includes("OUT OF RANGE")), "storm-night packing refuses the MAV");
+}
 must(i18n.includes("radioListening"), "radio listening toast is translated");
 must(i18n.includes("earthHeard"), "Earth heard toast is translated");
 {

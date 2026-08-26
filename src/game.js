@@ -354,7 +354,7 @@ async function bootGame() {
     }
     if (hit.kind === "console") {
       player.usedConsole = true;
-      const open = toggleHabConsole(world);
+      const open = toggleHabConsole(world, player);
       if (open) {
         toast(t("consoleTitle"));
         document.exitPointerLock?.();

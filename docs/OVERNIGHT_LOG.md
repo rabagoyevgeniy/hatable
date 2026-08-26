@@ -348,6 +348,13 @@ Overnight timer still listed desk/night. P2 leftover: lab / samples. Do not add 
 - Identified ice / soil / wire / comms / hydrazine write onto the Hab console. Empty desk stays empty
 - Field toast still names the sample; the desk is where you review the recipe. No rover. No Pointer Lock playtest
 
+### Cycle AM — the desk packs the walk
+
+Overnight timer still listed desk/night. Range line existed; the packing list did not.
+
+- Hab console lists wire / Pathfinder / MAV as IN RANGE or OUT OF RANGE from current O₂ and warmth. Storm night refuses the long walks
+- No new HUD meters. No rover. No Pointer Lock playtest
+
 
 
 
