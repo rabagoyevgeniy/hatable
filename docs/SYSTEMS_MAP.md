@@ -8,10 +8,12 @@ TIME (world.clock 0–1 per ~220s)
 
 WEATHER (world.weather.state: clear|dust|storm)
   → world.storm (visuals + audio)
-  → solar efficiency
+  → solar efficiency (while it blows)
   → outside cold
   → suit O₂ / warmth drain
   → crop light/temp
+  → after grace: sandblasts arrayHealth (permanent until a cell)
+  → hard storm snaps roof cable (roof kW = 0 until wire splice)
 
 HABITAT (world.hab)
   leak until seal station

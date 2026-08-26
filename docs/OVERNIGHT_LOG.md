@@ -200,6 +200,9 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 ### Cycle V playtest (browser)
 
+- From spawn the hatch mouth shows **ARES III** and **ШЛЮЗ** together; locker to the right
+- Did not finish patch this sitting (still on «Подбери лом»). Door is named; next sitting walks in and E the left tear
+
 ### Cycle W — First Sol closed by a headless harness
 
 Director: finish the vertical slice; max two browser playtests; if Pointer Lock / Page Unresponsive hangs, do not polish geometry for the agent. Gate is a deterministic chain, then continue Master Vision.
@@ -216,4 +219,15 @@ Browser E-build of the still is still unverified in a sitting. The sim chain is 
 
 - Coupled loop is now testable: dust/storm → kW → battery → `gridOn` → crop temp
 - Next deepen: equipment damage in storms (cables), not rover, not Pathfinder
+
+### Cycle X — storm leaves scars
+
+Overnight loop: First Sol is gated; do not rewind to the desk/night checklist. Deepen **stabilize**.
+
+- After the first ~280 s, a **storm** sandblasts `arrayHealth` (dust only derates kW while it blows)
+- ~44 s of hard storm snaps the roof **cable** — roof kW goes to 0 until E-splice with hammer + wire at the array (wire still lives at the solar graveyard)
+- Yard solar station bypasses a dead roof cable. Console says CABLE, not a silent blackout
+- First-sol leak minutes are protected. Harness: grace, dust-is-not-a-scar, scar remains after clear, splice, yard bypass
+- No rover. No Pointer Lock playtest this cycle
+
 

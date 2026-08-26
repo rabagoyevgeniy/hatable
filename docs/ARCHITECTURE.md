@@ -9,7 +9,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `player.js` | body, suit vitals, O₂ range; re-exports pocket helpers |
 | `systems/inventory.js` | count / add / take / afford (no Three) |
 | `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep Sol, crop factors |
-| `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState` for tests |
+| `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState`; storm array/cable damage |
 | `systems/science.js` | scan discoveries |
 | `systems/machines.js` | station records, still pump, headless `placeStationSim` |
 | `systems/survival.js` | seed potato, tank sip, bunk `trySleepSol` |

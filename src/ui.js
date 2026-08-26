@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction } from "./systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -490,7 +490,17 @@ export function findInteract(player, world) {
     return { kind: "locker", label: lockerLabel };
   }
 
-  if (arrayD < 3.4 && count(player, "solar") > 0 && (world.hab?.arrayHealth ?? 1) < 0.97) {
+  const arrayAct = pickArrayAction({
+    d: arrayD,
+    gatherD,
+    cableFault: !!world.hab?.cableFault,
+    canRepairCable: !!(player.tools.hammer && count(player, "wire") > 0),
+    canReplaceCell: count(player, "solar") > 0,
+    health: world.hab?.arrayHealth ?? 1,
+  });
+  if (arrayAct?.kind === "repair-cable") return { kind: "repair-cable", label: t("repairCable") };
+  if (arrayAct?.kind === "cable-diag") return { kind: "cable-diag", label: t("cableOpen") };
+  if (arrayAct?.kind === "repair-array") {
     return { kind: "repair-array", label: `${t("repairArray")}  ·  ${Math.round((world.hab?.arrayHealth || 0) * 100)}%` };
   }
   const hatchD = Math.hypot(p.x - HAB_HATCH.x, p.z - HAB_HATCH.z);

@@ -6,12 +6,12 @@
 
 import { RECIPES, YARD_PADS, HAB_LEAK, LOCKER_START } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP } from "./habitat.js";
-import { createWeather, applyWeatherState } from "./weather.js";
+import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience } from "./science.js";
-import { tickStillMachine, placeStationSim, stillCanRun } from "./machines.js";
+import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato } from "./survival.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, dist } from "./interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal } from "./goals.js";
 
 export const FIRST_SOL_CHAIN = ["leak", "repair", "power", "sleep", "still", "ice", "water", "drink", "crop"];
@@ -401,6 +401,87 @@ export function runStabilizeCoupling() {
     fail("stabilize", "dry soil should grow slower than watered");
   }
   notes.push("moisture-gates-pace");
+
+  const early = createHeadlessWorld();
+  early.playTime = 10;
+  early.hab.arrayHealth = 0.55;
+  applyWeatherState(early, "storm");
+  for (let i = 0; i < 50; i++) tickHabitat(early, 1);
+  if (early.hab.arrayHealth < 0.549) fail("stabilize", "first emergency minutes are not a sandblast");
+  if (early.hab.cableFault) fail("stabilize", "cable must not snap during the leak emergency");
+  notes.push("grace-protects-first-sol");
+
+  const dust = createHeadlessWorld();
+  dust.playTime = 300;
+  dust.hab.arrayHealth = 0.55;
+  applyWeatherState(dust, "dust");
+  for (let i = 0; i < 50; i++) tickHabitat(dust, 1);
+  if (dust.hab.arrayHealth < 0.549) fail("stabilize", "dust derates kW, it does not scar the array");
+  if (dust.hab.cableFault) fail("stabilize", "dust must not snap the cable");
+  notes.push("dust-is-not-a-scar");
+
+  const scar = createHeadlessWorld();
+  scar.playTime = 300;
+  scar.habSealed = true;
+  scar.hab.arrayHealth = 0.55;
+  applyWeatherState(scar, "storm");
+  for (let i = 0; i < 50; i++) tickHabitat(scar, 1);
+  if (!(scar.hab.arrayHealth < 0.5)) fail("stabilize", `storm did not scar the array (${scar.hab.arrayHealth})`);
+  const scarred = scar.hab.arrayHealth;
+  applyWeatherState(scar, "clear");
+  for (let i = 0; i < 20; i++) tickHabitat(scar, 1);
+  if (Math.abs(scar.hab.arrayHealth - scarred) > 0.002) fail("stabilize", "array scar must remain after the sky clears");
+  notes.push("storm-scars-array");
+
+  const cable = createHeadlessWorld();
+  cable.playTime = 300;
+  cable.habSealed = true;
+  cable.clock = 0.25;
+  tickTime(cable, 0);
+  cable.hab.arrayHealth = 0.7;
+  applyWeatherState(cable, "storm");
+  for (let i = 0; i < CABLE_SNAP_S + 2; i++) tickHabitat(cable, 1);
+  if (!cable.hab.cableFault) fail("stabilize", "a full storm should open the array cable");
+  applyWeatherState(cable, "clear");
+  tickHabitat(cable, 1);
+  if (!(cable.hab.solarKw < 0.08)) fail("stabilize", `open cable should kill roof kW (${cable.hab.solarKw})`);
+  notes.push("storm-snaps-cable");
+
+  const splice = pickArrayAction({
+    d: 0.4,
+    gatherD: 5,
+    cableFault: true,
+    canRepairCable: true,
+  });
+  if (splice?.kind !== "repair-cable") fail("stabilize", "array with wire is E-splice");
+  const hint = pickArrayAction({
+    d: 0.4,
+    gatherD: 5,
+    cableFault: true,
+    canRepairCable: false,
+  });
+  if (hint?.kind !== "cable-diag") fail("stabilize", "open cable without wire names the wreck");
+  repairArrayCable(cable.hab);
+  cable.clock = 0.25;
+  tickTime(cable, 0);
+  tickHabitat(cable, 1);
+  if (cable.hab.cableFault) fail("stabilize", "splice did not clear the fault");
+  if (!(cable.hab.solarKw > 0.4)) fail("stabilize", `spliced cable should restore roof kW (${cable.hab.solarKw})`);
+  notes.push("wire-splices-cable");
+
+  const bypass = createHeadlessWorld();
+  bypass.playTime = 300;
+  bypass.habSealed = true;
+  bypass.clock = 0.25;
+  tickTime(bypass, 0);
+  bypass.hab.cableFault = true;
+  applyWeatherState(bypass, "clear");
+  tickHabitat(bypass, 1);
+  const deadRoof = bypass.hab.solarKw;
+  placeStationSim(bypass, "solar", 7.6, 3.8);
+  tickHabitat(bypass, 1);
+  if (!(bypass.hab.solarKw > deadRoof + 0.4)) fail("stabilize", "yard panel should bypass a dead roof cable");
+  notes.push("yard-panel-bypasses-cable");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

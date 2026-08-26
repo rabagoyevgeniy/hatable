@@ -1,6 +1,7 @@
 /** Lightweight Hab machine: pressure, solar, battery, temperature, water. */
 
 import { tickStillOnSleep } from "./machines.js";
+import { tickStormDamage } from "./weather.js";
 
 export const SOL_SECONDS = 220;
 /** Sleep jump toward harvest. Four watered Sols can finish. */
@@ -30,6 +31,8 @@ export function createHabitat() {
     lifeSupportOn: true,
     waterTank: 2.2,
     arrayHealth: 0.31,
+    cableFault: false,
+    cableStress: 0,
     gridOn: true,
   };
 }
@@ -60,13 +63,14 @@ export function cropSleepFactors(world) {
 export function tickHabitat(world, dt) {
   const h = world.hab;
   if (!h) return;
+  tickStormDamage(world, dt);
   const day = Math.max(0, world.daylight || 0);
   const night = 1 - day;
   const storm = world.storm || 0;
   const solarCount = (world.stations || []).filter((s) => s.type === "solar").length;
   const iceBonus = world.science?.known?.ice ? 1.12 : 1;
 
-  const roof = 2.85 * h.arrayHealth * day * (1 - storm * 0.82);
+  const roof = h.cableFault ? 0 : 2.85 * h.arrayHealth * day * (1 - storm * 0.82);
   const extra = solarCount * 1.7 * day * (1 - storm * 0.82);
   h.solarKw = roof + extra;
 
@@ -157,7 +161,7 @@ export function habReadout(world, lang = "ru") {
     `${ru ? "ВОДА HAB" : "HAB H2O"}   ${h.waterTank.toFixed(1)} L`,
     `${ru ? "СНАРУЖИ" : "OUTSIDE"}   ${h.outsideC.toFixed(0)}°C`,
     `${ru ? "ВНУТРИ" : "INSIDE"}    ${h.insideC.toFixed(0)}°C`,
-    `${ru ? "МАССИВ" : "ARRAY"}     ${(h.arrayHealth * 100).toFixed(0)}%`,
+    `${ru ? "МАССИВ" : "ARRAY"}     ${h.cableFault ? (ru ? "КАБЕЛЬ" : "CABLE") : `${(h.arrayHealth * 100).toFixed(0)}%`}`,
     `${ru ? "ПЕЧЬ" : "HEATER"}    ${heat}   ${ru ? "СВЕТ" : "LIGHTS"} ${lights}`,
     `${ru ? "ДИСТИЛЛ" : "STILL"}    ${h.gridOn ? (ru ? "СЕТЬ ОК" : "GRID OK") : (ru ? "НЕТ СЕТИ" : "NO GRID")}`,
   ].join("\n");
@@ -173,7 +177,8 @@ export function habAlerts(world, lang = "ru") {
   if (h.solarKw + 0.05 < h.loadKw) out.push(ru ? "ДЕФИЦИТ МОЩНОСТИ" : "POWER DEFICIT");
   if (h.battery < 0.2) out.push(ru ? `БАТАРЕЯ ${(h.battery * 100).toFixed(0)}%` : `BATTERY ${(h.battery * 100).toFixed(0)}%`);
   if ((world.daylight || 0) < 0.32 && h.solarKw < 0.08) out.push(ru ? "НОЧЬ · СОЛНЦА НЕТ" : "NIGHT · NO SOLAR");
-  if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
+  if (h.cableFault) out.push(ru ? "КАБЕЛЬ МАССИВА · ПРОВОД НА КЛАДБИЩЕ ПАНЕЛЕЙ" : "ARRAY CABLE OPEN — wire at the solar wreck");
+  else if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
   if (h.waterTank < 1.0) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
   const fueled = (world.stations || []).some((s) => s.type === "still" && s.fuel > 0);
   if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");

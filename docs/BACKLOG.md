@@ -6,9 +6,9 @@
 
 ## P1
 
-- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid coupling)
+- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable coupling)
 - Optional human playtest: E-build still on the stake → ice fuel → drip → tank sip (harness already covers the sim)
-- Deepen stabilize: storm damage to the array / cables — no rover until that has teeth
+- After a storm: splice the roof cable (wire at solar wreck) and replace a cell — no rover until that loop is felt in play
 
 ## P2
 

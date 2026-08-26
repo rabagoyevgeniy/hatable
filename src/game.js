@@ -3,7 +3,7 @@ import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill, switchTone } from "./audio.js";
 import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
-import { repairStillPump, stillCanRun } from "./systems/machines.js";
+import { repairStillPump, stillCanRun, repairArrayCable } from "./systems/machines.js";
 import { sipHabitatTank } from "./systems/survival.js";
 import {
   createPlayer,
@@ -394,6 +394,21 @@ async function bootGame() {
       world.hab.arrayHealth = Math.min(1, world.hab.arrayHealth + 0.24);
       deliverTone();
       toast(`${t("arrayRepaired")} · ${Math.round(world.hab.arrayHealth * 100)}%`);
+      persist();
+      return;
+    }
+    if (hit.kind === "cable-diag") {
+      toast(t("cableFailHint"));
+      return;
+    }
+    if (hit.kind === "repair-cable") {
+      if (!player.tools.hammer || !takeItems(player, { wire: 1 })) {
+        toast(t("needCableParts"));
+        return;
+      }
+      repairArrayCable(world.hab);
+      deliverTone();
+      toast(t("cableFixed"));
       persist();
       return;
     }

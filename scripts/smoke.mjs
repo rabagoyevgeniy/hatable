@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, dist } from "../src/systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
@@ -410,6 +410,26 @@ must(tankWorld.hab.waterTank > tankBefore + 0.4, "fueled still also fills the Ha
 must(existsSync(resolve(root, "src/systems/firstSol.js")), "first-sol harness lives in systems");
 must(existsSync(resolve(root, "scripts/first-sol.mjs")), "first-sol runner");
 must(readFileSync(resolve(root, "package.json"), "utf8").includes("first-sol.mjs"), "smoke gate runs first-sol");
+must(game.includes("repair-cable"), "storm-snapped array cable is an E repair");
+must(i18n.includes("repairCable"), "cable splice prompt is translated");
+must(
+  pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: true }).kind === "repair-cable",
+  "wire at the roof array splices the cable"
+);
+must(
+  pickArrayAction({ d: 0.4, gatherD: 5, cableFault: true, canRepairCable: false }).kind === "cable-diag",
+  "open cable without wire names the solar wreck"
+);
+must(
+  pickArrayAction({ d: 0.4, gatherD: 0.3, cableFault: true, canRepairCable: true }).kind === "repair-cable",
+  "open cable at the roof wins over leftover scrap"
+);
+must(
+  pickArrayAction({ d: 3.2, gatherD: 0.2, cableFault: true, canRepairCable: true }) == null,
+  "loot underfoot away from the array still gathers"
+);
+const cableRead = habReadout({ hab: { ...createHabitat(), cableFault: true }, habSealed: true }, "en");
+must(cableRead.includes("CABLE"), "console names an open array cable");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

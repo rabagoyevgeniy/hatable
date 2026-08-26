@@ -74,6 +74,36 @@ export function tickWeather(world, dt) {
   }
 }
 
+/** First leak minutes are not also a sandblast. */
+export const STORM_GRACE_S = 280;
+export const ARRAY_BLAST_MIN = 0.5;
+export const ARRAY_BLAST_RATE = 0.008;
+export const ARRAY_HEALTH_FLOOR = 0.08;
+export const CABLE_STORM_MIN = 0.55;
+export const CABLE_SNAP_S = 44;
+
+export function stormIntensity(world) {
+  if (world.weather?.state === "storm") {
+    return Math.max(world.storm || 0, world.stormTarget || 0, 0.72);
+  }
+  return world.storm || 0;
+}
+
+/** Permanent array wear + cable snap. Dust only derates kW; a storm leaves scars. */
+export function tickStormDamage(world, dt) {
+  const h = world.hab;
+  if (!h || dt <= 0) return;
+  if ((world.playTime || 0) < STORM_GRACE_S) return;
+  const s = stormIntensity(world);
+  if (s > ARRAY_BLAST_MIN) {
+    h.arrayHealth = Math.max(ARRAY_HEALTH_FLOOR, h.arrayHealth - (s - ARRAY_BLAST_MIN) * ARRAY_BLAST_RATE * dt);
+  }
+  if (s > CABLE_STORM_MIN && !h.cableFault) {
+    h.cableStress = (h.cableStress || 0) + dt;
+    if (h.cableStress >= CABLE_SNAP_S) h.cableFault = true;
+  }
+}
+
 export function weatherLabel(world, lang = "ru") {
   const state = world.weather?.state || "clear";
   const ru = lang === "ru";

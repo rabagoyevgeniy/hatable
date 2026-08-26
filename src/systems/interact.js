@@ -92,6 +92,23 @@ export function pickStillMachineAction({
   return null;
 }
 
+export const ARRAY_RANGE = 3.4;
+
+export function pickArrayAction({
+  d = 99,
+  gatherD = 99,
+  cableFault = false,
+  canRepairCable = false,
+  canReplaceCell = false,
+  health = 1,
+} = {}) {
+  if (d >= ARRAY_RANGE) return null;
+  if (gatherD + 0.35 < d) return null;
+  if (cableFault) return { kind: canRepairCable ? "repair-cable" : "cable-diag", d };
+  if (canReplaceCell && health < 0.97) return { kind: "repair-array", d };
+  return null;
+}
+
 export function dist(ax, az, bx, bz) {
   return Math.hypot(ax - bx, az - bz);
 }

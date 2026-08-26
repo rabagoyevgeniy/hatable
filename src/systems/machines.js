@@ -66,3 +66,9 @@ export function repairStillPump(st) {
   st.repaired = true;
   st.condition = 1;
 }
+
+export function repairArrayCable(hab) {
+  if (!hab) return;
+  hab.cableFault = false;
+  hab.cableStress = 0;
+}
