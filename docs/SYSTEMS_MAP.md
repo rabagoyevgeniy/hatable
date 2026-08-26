@@ -33,11 +33,11 @@ HABITAT (world.hab)
   still (fueled AND grid live)
     → station.water tap
     → hab.waterTank (starts as ~2 L leftover; still is the real supply)
-    → extra load on the battery at night
+    → extra load on the battery only while the grid is live (dead still does not phantom-draw at noon)
   potatoes
     → eat one; last tuber is seed until harvest
     → eating dries thirst; tank sip at console, then ice → still
-    → dead grid takes the still offline; leftover tank sips still work; a full flask is still collectable
+    → dead grid takes the still offline (no kW either); leftover tank sips still work; a full flask is still collectable
   plot
     → grow = light × temp × moisture
     → sleep uses a day of light (not wake-up night)

@@ -460,6 +460,13 @@ Overnight: hunt couplings, no new HUD. Tank sips survived grid death; water alre
 - E on a full flask is still-take even when `gridOn` is false. Empty fueled still waits. No rover
 - No Pointer Lock playtest
 
+### Cycle BC — dead still does not phantom-load the grid
+
+Overnight: hunt couplings, no new HUD. Grid death already froze the still, the flask, and the tank trickle — but noon still drew 0.32 kW with nothing to show for it.
+
+- Fueled still loads the battery only while `gridOn`. Dawn recovery is not slower because an offline machine is sitting in the yard. Live grid still draws. No rover
+- No Pointer Lock playtest
+
 
 
 

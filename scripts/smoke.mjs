@@ -453,6 +453,43 @@ tankWorld.hab.heaterOn = false;
 const tankBefore = tankWorld.hab.waterTank;
 for (let i = 0; i < 28; i++) tickHabitat(tankWorld, 1);
 must(tankWorld.hab.waterTank > tankBefore + 0.4, "fueled still also fills the Hab tank at the desk");
+{
+  const noonDead = { hab: createHabitat(), habSealed: true, daylight: 1, storm: 0, clock: 0.25, stations: [] };
+  noonDead.hab.gridOn = false;
+  noonDead.hab.battery = 0;
+  noonDead.hab.heaterOn = false;
+  tickTime(noonDead, 0);
+  tickHabitat(noonDead, 0);
+  const bareLoad = noonDead.hab.loadKw;
+  const phantom = {
+    hab: createHabitat(),
+    habSealed: true,
+    daylight: 1,
+    storm: 0,
+    clock: 0.25,
+    stations: [{ type: "still", fuel: 28, fault: null }],
+  };
+  phantom.hab.gridOn = false;
+  phantom.hab.battery = 0;
+  phantom.hab.heaterOn = false;
+  tickTime(phantom, 0);
+  tickHabitat(phantom, 0);
+  must(Math.abs(phantom.hab.loadKw - bareLoad) < 0.01, "offline still does not phantom-load a dead grid");
+  const liveDraw = {
+    hab: createHabitat(),
+    habSealed: true,
+    daylight: 1,
+    storm: 0,
+    clock: 0.25,
+    stations: [{ type: "still", fuel: 28, fault: null }],
+  };
+  liveDraw.hab.gridOn = true;
+  liveDraw.hab.heaterOn = false;
+  tickTime(liveDraw, 0);
+  tickHabitat(liveDraw, 0);
+  must(liveDraw.hab.loadKw >= bareLoad + 0.3, "live grid still draws 0.32 kW");
+}
+must(!readFileSync(resolve(root, "src/systems/habitat.js"), "utf8").includes("stillMayRun"), "still load is not a daylight phantom");
 
 must(existsSync(resolve(root, "src/systems/firstSol.js")), "first-sol harness lives in systems");
 must(existsSync(resolve(root, "scripts/first-sol.mjs")), "first-sol runner");

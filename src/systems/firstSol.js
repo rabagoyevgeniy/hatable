@@ -441,6 +441,76 @@ export function runStabilizeCoupling() {
   }
   notes.push("dead-grid-flask-still-takes");
 
+  const bareDawn = createHeadlessWorld();
+  bareDawn.habSealed = true;
+  bareDawn.hab.gridOn = false;
+  bareDawn.hab.battery = 0;
+  bareDawn.hab.heaterOn = false;
+  bareDawn.clock = 0.25;
+  tickTime(bareDawn, 0);
+  applyWeatherState(bareDawn, "clear");
+  tickHabitat(bareDawn, 0);
+  const bareLoad = bareDawn.hab.loadKw;
+
+  const phantomDawn = createHeadlessWorld();
+  phantomDawn.habSealed = true;
+  phantomDawn.hab.gridOn = false;
+  phantomDawn.hab.battery = 0;
+  phantomDawn.hab.heaterOn = false;
+  phantomDawn.clock = 0.25;
+  tickTime(phantomDawn, 0);
+  applyWeatherState(phantomDawn, "clear");
+  const idleStill = placeStationSim(phantomDawn, "still", -7.5, 12.6);
+  idleStill.fuel = 28;
+  tickHabitat(phantomDawn, 0);
+  if (Math.abs(phantomDawn.hab.loadKw - bareLoad) > 0.01) {
+    fail("stabilize", `offline still must not phantom-load the grid (${phantomDawn.hab.loadKw} vs ${bareLoad})`);
+  }
+
+  const liveLoad = createHeadlessWorld();
+  liveLoad.habSealed = true;
+  liveLoad.hab.gridOn = true;
+  liveLoad.hab.battery = 0.8;
+  liveLoad.hab.heaterOn = false;
+  liveLoad.clock = 0.25;
+  tickTime(liveLoad, 0);
+  applyWeatherState(liveLoad, "clear");
+  tickHabitat(liveLoad, 0);
+  const onBare = liveLoad.hab.loadKw;
+  const running = placeStationSim(liveLoad, "still", -7.5, 12.6);
+  running.fuel = 28;
+  tickHabitat(liveLoad, 0);
+  if (!(liveLoad.hab.loadKw >= onBare + 0.3)) {
+    fail("stabilize", "a running still should load the live grid");
+  }
+
+  function ticksUntilGrid(withStill) {
+    const w = createHeadlessWorld();
+    w.habSealed = true;
+    w.hab.gridOn = false;
+    w.hab.battery = 0;
+    w.hab.heaterOn = false;
+    w.clock = 0.25;
+    tickTime(w, 0);
+    applyWeatherState(w, "clear");
+    if (withStill) {
+      const s = placeStationSim(w, "still", -7.5, 12.6);
+      s.fuel = 28;
+    }
+    let n = 0;
+    while (!w.hab.gridOn && n < 400) {
+      tickHabitat(w, 1);
+      n += 1;
+    }
+    return n;
+  }
+  const bareTicks = ticksUntilGrid(false);
+  const stillTicks = ticksUntilGrid(true);
+  if (stillTicks > bareTicks + 1) {
+    fail("stabilize", `offline still must not delay dawn recovery (${stillTicks} vs ${bareTicks})`);
+  }
+  notes.push("dead-still-does-not-phantom-load");
+
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {
     fail("stabilize", "dry soil should grow slower than watered");

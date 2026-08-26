@@ -803,7 +803,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     world.scanRing.scale.x += dt * 18;
     world.scanRing.scale.y += dt * 18;
     world.scanRing.material.opacity = Math.max(0, 0.7 - world.scanRing.scale.x * 0.03);
-    if (world.scanRing.scale.x > 22) world.scanRing.scale.set(1, 1, 1);
+    if (world.scanRing.scale.x > LOOT_RING_RANGE) world.scanRing.scale.set(1, 1, 1);
   } else {
     world.scanRing.material.opacity = 0;
     world.scanRing.scale.set(1, 1, 1);

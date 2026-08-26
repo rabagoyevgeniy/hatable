@@ -78,8 +78,8 @@ export function tickHabitat(world, dt) {
   if (h.heaterOn && (night > 0.5 || h.insideC < 16)) load += 0.5;
   if (h.lightsOn) load += 0.11;
   const stillsFueled = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0 && !s.fault);
-  const stillMayRun = h.gridOn || h.battery > 0.06 || day > 0.48;
-  if (stillMayRun) load += stillsFueled.length * 0.32;
+  // Offline still is dark: no flask, no tank trickle, no phantom kW fighting dawn recovery.
+  if (h.gridOn) load += stillsFueled.length * 0.32;
   h.loadKw = load;
 
   if (!h.gridOn) {
