@@ -200,5 +200,20 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 ### Cycle V playtest (browser)
 
-- From spawn the hatch mouth shows **ARES III** and **ШЛЮЗ** together; locker to the right
-- Did not finish patch this sitting (still on «Подбери лом»). Door is named; next sitting walks in and E the left tear
+### Cycle W — First Sol closed by a headless harness
+
+Director: finish the vertical slice; max two browser playtests; if Pointer Lock / Page Unresponsive hangs, do not polish geometry for the agent. Gate is a deterministic chain, then continue Master Vision.
+
+- `scripts/first-sol.mjs` runs leak → repair → power → sleep → still → ice → water → drink → crop on the live sim (no Three)
+- Sleep / tank sip / inventory / station place extracted so the harness cannot import `player.js` / `world.js`
+- Crop sleep uses a **day** of growth, not the night you wake into. Sealed + live grid is a greenhouse; dead grid / open hull uses Mars-outside cold
+- Stabilize gate (same runner): storm cuts solar, storm slows crops, grid death freezes the plot, dry soil is slower than watered
+- `npm run smoke` now includes the first-sol runner. No new HUD/geometry polish
+
+Browser E-build of the still is still unverified in a sitting. The sim chain is green. Rover still waits.
+
+### Cycle W — Master Vision after the gate
+
+- Coupled loop is now testable: dust/storm → kW → battery → `gridOn` → crop temp
+- Next deepen: equipment damage in storms (cables), not rover, not Pathfinder
+

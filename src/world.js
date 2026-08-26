@@ -4,8 +4,8 @@ import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS, HAB_LEAK, HAB_PO
 import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, cropFactors, CROP_SLEEP, CROP_LIVE } from "./systems/habitat.js";
-import { tickStillMachine, stillCanRun, STILL_PUMP_FAIL } from "./systems/machines.js";
+import { createHabitat, tickTime, tickHabitat, cropFactors, CROP_LIVE, advanceSolSim } from "./systems/habitat.js";
+import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience } from "./systems/science.js";
 import { isMobileView } from "./device.js";
@@ -534,28 +534,14 @@ export function placeStation(world, station, x, z) {
     if (plate) plate.visible = false;
     if (light) light.visible = false;
     if (steam) steam.visible = false;
-    const st = { type: "seal", mesh: hab?.group, x: 0, z: 8, water: 0, fuel: 0, planted: false, grow: 0 };
+    const st = { ...makeStation("seal", 0, 8), mesh: hab?.group };
     world.stations.push(st);
     return st;
   }
   const mesh = buildStation(station);
   mesh.position.set(x, heightAt(x, z), z);
   world.scene.add(mesh);
-  const st = {
-    type: station,
-    mesh,
-    x,
-    z,
-    water: 0,
-    fuel: 0,
-    planted: false,
-    grow: 0,
-    moisture: 0.2,
-    runtime: 0,
-    fault: null,
-    repaired: false,
-    condition: 1,
-  };
+  const st = { ...makeStation(station, x, z), mesh };
   world.stations.push(st);
   if (station === "solar") {
     world.powered = true;
@@ -893,22 +879,9 @@ export function updatePlotVisual(st) {
 }
 
 export function advanceSol(world) {
-  simulateSleep(world, 96);
-  const f = cropFactors(world);
-  const soil = world.science?.known?.soil ? 1.12 : 1;
+  advanceSolSim(world);
   for (const st of world.stations) {
-    if (st.type === "plot" && st.planted) {
-      st.grow = Math.min(1, st.grow + CROP_SLEEP * f.light * f.temp * Math.max(0.22, st.moisture) * soil);
-      st.moisture = Math.max(0.08, (st.moisture ?? 0.4) * 0.72);
-      updatePlotVisual(st);
-    }
-    if (st.type === "still" && stillCanRun(st, world)) {
-      st.water += 5;
-      st.fuel = Math.max(0, st.fuel - 10);
-      st.runtime = (st.runtime || 0) + 40;
-      if (!st.repaired && st.runtime >= STILL_PUMP_FAIL) st.fault = "pump";
-      if (world.hab && !st.fault) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);
-    }
+    if (st.type === "plot") updatePlotVisual(st);
   }
 }
 

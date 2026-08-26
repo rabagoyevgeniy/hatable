@@ -12,8 +12,10 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Roof array condition + cell replacement with salvaged solar
 - Sleep advances Sol and ticks habitat/weather/crops
 - Versioned localStorage save: Continue / New Game / autosave
-- Still (ice/hydrazine → water **if grid is live**; E at the cream pole with 2 scrap + canvas, ice is fuel). Stake+sign visible from Hab. Overnight browser has not yet finished E-build+fuel in one sitting
-- Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest (watering is not a click)
+- Still (ice/hydrazine → water **if grid is live**; E at the cream pole with 2 scrap + canvas, ice is fuel)
+- **First Sol vertical slice** gated by `scripts/first-sol.mjs`: leak → repair → power → sleep → still → ice → water → drink → crop (headless; browser E-build of the still still unverified in one sitting)
+- Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest. Sleep growth is a day, not the night you wake into. Sealed + live grid shelters the crop; dead grid uses Mars cold
+- Coupled stabilize (harness): storm cuts solar and crop light; grid death freezes plots
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
@@ -30,7 +32,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 
 - Scanner science (first-scan ident, no lab / recipes from samples yet)
 - Range estimate (O₂ round-trip only; no thermal/sunset packing list)
-- Weather vs equipment damage (solar derate + cold; no broken cables yet)
+- Weather vs equipment damage (solar + crop derate + greenhouse freeze on grid death; no broken cables yet)
 - Diegetic HUD (console exists; default HUD still has meters)
 - Story / delayed Earth (journal logs only)
 

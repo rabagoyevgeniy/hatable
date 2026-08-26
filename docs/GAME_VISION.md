@@ -29,6 +29,8 @@ Loop: observe problem → understand cause → prepare → leave safety → scav
 
 Leak + power emergency. Patch pressure. Salvage. Trickle-charge a damaged array. Night kills solar. Battery is the lifeline. Ice → water. First crop is a moment, not a click.
 
+Closed when `scripts/first-sol.mjs` stays green (leak → repair → power → sleep → still → ice → water → drink → crop). After that, deepen **stabilize** (storm → solar → battery → heater/grid → crops). Rover waits.
+
 ## Constraints
 
 Browser game. Vite + Three.js. Desktop quality, mobile fallback. No rewrite. Modular systems when a feature needs them — not empty folders.

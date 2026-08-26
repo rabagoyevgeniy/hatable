@@ -1,6 +1,50 @@
-/** Station faults. Repair uses existing salvage, not XP. */
+/** Station faults and headless station state. Repair uses existing salvage, not XP. */
 
 export const STILL_PUMP_FAIL = 56;
+
+export function makeStation(type, x = 0, z = 0) {
+  return {
+    type,
+    x,
+    z,
+    water: 0,
+    fuel: 0,
+    planted: false,
+    grow: 0,
+    moisture: type === "plot" ? 0.2 : 0,
+    runtime: 0,
+    fault: null,
+    repaired: false,
+    condition: 1,
+  };
+}
+
+/** Same flags and station records as `placeStation`, without meshes. */
+export function placeStationSim(world, type, x = 0, z = 0) {
+  if (type === "seal") {
+    world.habSealed = true;
+    const st = makeStation("seal", 0, 8);
+    world.stations.push(st);
+    return st;
+  }
+  const st = makeStation(type, x, z);
+  world.stations.push(st);
+  if (type === "solar") world.powered = true;
+  if (type === "radio") world.contacted = true;
+  return st;
+}
+
+/** Compressed still work for a slept Sol — same numbers as the live `advanceSol`. */
+export function tickStillOnSleep(world) {
+  for (const st of world.stations || []) {
+    if (!stillCanRun(st, world)) continue;
+    st.water += 5;
+    st.fuel = Math.max(0, st.fuel - 10);
+    st.runtime = (st.runtime || 0) + 40;
+    if (!st.repaired && st.runtime >= STILL_PUMP_FAIL) st.fault = "pump";
+    if (world.hab && !st.fault) world.hab.waterTank = Math.min(40, world.hab.waterTank + 2.4);
+  }
+}
 
 export function stillCanRun(st, world) {
   return !!(st && st.type === "still" && st.fuel > 0 && !st.fault && world.hab?.gridOn);

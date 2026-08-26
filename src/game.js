@@ -4,7 +4,7 @@ import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill,
 import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { repairStillPump, stillCanRun } from "./systems/machines.js";
-import { TANK_SIP_L, TANK_MIN_L, TANK_SIP_THIRST } from "./systems/survival.js";
+import { sipHabitatTank } from "./systems/survival.js";
 import {
   createPlayer,
   updatePlayer,
@@ -181,13 +181,10 @@ async function bootGame() {
         switchTone();
         toast(world.hab.lightsOn ? t("lightsOn") : t("lightsOff"));
       } else if (act === "drink") {
-        if (world.hab.waterTank < TANK_MIN_L) {
+        if (!sipHabitatTank(world, player).ok) {
           toast(t("tankEmpty"));
           return;
         }
-        world.hab.waterTank -= TANK_SIP_L;
-        player.thirst = Math.min(100, player.thirst + TANK_SIP_THIRST);
-        player.drank = true;
         pickupTone("water");
         toast(t("drankTank"));
         maybeGoal();

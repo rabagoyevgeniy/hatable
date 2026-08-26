@@ -407,6 +407,10 @@ const tankBefore = tankWorld.hab.waterTank;
 for (let i = 0; i < 28; i++) tickHabitat(tankWorld, 1);
 must(tankWorld.hab.waterTank > tankBefore + 0.4, "fueled still also fills the Hab tank at the desk");
 
+must(existsSync(resolve(root, "src/systems/firstSol.js")), "first-sol harness lives in systems");
+must(existsSync(resolve(root, "scripts/first-sol.mjs")), "first-sol runner");
+must(readFileSync(resolve(root, "package.json"), "utf8").includes("first-sol.mjs"), "smoke gate runs first-sol");
+
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));
   process.exit(1);

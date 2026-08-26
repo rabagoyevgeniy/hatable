@@ -34,6 +34,9 @@ HABITAT (world.hab)
     → eating dries thirst; tank sip at console, then ice → still
   plot
     → grow = light × temp × moisture × (soil scan bonus)
+    → sleep uses a day of light (not wake-up night)
+    → temp = Hab inside °C if sealed + gridOn, else outside
+    → storm cuts light; dead grid freezes the greenhouse
 
 PLAYER
   suit O₂, hunger, thirst, warmth

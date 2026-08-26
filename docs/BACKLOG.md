@@ -6,8 +6,9 @@
 
 ## P1
 
-- Keep leak / power / water / first harvest stable — no rover until that holds
-- Confirm still playtest: E-build on the stake → ice fuel → drip prompt → tank sip
+- Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid coupling)
+- Optional human playtest: E-build still on the stake → ice fuel → drip → tank sip (harness already covers the sim)
+- Deepen stabilize: storm damage to the array / cables — no rover until that has teeth
 
 ## P2
 

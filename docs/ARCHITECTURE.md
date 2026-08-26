@@ -6,12 +6,14 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | --- | --- |
 | `game.js` | renderer, input, camera, interact, save triggers, frame |
 | `world.js` | scene, terrain, outposts, stations, clock visuals |
-| `player.js` | body, inventory, suit vitals, sleep, O₂ range |
-| `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep sim |
-| `systems/weather.js` | CLEAR/DUST/STORM → `world.storm` |
+| `player.js` | body, suit vitals, O₂ range; re-exports pocket helpers |
+| `systems/inventory.js` | count / add / take / afford (no Three) |
+| `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep Sol, crop factors |
+| `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState` for tests |
 | `systems/science.js` | scan discoveries |
-| `systems/machines.js` | station faults (still pump) and repair helpers |
-| `systems/survival.js` | seed potato + first-Sol thirst/tank pacing |
+| `systems/machines.js` | station records, still pump, headless `placeStationSim` |
+| `systems/survival.js` | seed potato, tank sip, bunk `trySleepSol` |
+| `systems/firstSol.js` | sequential First Sol + stabilize harness |
 | `systems/save.js` | localStorage snapshot `stranded-mars-save-v1` |
 | `ui.js` / `i18n.js` | HUD, menus, language, Hab console |
 | `data.js` | items, recipes, spawns, goals, Hab interact points |
@@ -27,3 +29,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 Do not grow `game.js` into a god object. New coupled sim goes in `src/systems/`.
 
 **Design decision — battery:** kW integrated as `(net kW × dt × 4.2 h) / 220 s / 7.5 kWh` so a night can empty a weak battery without draining it in two real seconds.
+
+**Design decision — crop sleep:** `advanceSolSim` grows plots with daylight 0.85 (the Sol you slept), not the night clock you wake into. Temp uses Hab inside °C while sealed + `gridOn`, else outside Mars cold.
+
+**Gate:** `npm run smoke` runs isolated sim checks then `scripts/first-sol.mjs` (leak → crop, then storm/grid coupling).

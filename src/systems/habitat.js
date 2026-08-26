@@ -1,5 +1,7 @@
 /** Lightweight Hab machine: pressure, solar, battery, temperature, water. */
 
+import { tickStillOnSleep } from "./machines.js";
+
 export const SOL_SECONDS = 220;
 /** Sleep jump toward harvest. Four watered Sols can finish. */
 export const CROP_SLEEP = 0.52;
@@ -40,9 +42,19 @@ export function tickTime(world, dt) {
 export function cropFactors(world) {
   const storm = world.storm || 0;
   const light = Math.max(0.06, (world.daylight || 0) * (1 - storm * 0.78));
-  const outside = world.hab?.outsideC ?? -20;
-  const temp = Math.max(0.12, Math.min(1, (outside + 40) / 52));
+  const hab = world.hab;
+  const sheltered = !!(world.habSealed && hab?.gridOn);
+  const tC = sheltered ? hab?.insideC ?? 8 : hab?.outsideC ?? -20;
+  const temp = Math.max(0.12, Math.min(1, (tC + 40) / 52));
   return { light, temp };
+}
+
+/**
+ * A slept Sol is a day of growth, not the night you wake into.
+ * Storm cuts light. Dead grid / unsealed hull uses Mars-outside cold.
+ */
+export function cropSleepFactors(world) {
+  return cropFactors({ ...world, daylight: 0.85 });
 }
 
 export function tickHabitat(world, dt) {
@@ -108,6 +120,24 @@ export function simulateSleep(world, seconds = 96) {
     if (typeof weatherTick === "function") weatherTick(world, dt);
     tickHabitat(world, dt);
   }
+}
+
+export function tickCropsOnSleep(world) {
+  const f = cropSleepFactors(world);
+  const soil = world.science?.known?.soil ? 1.12 : 1;
+  for (const st of world.stations || []) {
+    if (st.type !== "plot" || !st.planted) continue;
+    const moist = st.moisture ?? 0.4;
+    st.grow = Math.min(1, st.grow + CROP_SLEEP * f.light * f.temp * Math.max(0.22, moist) * soil);
+    st.moisture = Math.max(0.08, moist * 0.72);
+  }
+}
+
+/** Three-free Sol advance used by bunk sleep and the first-sol harness. */
+export function advanceSolSim(world) {
+  simulateSleep(world, 96);
+  tickCropsOnSleep(world);
+  tickStillOnSleep(world);
 }
 
 export function habReadout(world, lang = "ru") {
