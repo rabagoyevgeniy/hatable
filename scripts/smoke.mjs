@@ -305,6 +305,17 @@ must(!canEatPotato({ inv: { potato: 1 }, harvestedCrop: false }), "last potato i
 must(canEatPotato({ inv: { potato: 1 }, harvestedCrop: true }), "harvested copies can be eaten");
 must(!hasMavCargo({ inv: { water: 1, potato: 1 }, harvestedCrop: false }), "last seed is not MAV cargo");
 must(hasMavCargo({ inv: { water: 1, potato: 1 }, harvestedCrop: true }), "harvested potato plus water is MAV cargo");
+must(!hasMavCargo({ inv: { potato: 1 }, harvestedCrop: true }), "no flask is not MAV cargo");
+{
+  const flask = { oxygen: 100, warmth: 70, thirst: 100, hunger: 80, inv: { potato: 1 }, harvestedCrop: true };
+  const camp = { habSealed: true, daylight: 0.9, storm: 0.05, contacted: true, hab: { waterTank: 2.2 } };
+  must(sipHabitatTank(camp, flask).ok, "desk can sip leftover tank");
+  must(!hasMavCargo(flask), "tank sip is thirst, not a still flask");
+  must(
+    packingLines(flask, camp, "en").some((l) => l.includes("MAV") && l.includes("NO CARGO")),
+    "hydrated without a flask is still NO CARGO"
+  );
+}
 must(
   !goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 } }, { contacted: true }).escape,
   "walking the seed to the MAV is not the win"

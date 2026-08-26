@@ -439,6 +439,13 @@ Timer still listed desk/night. Repo: First Sol is closed in sim; scanner is not 
 - Next high-value is not another micro-gate. Suit tablet needs a real player. Storm→wire and still E-build need human eyes. Rover waits
 - No Pointer Lock playtest
 
+### Cycle AZ — tank sip is not a MAV flask
+
+Overnight timer: hunt couplings, no new HUD. Desk drink packs thirst for Pathfinder; escape still needs a still flask in pockets.
+
+- Hydrated + harvested without `inv.water` stays NO CARGO. No rover
+- No Pointer Lock playtest
+
 
 
 

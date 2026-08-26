@@ -10,7 +10,7 @@ import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
-import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines } from "./survival.js";
+import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines, hasMavCargo } from "./survival.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal, GOAL_IDS } from "./goals.js";
 
@@ -961,6 +961,22 @@ export function runStabilizeCoupling() {
     fail("stabilize", "harvested cargo at the MAV after Earth should finish the walk");
   }
   notes.push("seed-is-not-mav-cargo");
+
+  const flask = { oxygen: 100, warmth: 70, thirst: 100, hunger: 80, inv: { potato: 1 }, harvestedCrop: true };
+  const earthCamp = createHeadlessWorld();
+  earthCamp.habSealed = true;
+  earthCamp.daylight = 0.9;
+  earthCamp.contacted = true;
+  applyWeatherState(earthCamp, "clear");
+  if (hasMavCargo(flask)) fail("stabilize", "harvest without a flask is not MAV cargo");
+  if (!sipHabitatTank(earthCamp, flask).ok) fail("stabilize", "leftover tank should still sip");
+  if (hasMavCargo(flask)) fail("stabilize", "tank sip is thirst, not a still flask");
+  if (!packingLines(flask, earthCamp, "en").some((l) => l.includes("MAV") && l.includes("NO CARGO"))) {
+    fail("stabilize", "hydrated desk without a flask should still say NO CARGO");
+  }
+  flask.inv.water = 1;
+  if (!hasMavCargo(flask)) fail("stabilize", "still flask plus harvest is MAV cargo");
+  notes.push("tank-sip-is-not-mav-flask");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }
