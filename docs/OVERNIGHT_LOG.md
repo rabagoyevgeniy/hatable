@@ -276,6 +276,15 @@ Overnight timer still listed desk/night. Repo: dust hides rings. Next understand
 - Wire underfoot still scans as wire. Shared `pickScanTarget` in the harness
 - No rover. No Pointer Lock playtest
 
+### Cycle AD — distant wrecks have no cookie in clear weather
+
+Overnight timer still listed desk/night. P2: drop loot rings in clear weather too — but keep the yard.
+
+- Further than 22 m, non-starter rings stay off until you scan or walk in. Solar-wreck wire is a landmark + F, not a glow on the horizon
+- Yard ice/canvas still ring on a clear day. Dust still eats everything without scan
+- No rover. No Pointer Lock playtest
+
+
 
 
 

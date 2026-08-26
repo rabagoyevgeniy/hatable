@@ -66,12 +66,21 @@ export const SCAN_DB = {
 import { STORM_GRACE_S } from "./weather.js";
 
 export const DUST_HIDES_BEACONS = 0.42;
+/** Further than this, even a clear day has no cheat ring — scan or walk in. */
+export const LOOT_RING_RANGE = 22;
 
-/** Debug loot rings. Dust eats them; hold F / Scan to see. Starter rings survive the first emergency. */
-export function lootBeaconVisible({ starter = false, storm = 0, scanning = false, playTime = 0 } = {}) {
+/** Debug loot rings. Dust eats them; distance eats them; hold F / Scan to see. */
+export function lootBeaconVisible({
+  starter = false,
+  storm = 0,
+  scanning = false,
+  playTime = 0,
+  dist = 0,
+} = {}) {
   if (scanning) return true;
   if (starter && (playTime || 0) < STORM_GRACE_S) return true;
   if (storm >= DUST_HIDES_BEACONS) return false;
+  if (!starter && dist > LOOT_RING_RANGE) return false;
   return true;
 }
 

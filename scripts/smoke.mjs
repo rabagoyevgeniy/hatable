@@ -452,6 +452,9 @@ must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("WALK_MPS"), 
 must(lootBeaconVisible({ starter: true, playTime: 10, storm: 0 }), "starter rings show during the leak emergency");
 must(!lootBeaconVisible({ starter: false, storm: 0.5, scanning: false }), "dust eats debug loot rings");
 must(lootBeaconVisible({ starter: false, storm: 0.78, scanning: true }), "scan reveals loot in a storm");
+must(lootBeaconVisible({ starter: false, storm: 0, dist: 8 }), "yard loot still rings on a clear day");
+must(!lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: false }), "distant wrecks have no cheat ring in clear weather");
+must(lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: true }), "scan reveals distant wreck loot");
 must(world.includes("lootBeaconVisible"), "world hides loot marks from storm, not only the HUD");
 must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "scan at the solar wreck names the farm");
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");

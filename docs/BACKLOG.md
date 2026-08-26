@@ -12,7 +12,7 @@
 
 ## P2
 
-- Scanner as a mode: dust already hides loot rings — next is dropping rings in clear weather too / lab from samples
+- Scanner as a mode: dust and distance hide loot rings — lab / recipes from samples still wait
 - Suit tablet instead of MMO meters
 - Delayed Earth after radio
 

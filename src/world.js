@@ -787,6 +787,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       storm: world.storm,
       scanning,
       playTime: world.playTime,
+      dist: Math.hypot(n.mesh.position.x - playerPos.x, n.mesh.position.z - playerPos.z),
     });
     const mark = n.mesh.getObjectByName("lootMark");
     if (mark) mark.visible = show;

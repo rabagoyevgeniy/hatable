@@ -56,6 +56,7 @@ SCIENCE
   soil → crop rate
   solaryard → first ident of the copper/cell wreck (not XP)
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
+  distant (>22 m) non-starter rings stay off even in clear weather
 
 WORLD
   nodes (loot), stations, locker, outposts

@@ -527,7 +527,12 @@ export function runStabilizeCoupling() {
   notes.push("storm-blocks-wire-run");
 
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
-  if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false })) fail("stabilize", "clear-day yard loot still has a ring");
+  if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");
+  if (lootBeaconVisible({ starter: false, storm: 0, scanning: false, dist: 40 })) {
+    fail("stabilize", "clear-day distant wrecks should not glow until you scan or close in");
+  }
+  if (!lootBeaconVisible({ starter: false, storm: 0, scanning: true, dist: 40 })) fail("stabilize", "scan reveals distant wreck loot");
+  notes.push("distant-rings-need-scan");
   if (lootBeaconVisible({ starter: false, storm: 0.5, scanning: false })) fail("stabilize", "dust should eat debug loot rings");
   if (!lootBeaconVisible({ starter: false, storm: 0.78, scanning: true })) fail("stabilize", "scan must reveal loot in a storm");
   if (lootBeaconVisible({ starter: true, playTime: 400, storm: 0.5, scanning: false })) {
