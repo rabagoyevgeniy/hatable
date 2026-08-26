@@ -288,7 +288,10 @@ export function updateHud({ player, world, journal, scanning, camera, inside }) 
       bits.push(`BAT ${(world.hab.battery * 100).toFixed(0)}%`);
     }
     bits.push(weatherLabel(world, getLang()));
-    if (!inside) bits.push(`${t("range")} ${Math.max(0.1, estimateRangeM(player, world) / 1000).toFixed(1)} km`);
+    if (!inside) {
+      const km = estimateRangeM(player, world) / 1000;
+      bits.push(`${t("range")} ${km < 0.05 ? "<0.1" : km.toFixed(1)} km`);
+    }
     if (still) bits.push(`${getLang() === "ru" ? "вода" : "still"} ${Math.floor(still.water)}`);
     if (plot?.planted) bits.push(`${getLang() === "ru" ? "рост" : "crop"} ${Math.floor(plot.grow * 100)}%`);
     base.textContent = bits.join(" · ");

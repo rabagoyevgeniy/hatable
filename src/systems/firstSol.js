@@ -4,13 +4,13 @@
  * Uses the live sim modules. No Three.js.
  */
 
-import { RECIPES, YARD_PADS, HAB_LEAK, LOCKER_START } from "../data.js";
+import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
-import { trySleepSol, sipHabitatTank, canEatPotato } from "./survival.js";
+import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal } from "./goals.js";
 
@@ -502,6 +502,29 @@ export function runStabilizeCoupling() {
   }
   if (!habStatusLine(nap, "en").includes("CABLE")) fail("stabilize", "status line should not hide the cable under POWER DEFICIT");
   notes.push("sleep-through-storm");
+
+  const solar = OUTPOSTS.find((o) => o.id === "solar");
+  const wire = NODE_SPAWNS.find((n) => n.type === "wire" && n.x > 40 && n.z > 90);
+  if (!solar || !wire) fail("stabilize", "solar wreck / wire pile missing");
+  const trip = roundTripM(HAB_POS, wire);
+  if (trip < 180 || trip > 280) fail("stabilize", `wire run should be a leash, not a stroll (${trip.toFixed(0)} m)`);
+  const suit = { oxygen: 100, warmth: 70 };
+  const noon = createHeadlessWorld();
+  noon.habSealed = true;
+  noon.daylight = 0.9;
+  applyWeatherState(noon, "clear");
+  if (!canRoundTrip(suit, noon, wire, HAB_POS)) {
+    fail("stabilize", `clear day should reach the solar wreck (range ${estimateRangeM(suit, noon).toFixed(0)} vs ${trip.toFixed(0)})`);
+  }
+  notes.push("clear-day-wire-run");
+
+  const gale = createHeadlessWorld();
+  gale.habSealed = true;
+  gale.daylight = 0.12;
+  applyWeatherState(gale, "storm");
+  if (canRoundTrip(suit, gale, wire, HAB_POS)) fail("stabilize", "storm night must not be a safe wire run");
+  if (!(estimateRangeM(suit, gale) < trip * 0.6)) fail("stabilize", "storm night should crush the range line");
+  notes.push("storm-blocks-wire-run");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

@@ -240,5 +240,15 @@ Overnight timer still listed the old desk/night checklist. Repo: First Sol gated
 - Save does not replay the snap toast
 - No rover. No Pointer Lock playtest
 
+### Cycle Z — the wire run is a leash
+
+Overnight timer still listed desk/night. Repo: cable is a diagnosis. Next P1 was “felt in play” as a walk, not a rover.
+
+- Suit range is now the tighter of O₂ and warmth (storm night is cold, not just thin air)
+- HUD no longer floors the number at 0.1 km, so a suicide walk does not look safe
+- Harness: clear day reaches the solar-wreck wire; storm night does not. Distance is the splice cost
+- No rover. No Pointer Lock playtest
+
+
 
 

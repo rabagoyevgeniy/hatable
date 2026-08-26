@@ -8,7 +8,7 @@
 
 - Do not break `npm run smoke` / `npm run first-sol` (leak → crop + storm/grid/cable coupling)
 - Optional human playtest: E-build still on the stake → ice fuel → drip → tank sip (harness already covers the sim)
-- After a storm: splice the roof cable (wire at solar wreck) and replace a cell — HUD now names the cable; optional human sit-through of a storm. No rover
+- After a storm: wait for a clear day, walk the solar wreck for wire, splice at the roof — range line now refuses a storm-night suicide run. No rover
 
 ## P2
 

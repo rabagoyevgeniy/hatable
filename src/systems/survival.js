@@ -1,5 +1,6 @@
 /** First-Sol gut: leftover tank, seed potato, sleep, tank sip. No Three.js. */
 
+import { SURVIVAL } from "../data.js";
 import { advanceSolSim } from "./habitat.js";
 
 export const TANK_SIP_L = 0.4;
@@ -58,4 +59,33 @@ export function trySleepSol(player, world, advance = advanceSolSim) {
   else player.oxygen = clamp100(player.oxygen + 12);
   player.warmth = clamp100(world.hab?.insideC > 12 ? 86 : player.warmth + 14);
   return "slept";
+}
+
+/** Match the walk speed baked into the old O₂ range line. */
+export const WALK_MPS = 3.05;
+
+export function suitDrainRates(world) {
+  const storm = world.storm || 0;
+  const night = (world.daylight || 1) < 0.28;
+  return {
+    o2: SURVIVAL.o2Outside + (world.habSealed ? 0.05 : 0.22) + storm * SURVIVAL.o2Storm,
+    warmth: (night ? SURVIVAL.warmthNight : SURVIVAL.warmthDay) * (storm + 0.55),
+  };
+}
+
+/** Round-trip metres you can survive on current O₂ and warmth. */
+export function estimateRangeM(player, world) {
+  const rates = suitDrainRates(world);
+  const o2Seconds = (player.oxygen ?? 0) / Math.max(0.08, rates.o2);
+  const warmthSeconds = (player.warmth ?? 0) / Math.max(0.08, rates.warmth);
+  const seconds = Math.min(o2Seconds, warmthSeconds);
+  return (seconds * WALK_MPS) / 2;
+}
+
+export function roundTripM(from, to) {
+  return Math.hypot((to.x ?? 0) - (from.x ?? 0), (to.z ?? 0) - (from.z ?? 0)) * 2;
+}
+
+export function canRoundTrip(player, world, dest, from = { x: 0, z: 8 }) {
+  return estimateRangeM(player, world) + 0.01 >= roundTripM(from, dest);
 }

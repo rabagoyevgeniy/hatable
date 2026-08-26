@@ -4,9 +4,9 @@ import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habSta
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
-import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
+import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
-import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
 import { goalsDone, advanceJournal } from "../src/systems/goals.js";
@@ -439,6 +439,15 @@ must(
 );
 must(game.includes("consumeHabEvents"), "cable snap raises a Hab log, not only a silent kW drop");
 must(i18n.includes("cableSnapped"), "storm-snapped cable toast is translated");
+must(ui.includes("<0.1"), "range line can show you cannot make the wreck");
+const wirePile = NODE_SPAWNS.find((n) => n.type === "wire" && n.x > 40 && n.z > 90);
+must(!!wirePile, "wire for the array cable lives at the solar wreck");
+must(roundTripM(HAB_POS, wirePile) > 180, "the wire run is a round trip, not a yard stroll");
+must(
+  estimateRangeM({ oxygen: 100, warmth: 70 }, { habSealed: true, daylight: 0.9, storm: 0.05 }) >
+    estimateRangeM({ oxygen: 100, warmth: 70 }, { habSealed: true, daylight: 0.12, storm: 0.78 }),
+  "storm night cuts suit range vs a clear day"
+);
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

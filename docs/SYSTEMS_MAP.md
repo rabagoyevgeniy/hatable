@@ -46,7 +46,8 @@ HABITAT (world.hab)
 PLAYER
   suit O₂, hunger, thirst, warmth
   pockets, hammer, sleep (bunk)
-  estimated O₂ round-trip range
+  round-trip range = min(O₂ time, warmth time) × walk / 2
+  solar-wreck wire is outside a storm-night leash
 
 SCIENCE
   world.science.known[type] from scanner

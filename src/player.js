@@ -6,10 +6,10 @@ import { footstep } from "./audio.js";
 import { advanceSol, isMobileView } from "./world.js";
 import { maps, std, phys } from "./gfx.js";
 import { takeCharacter, takeModel } from "./models.js";
-import { canEatPotato, trySleepSol } from "./systems/survival.js";
+import { canEatPotato, trySleepSol, estimateRangeM } from "./systems/survival.js";
 import { count, totalItems, addItem, takeItems, canAfford, transfer } from "./systems/inventory.js";
 
-export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer };
+export { canEatPotato, count, totalItems, addItem, takeItems, canAfford, transfer, estimateRangeM };
 
 export function createPlayer(scene) {
   const root = new THREE.Group();
@@ -204,13 +204,6 @@ function clamp(v) {
 
 export function isInsideHab(player) {
   return Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 6.2;
-}
-
-export function estimateRangeM(player, world) {
-  const storm = world.storm || 0;
-  const rate = SURVIVAL.o2Outside + (world.habSealed ? 0.05 : 0.22) + storm * SURVIVAL.o2Storm;
-  const seconds = player.oxygen / Math.max(0.08, rate);
-  return (seconds * 3.05) / 2;
 }
 
 export function updatePlayer(player, dt, input, world) {
