@@ -334,6 +334,13 @@ Overnight timer still listed desk/night. Repo: radio is a recipe. F at the soil 
 - Loot underfoot still wins. MAV is the longest leash: past Pathfinder, clear day reaches, storm night does not
 - Did not start driving the rover. No Pointer Lock playtest
 
+### Cycle AK — ident reach matches the ring
+
+Overnight timer still listed desk/night. Repo: wrecks have names, but F stopped at 16 m while rings live to 22 m — a glow with no ident.
+
+- Place ident uses the same 22 m as loot rings. Beyond that a pocket sample wins; the farm is not a horizon cheat
+- No rover. No Pointer Lock playtest
+
 
 
 

@@ -82,8 +82,9 @@ export const SCAN_DB = {
 import { STORM_GRACE_S } from "./weather.js";
 
 export const DUST_HIDES_BEACONS = 0.42;
-/** Further than this, even a clear day has no cheat ring — scan or walk in. */
+/** Further than this, even a clear day has no cheat ring — scan or walk in. Same reach as place ident. */
 export const LOOT_RING_RANGE = 22;
+export const SCAN_PLACE_RANGE = LOOT_RING_RANGE;
 
 /** Debug loot rings. Dust eats them; distance eats them; hold F / Scan to see. */
 export function lootBeaconVisible({
@@ -160,7 +161,7 @@ export function pickScanTarget({
 } = {}) {
   if (nodeType && nodeD < 5.2) return nodeType;
   if (inside) return sealed ? "hab" : "leak";
-  if (outpostKind && outpostKind !== "hab" && outpostD < 16) {
+  if (outpostKind && outpostKind !== "hab" && outpostD < SCAN_PLACE_RANGE) {
     return outpostKind === "solar" ? "solaryard" : outpostKind;
   }
   if (heldId && SCAN_DB[heldId]) return heldId;

@@ -63,6 +63,7 @@ SCIENCE
   contacted after RADIO_CONTACT_S of clear daylight — not on place
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
   distant (>22 m) non-starter rings stay off even in clear weather
+  place ident uses the same 22 m as loot rings — F names the wreck you can see, not the horizon
 
 WORLD
   nodes (loot), stations, locker, outposts

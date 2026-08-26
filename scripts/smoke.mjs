@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown } from "../src/systems/science.js";
+import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
@@ -481,6 +481,8 @@ must(!lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: false })
 must(lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: true }), "scan reveals distant wreck loot");
 must(world.includes("lootBeaconVisible"), "world hides loot marks from storm, not only the HUD");
 must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "scan at the solar wreck names the farm");
+must(pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE - 2 }) === "solaryard", "farm ident reaches as far as a loot ring");
+must(pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE + 1, heldId: "ice" }) === "ice", "beyond ring range a pocket sample wins");
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");
 must(pickScanTarget({ outpostKind: "pathfinder", outpostD: 8 }) === "pathfinder", "scan at Pathfinder names the lander");
 must(pickScanTarget({ nodeType: "comms", nodeD: 0.8, outpostKind: "pathfinder", outpostD: 3 }) === "comms", "comms underfoot still scans as comms");

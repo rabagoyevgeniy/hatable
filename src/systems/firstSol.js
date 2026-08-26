@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -605,6 +605,12 @@ export function runStabilizeCoupling() {
   const look = createHeadlessWorld();
   if (pickScanTarget({ outpostKind: "solar", outpostD: 8 }) !== "solaryard") {
     fail("stabilize", "scan at the solar wreck should name the farm, not a cell");
+  }
+  if (pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE - 2 }) !== "solaryard") {
+    fail("stabilize", "place ident should reach as far as a clear-day loot ring");
+  }
+  if (pickScanTarget({ outpostKind: "solar", outpostD: LOOT_RING_RANGE + 1, heldId: "ice" }) !== "ice") {
+    fail("stabilize", "beyond ring range a pocket sample wins; the farm is not a horizon cheat");
   }
   if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
     fail("stabilize", "copper underfoot still identifies as wire");
