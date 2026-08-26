@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
@@ -314,6 +314,26 @@ must(!habCanRefillSuit({ habSealed: false, hab: { pressure: 0.9 } }), "leaking h
   must(deadAir.hab.pressure >= HAB_DEAD_P_FLOOR - 0.001, "dead-grid pressure floors");
 }
 must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("habCanRefillSuit"), "suit refill uses Hab pressure, not a sealed flag");
+must(heaterDrawsLoad({ heaterOn: true, insideC: 4 }, 1), "cold noon still draws the heater");
+must(!heaterDrawsLoad({ heaterOn: false, insideC: 4 }, 1), "heater off draws nothing");
+{
+  const heatDawn = { hab: createHabitat(), habSealed: true, daylight: 1, storm: 0, clock: 0.25, stations: [] };
+  heatDawn.hab.battery = 0;
+  heatDawn.hab.gridOn = false;
+  heatDawn.hab.heaterOn = true;
+  heatDawn.hab.insideC = 4;
+  tickTime(heatDawn, 0);
+  for (let i = 0; i < 220; i++) tickHabitat(heatDawn, 1);
+  must(!heatDawn.hab.gridOn, "heater left on holds a damaged-array blackout through noon");
+  const shedDawn = { hab: createHabitat(), habSealed: true, daylight: 1, storm: 0, clock: 0.25, stations: [] };
+  shedDawn.hab.battery = 0;
+  shedDawn.hab.gridOn = false;
+  shedDawn.hab.heaterOn = false;
+  shedDawn.hab.insideC = 4;
+  tickTime(shedDawn, 0);
+  for (let i = 0; i < 220; i++) tickHabitat(shedDawn, 1);
+  must(shedDawn.hab.gridOn, "shedding the heater lets noon recover a dead battery");
+}
 
 const ration = createHabitat();
 must(ration.waterTank < 3, "Hab tank is leftover sips, not a still");

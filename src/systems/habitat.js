@@ -12,6 +12,15 @@ export const HAB_DEAD_P_FLOOR = 0.42;
 export function habCanRefillSuit(world) {
   return !!(world?.habSealed && world.hab && world.hab.pressure > HAB_REFILL_P);
 }
+
+/** Cold Hab still calls for heat at noon — that load can hold a blackout. */
+export const HEATER_INSIDE_C = 16;
+
+export function heaterDrawsLoad(hab, daylight) {
+  if (!hab?.heaterOn) return false;
+  const day = Math.max(0, daylight || 0);
+  return 1 - day > 0.5 || (hab.insideC ?? 0) < HEATER_INSIDE_C;
+}
 /** Sleep jump toward harvest. Four watered Sols can finish. */
 export const CROP_SLEEP = 0.52;
 /** Realtime trickle — standing a Sol is not a harvest. */
@@ -73,7 +82,6 @@ export function tickHabitat(world, dt) {
   if (!h) return;
   tickStormDamage(world, dt);
   const day = Math.max(0, world.daylight || 0);
-  const night = 1 - day;
   const storm = world.storm || 0;
   const solarCount = (world.stations || []).filter((s) => s.type === "solar").length;
   const roof = h.cableFault ? 0 : 2.85 * h.arrayHealth * day * (1 - storm * 0.82);
@@ -82,7 +90,7 @@ export function tickHabitat(world, dt) {
 
   let load = 0;
   if (h.lifeSupportOn) load += world.habSealed ? 0.38 : 0.58;
-  if (h.heaterOn && (night > 0.5 || h.insideC < 16)) load += 0.5;
+  if (heaterDrawsLoad(h, day)) load += 0.5;
   if (h.lightsOn) load += 0.11;
   const stillsFueled = (world.stations || []).filter((s) => s.type === "still" && s.fuel > 0 && !s.fault);
   // Offline still is dark: no flask, no tank trickle, no phantom kW fighting dawn recovery.

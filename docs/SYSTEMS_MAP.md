@@ -24,7 +24,7 @@ HABITAT (world.hab)
     → battery (kWh compressed per Sol)
     → gridOn
   heater / lights (console toggles)
-    → load kW
+    → load kW (heater still draws at noon if the Hab is cold — that load can hold a damaged-array blackout)
     → inside temperature
     → player warmth while inside
   roof array

@@ -5,7 +5,7 @@
  */
 
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
-import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR } from "./habitat.js";
+import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
@@ -545,6 +545,34 @@ export function runStabilizeCoupling() {
     fail("stabilize", "a leaking hull must not refill the suit");
   }
   notes.push("dead-grid-bleeds-suit-refill");
+
+  const heatDawn = createHeadlessWorld();
+  heatDawn.habSealed = true;
+  heatDawn.hab.battery = 0;
+  heatDawn.hab.gridOn = false;
+  heatDawn.hab.heaterOn = true;
+  heatDawn.hab.insideC = 4;
+  heatDawn.clock = 0.25;
+  tickTime(heatDawn, 0);
+  applyWeatherState(heatDawn, "clear");
+  if (!heaterDrawsLoad(heatDawn.hab, heatDawn.daylight)) {
+    fail("stabilize", "a cold noon should still draw the heater");
+  }
+  for (let i = 0; i < 220; i++) tickHabitat(heatDawn, 1);
+  if (heatDawn.hab.gridOn) fail("stabilize", "heater left on should hold a damaged-array blackout through noon");
+
+  const shedDawn = createHeadlessWorld();
+  shedDawn.habSealed = true;
+  shedDawn.hab.battery = 0;
+  shedDawn.hab.gridOn = false;
+  shedDawn.hab.heaterOn = false;
+  shedDawn.hab.insideC = 4;
+  shedDawn.clock = 0.25;
+  tickTime(shedDawn, 0);
+  applyWeatherState(shedDawn, "clear");
+  for (let i = 0; i < 220; i++) tickHabitat(shedDawn, 1);
+  if (!shedDawn.hab.gridOn) fail("stabilize", "shedding the heater should let noon recover a dead battery");
+  notes.push("heater-on-holds-noon-blackout");
 
   const dryJump = CROP_SLEEP * fClear.light * fClear.temp * 0.22;
   if (!(dryJump < clearJump * 0.4)) {

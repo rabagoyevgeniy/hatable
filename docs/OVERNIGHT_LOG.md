@@ -474,6 +474,13 @@ Overnight: hunt couplings, no new HUD. A patched hull is not free O₂ if life s
 - `habCanRefillSuit` is sealed ∩ pressure. Night blackout crosses that line; a leaking hull never refills. No new HUD. No rover
 - No Pointer Lock playtest
 
+### Cycle BE — cold heater holds the noon blackout
+
+Overnight: hunt couplings, no new HUD. First Sol already taught heater-off saves the night. A cold dead Hab still calls for 0.5 kW at noon, and the starting array cannot climb that hill.
+
+- Heater left on keeps `gridOn` false through a Sol of sun. Shedding it lets noon recover. No new HUD. No rover
+- No Pointer Lock playtest
+
 
 
 
