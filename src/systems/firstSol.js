@@ -11,7 +11,7 @@ import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStil
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines, hasMavCargo } from "./survival.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickArrayAction, dist } from "./interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal, GOAL_IDS } from "./goals.js";
 
 export const FIRST_SOL_CHAIN = ["leak", "repair", "power", "sleep", "still", "ice", "water", "drink", "crop"];
@@ -1153,6 +1153,25 @@ export function runStabilizeCoupling() {
   flask.inv.water = 1;
   if (!hasMavCargo(flask)) fail("stabilize", "still flask plus harvest is MAV cargo");
   notes.push("tank-sip-is-not-mav-flask");
+
+  const crateWalk = { oxygen: 100, warmth: 70, thirst: 100, hunger: 80, inv: {}, harvestedCrop: true, x: 196, z: -158 };
+  if (hasMavCargo(crateWalk)) fail("stabilize", "empty pockets are not MAV cargo");
+  if (goalsDone(crateWalk, { contacted: true, locker: { storage: { water: 1, potato: 2 } } }).escape) {
+    fail("stabilize", "cargo in the locker is not at the MAV");
+  }
+  if (!packingLines(crateWalk, earthCamp, "en").some((l) => l.includes("MAV") && l.includes("NO CARGO"))) {
+    fail("stabilize", "a full locker should still pack NO CARGO");
+  }
+  if (pickPlotWaterAction({ planted: true, grow: 0.4, hasWater: false })) {
+    fail("stabilize", "locker water must not water the plot");
+  }
+  crateWalk.inv = { water: 1, potato: 1 };
+  if (!hasMavCargo(crateWalk)) fail("stabilize", "pockets at the MAV are the cargo");
+  if (!goalsDone(crateWalk, earthCamp).escape) fail("stabilize", "pocket cargo at the MAV after Earth is the walk");
+  if (pickPlotWaterAction({ planted: true, grow: 0.4, hasWater: true })?.kind !== "water-plot") {
+    fail("stabilize", "a flask in pockets should water the crop");
+  }
+  notes.push("locker-is-not-hands");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

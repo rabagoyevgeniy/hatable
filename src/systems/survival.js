@@ -22,7 +22,7 @@ export function canEatPotato(player) {
   return true;
 }
 
-/** Escape cargo: water plus a potato that is not the last seed. */
+/** Escape cargo: water plus a potato that is not the last seed. Pockets only — the locker stays in the Hab. */
 export function hasMavCargo(player) {
   return (player.inv?.water || 0) >= 1 && canEatPotato(player);
 }

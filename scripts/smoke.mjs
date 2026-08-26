@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, habCanRefillSuit, HAB_REFILL_P, HAB_DEAD_P_FLOOR, heaterDrawsLoad, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, labLines, overlayNamesOutpost, overlayNamesLoot } from "../src/systems/science.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank, hasMavCargo, trySleepSol } from "../src/systems/survival.js";
@@ -382,6 +382,17 @@ must(
   goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 }, harvestedCrop: true }, { contacted: true }).escape,
   "harvested cargo at the MAV after Earth is the win"
 );
+must(
+  !hasMavCargo({ inv: {}, harvestedCrop: true }),
+  "empty pockets are not MAV cargo even after harvest"
+);
+must(
+  !goalsDone(
+    { x: 196, z: -158, inv: {}, harvestedCrop: true },
+    { contacted: true, locker: { storage: { water: 1, potato: 2 } } }
+  ).escape,
+  "cargo in the Hab locker is not at the MAV"
+);
 must(game.includes("seedPotato"), "eating seed potato is blocked in play");
 must(existsSync(resolve(root, "src/systems/survival.js")), "first-sol gut lives in systems/survival");
 
@@ -478,6 +489,13 @@ must(
   pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true }).kind === "plant",
   "identified soil lets you plant the seed"
 );
+must(
+  pickPlotWaterAction({ planted: true, grow: 0.2, hasWater: true }).kind === "water-plot",
+  "a flask in pockets waters the crop"
+);
+must(!pickPlotWaterAction({ planted: true, grow: 0.2, hasWater: false }), "water in the locker does not water the plot");
+must(!pickPlotWaterAction({ planted: true, grow: 1, hasWater: true }), "a finished crop is harvest, not a hose");
+must(readFileSync(resolve(root, "src/ui.js"), "utf8").includes("pickPlotWaterAction"), "plot E uses pocket water, not a locker hose");
 must(
   pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: true }).kind === "still-take",
   "a full flask is collect, not drip"

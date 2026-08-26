@@ -15,7 +15,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Still (ice/hydrazine → water **if grid is live**; E at the cream pole with 2 scrap + canvas, ice is fuel)
 - **First Sol vertical slice** gated by `scripts/first-sol.mjs`: leak → repair → power → sleep → still → ice → water → drink → crop (headless; browser E-build of the still still unverified in one sitting). Overlay names are not a horizon atlas.
 - Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest. Sleep growth is a day, not the night you wake into. Sealed + live grid shelters the crop; dead grid uses Mars cold
-- Coupled stabilize (harness): storm cuts solar and crop light; grid death freezes plots **and** takes the still offline (no phantom kW on a dead grid) while leftover tank sips and a full flask still work; a blackout home bleeds pressure below suit refill; a cold heater holds a damaged-array blackout through noon; the bunk is not a magic O₂ tank when refill is dead; storm scars the array and can snap the roof cable (wire from the solar wreck). Sleep-through-storm is a diagnosis, not a silent kW drop
+- Coupled stabilize (harness): storm cuts solar and crop light; grid death freezes plots **and** takes the still offline (no phantom kW on a dead grid) while leftover tank sips and a full flask still work; a blackout home bleeds pressure below suit refill; a cold heater holds a damaged-array blackout through noon; the bunk is not a magic O₂ tank when refill is dead; storm scars the array and can snap the roof cable (wire from the solar wreck). Sleep-through-storm is a diagnosis, not a silent kW drop. MAV cargo and plot water are pockets, not the Hab locker.
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
@@ -31,7 +31,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 ## PARTIAL
 
 - Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples after the hull is sealed. Place ident, overlay names, loot rings, and station/locker tags share the 22 m scan pulse. Hold-F is not a planet detector. Rover identified as dead, not driven)
-- Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk; after Earth the MAV line wants a still flask + a harvested potato, not a desk drink or the last seed)
+- Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk; after Earth the MAV line wants a still flask + a harvested potato in **pockets**, not a desk drink, the last seed, or the Hab locker)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)
 - Story / delayed Earth (radio listens on a clear day or a clear-day sleep; storms bury S-band. Placing is not Hello, Earth. Journal contact waits for the reply)

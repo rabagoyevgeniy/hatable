@@ -488,6 +488,13 @@ Overnight: hunt couplings, no new HUD. Standing inside already needed sealed ∩
 - `trySleepSol` uses `habCanRefillSuit`. Live First Sol bunk still fills. Blackout and leak share the trickle. No rover
 - No Pointer Lock playtest
 
+### Cycle BG — locker is not your hands
+
+Overnight: hunt a different coupling, not another grid-death lock. MAV cargo and plot water already read pockets; the crate was untested.
+
+- Empty pockets at the MAV with a full locker stay NO CARGO / not escape. Plot E waters only with a flask in hand. No new HUD. No rover
+- No Pointer Lock playtest
+
 
 
 

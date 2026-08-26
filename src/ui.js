@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickPlotWaterAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
 import { isKnown, recipeKnown, SCAN_PLACE_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./systems/science.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
@@ -472,7 +472,12 @@ export function findInteract(player, world) {
       });
       if (plantAct?.kind === "plot-scan") return { kind: "plot-scan", station: st, label: t("scanSoilPlant") };
       if (plantAct?.kind === "plant") return { kind: "plant", station: st, label: t("plant") };
-      if (st.planted && st.grow < 1 && count(player, "water") > 0) {
+      const waterAct = pickPlotWaterAction({
+        planted: !!st.planted,
+        grow: st.grow || 0,
+        hasWater: count(player, "water") > 0,
+      });
+      if (waterAct?.kind === "water-plot") {
         return { kind: "water-plot", station: st, label: `${t("waterPlot")}  ·  ${Math.floor(st.grow * 100)}%` };
       }
       if (st.grow >= 1) return { kind: "harvest-plot", station: st, label: t("harvestReady") };

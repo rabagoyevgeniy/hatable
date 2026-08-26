@@ -110,6 +110,16 @@ export function pickPlotPlantAction({
   return { kind: soilKnown ? "plant" : "plot-scan" };
 }
 
+/** Water in pockets. The Hab locker is a crate, not a hose. */
+export function pickPlotWaterAction({
+  planted = false,
+  grow = 0,
+  hasWater = false,
+} = {}) {
+  if (!planted || grow >= 1 || !hasWater) return null;
+  return { kind: "water-plot" };
+}
+
 export const ARRAY_RANGE = 3.4;
 
 export function pickArrayAction({
