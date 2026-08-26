@@ -1,4 +1,5 @@
 import { heightAt } from "../noise.js";
+import { goalsDone, advanceJournal } from "./goals.js";
 
 const KEY = "stranded-mars-save-v1";
 export const SAVE_VERSION = 1;
@@ -159,4 +160,5 @@ export function applySave(data, { player, world, journal, placeStation, updatePl
   journal.index = data.journal?.index || 0;
   journal.finished = !!data.journal?.finished;
   journal.sols = data.journal?.sols || 19;
+  advanceJournal(journal, goalsDone(player, world));
 }

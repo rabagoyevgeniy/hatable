@@ -124,3 +124,4 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 - Sealing the Hab completes the scrap card so the order is not «Подбери лом» over a patched tear
 - Catch-up skips finished goals in one tick (patch + hammer → water)
 - Journal still does not create the sim — it only stops lying about it
+- Continue/applySave runs the same catch-up so an old sealed save is not stuck on scrap
