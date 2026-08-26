@@ -7,7 +7,7 @@ import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 import { createHabitat, tickTime, tickHabitat, cropFactors, CROP_LIVE, advanceSolSim } from "./systems/habitat.js";
 import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.js";
 import { createWeather, tickWeather } from "./systems/weather.js";
-import { createScience } from "./systems/science.js";
+import { createScience, lootBeaconVisible } from "./systems/science.js";
 import { isMobileView } from "./device.js";
 
 export { isMobileView };
@@ -185,6 +185,7 @@ function addLootMarker(group, { starter, wreck, color }) {
   if (starter) {
     const light = new THREE.PointLight(col, 1.35, 14);
     light.position.y = 1.15;
+    light.name = "lootBeaconLight";
     group.add(light);
   }
 }
@@ -778,6 +779,20 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   dustPos.needsUpdate = true;
   world.dust.position.set(playerPos.x, playerPos.y, playerPos.z);
   world.dust.material.opacity = 0.16 + world.storm * 0.55 + night * 0.08;
+
+  for (const n of world.nodes) {
+    if (n.taken) continue;
+    const show = lootBeaconVisible({
+      starter: n.starter,
+      storm: world.storm,
+      scanning,
+      playTime: world.playTime,
+    });
+    const mark = n.mesh.getObjectByName("lootMark");
+    if (mark) mark.visible = show;
+    const lamp = n.mesh.getObjectByName("lootBeaconLight");
+    if (lamp) lamp.visible = show;
+  }
 
   if (scanning) {
     world.scanRing.position.set(playerPos.x, playerPos.y + 0.05, playerPos.z);

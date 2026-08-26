@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience } from "../src/systems/science.js";
+import { noteScan, createScience, lootBeaconVisible } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
@@ -449,6 +449,10 @@ must(
   "storm night cuts suit range vs a clear day"
 );
 must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("WALK_MPS"), "body speed and range line share one walk constant");
+must(lootBeaconVisible({ starter: true, playTime: 10, storm: 0 }), "starter rings show during the leak emergency");
+must(!lootBeaconVisible({ starter: false, storm: 0.5, scanning: false }), "dust eats debug loot rings");
+must(lootBeaconVisible({ starter: false, storm: 0.78, scanning: true }), "scan reveals loot in a storm");
+must(world.includes("lootBeaconVisible"), "world hides loot marks from storm, not only the HUD");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

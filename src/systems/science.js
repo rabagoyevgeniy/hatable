@@ -59,6 +59,18 @@ export const SCAN_DB = {
   },
 };
 
+import { STORM_GRACE_S } from "./weather.js";
+
+export const DUST_HIDES_BEACONS = 0.42;
+
+/** Debug loot rings. Dust eats them; hold F / Scan to see. Starter rings survive the first emergency. */
+export function lootBeaconVisible({ starter = false, storm = 0, scanning = false, playTime = 0 } = {}) {
+  if (scanning) return true;
+  if (starter && (playTime || 0) < STORM_GRACE_S) return true;
+  if (storm >= DUST_HIDES_BEACONS) return false;
+  return true;
+}
+
 export function createScience() {
   return { known: {} };
 }

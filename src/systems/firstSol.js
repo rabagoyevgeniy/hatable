@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience } from "./science.js";
+import { createScience, lootBeaconVisible } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -525,6 +525,15 @@ export function runStabilizeCoupling() {
   if (canRoundTrip(suit, gale, wire, HAB_POS)) fail("stabilize", "storm night must not be a safe wire run");
   if (!(estimateRangeM(suit, gale) < trip)) fail("stabilize", "storm night should crush the range line");
   notes.push("storm-blocks-wire-run");
+
+  if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
+  if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false })) fail("stabilize", "clear-day yard loot still has a ring");
+  if (lootBeaconVisible({ starter: false, storm: 0.5, scanning: false })) fail("stabilize", "dust should eat debug loot rings");
+  if (!lootBeaconVisible({ starter: false, storm: 0.78, scanning: true })) fail("stabilize", "scan must reveal loot in a storm");
+  if (lootBeaconVisible({ starter: true, playTime: 400, storm: 0.5, scanning: false })) {
+    fail("stabilize", "after the emergency, even starter rings vanish in dust");
+  }
+  notes.push("dust-hides-loot-rings");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }
