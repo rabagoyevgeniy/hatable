@@ -173,3 +173,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - Playtest of E-build died on the craft panel: C / ▶ closed the list with no toast, pockets still had scrap+rock
 - Open craft, C (or Craft) again now makes the first ready tool. Ready hammer row says «СДЕЛАТЬ»
+
+### Cycle S playtest (browser)
+
+- C → список, кнопка «СДЕЛАТЬ»; C ещё раз → тост «ГОТОВО · Грубый молоток», молоток в карманах
+- Страница иногда «Unresponsive» в этом раннере; стройка still на шесте не дошла — следующий проход
