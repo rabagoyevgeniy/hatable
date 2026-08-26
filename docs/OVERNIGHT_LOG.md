@@ -187,3 +187,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 ### Cycle U — still yard toasts the recipe
 
 - First time you walk the west yard with a hammer: toast names 2 scrap + canvas and E at the pole (ice after), same idea as the leak entry toast
+
+### Cycle U playtest
+
+- C then C still makes the hammer (tool in slot 9). West walk underlined ДИСТИЛЛЯТОР in the world labels
+- 1.8s toast vanished during a «Page Unresponsive» wait — hint now also writes the 18s log card; toasts last 3.2s

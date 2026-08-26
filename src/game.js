@@ -733,6 +733,7 @@ async function bootGame() {
         if (pad && Math.hypot(player.root.position.x - pad.x, player.root.position.z - pad.z) < 9) {
           player.sawStillYard = true;
           toast(t("stillYardHint"));
+          pushLog("HAB", t("stillYardHint"));
         }
       }
       updateWorld(world, dt, player.root.position, scanning, true);

@@ -691,7 +691,7 @@ export function toast(text) {
   const el = $("toast");
   el.textContent = text;
   el.classList.add("show");
-  setTimeout(() => el.classList.remove("show"), 1800);
+  setTimeout(() => el.classList.remove("show"), 3200);
 }
 
 export function showEnd(journal, player) {
