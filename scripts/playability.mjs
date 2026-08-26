@@ -8,6 +8,7 @@ import {
   FOOT_OFFSET,
   HAB_INNER_R,
   HAB_WALL_R,
+  LAB,
   MOBILE_TERRAIN_SEGS,
   PLAYER_RADIUS,
   TERRAIN_HALF,
@@ -155,10 +156,10 @@ must(i18n.includes("stillNeedIce"), "empty still asks for ice");
   must(pos.y >= gy - 1e-6, "chunk/cell crossing does not bury the feet");
 }
 
-/* Hab perimeter: walls block except the airlock. */
+/* Hab perimeter: walls block except the airlock. Start outside lab+hab. */
 {
   let leaked = 0;
-  const startR = HAB_WALL_R + 1.2;
+  const startR = Math.hypot(LAB.x - HAB_POS.x, LAB.z - HAB_POS.z) + LAB.r + 2.4;
   for (let i = 0; i < 72; i++) {
     const ang = (i / 72) * Math.PI * 2;
     const pos = {
@@ -167,7 +168,7 @@ must(i18n.includes("stillNeedIce"), "empty still asks for ice");
       z: HAB_POS.z + Math.cos(ang) * startR,
     };
     snapToGround(pos, segs, heightAt);
-    for (let s = 0; s < 40; s++) {
+    for (let s = 0; s < 120; s++) {
       stepGrounded(pos, Math.sin(ang) * -0.12, Math.cos(ang) * -0.12, segs, heightAt);
     }
     const door = inAirlockCorridor(pos.x, pos.z) || Math.abs(Math.atan2(pos.x - HAB_POS.x, pos.z - HAB_POS.z)) < 0.38;
@@ -185,15 +186,16 @@ must(i18n.includes("stillNeedIce"), "empty still asks for ice");
   must(isSheltered(pos.x, pos.z), "airlock walk reaches shelter");
   must(isInsideHabHull(pos.x, pos.z), "airlock walk reaches hull interior");
 
+  pos.x = HAB_POS.x;
+  for (let i = 0; i < 240; i++) stepGrounded(pos, 0, 0.08, segs, heightAt);
+  must(!isInsideHabHull(pos.x, pos.z), "exit through the airlock leaves the hull");
+  must(pos.z >= AIRLOCK.maxZ - 0.4, "exit comes out the hatch, not a wall");
+
   const side = { x: HAB_POS.x + HAB_WALL_R + 2.4, y: 0, z: HAB_POS.z };
   snapToGround(side, segs, heightAt);
   for (let i = 0; i < 80; i++) stepGrounded(side, -0.1, 0, segs, heightAt);
   must(!isInsideHabHull(side.x, side.z), "side wall is not a door");
   must(habRadial(side.x, side.z) >= HAB_WALL_R - 0.05, "side approach stays on the exterior");
-
-  for (let i = 0; i < 220; i++) stepGrounded(pos, 0, 0.08, segs, heightAt);
-  must(!isInsideHabHull(pos.x, pos.z), "exit through the airlock leaves the hull");
-  must(pos.z >= AIRLOCK.maxZ - 0.4, "exit comes out the hatch, not a wall");
 }
 
 /* Interior back wall holds. */
@@ -204,6 +206,15 @@ must(i18n.includes("stillNeedIce"), "empty still asks for ice");
   for (let i = 0; i < 80; i++) stepGrounded(pos, 0, -0.1, segs, heightAt);
   must(isInsideHabHull(pos.x, pos.z), "back wall keeps the player inside");
   must(pos.z > HAB_POS.z - HAB_INNER_R + PLAYER_RADIUS * 0.5, "back wall does not eject into the desert");
+}
+
+/* Hab living module connects to the lab through the tube, not the desert. */
+{
+  const pos = { x: HAB_POS.x, y: 0, z: HAB_POS.z };
+  snapToGround(pos, segs, heightAt);
+  for (let i = 0; i < 200; i++) stepGrounded(pos, -0.08, 0, segs, heightAt);
+  must(isSheltered(pos.x, pos.z), "lab tube stays sheltered");
+  must(pos.x < LAB.x + 1.5, "west walk from the Hab reaches the lab");
 }
 
 must(BLOCKERS.length >= 4, "locker and major furniture have collision");

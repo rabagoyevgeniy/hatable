@@ -1264,7 +1264,7 @@ function dressHabRoom(g, { hull, orange, bunkMat, sheet, tex }) {
 
   const crateMat = std({ color: 0x8a6a40, map: tex.hull, roughness: 0.7, emissive: 0x4a3010, emissiveIntensity: 0.16 });
   g.add(box(crateMat, 0.72, 0.58, 0.52, 3.4, 0.38, -2.8));
-  g.add(box(crateMat, 0.55, 0.42, 0.42, -0.4, 0.28, 3.4));
+  g.add(box(crateMat, 0.55, 0.42, 0.42, -2.6, 0.28, 2.8));
   g.add(box(std({ color: 0xc9a05a, roughness: 0.65 }), 0.22, 0.14, 0.16, 3.55, 0.74, 2.5));
 
   const strip = std({ color: 0xffe8c0, emissive: 0xffd090, emissiveIntensity: mobile ? 1.35 : 0.7 });

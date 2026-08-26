@@ -21,7 +21,7 @@ export const DESKTOP_TERRAIN_SEGS = 168;
 export const AIRLOCK = {
   minX: -1.32,
   maxX: 1.32,
-  minZ: 14.28,
+  minZ: 13.5,
   maxZ: 19.92,
 };
 
@@ -141,12 +141,31 @@ function resolveRing(pos, cx, cz, inner, outer, rPlayer, skip) {
   }
 }
 
+function resolveTubeSides(p, rPlayer) {
+  if (p.x < LAB_TUBE.minX || p.x > LAB_TUBE.maxX) return;
+  const midZ = (LAB_TUBE.minZ + LAB_TUBE.maxZ) / 2;
+  const half = (LAB_TUBE.maxZ - LAB_TUBE.minZ) / 2;
+  const inner = half - rPlayer;
+  const outer = half + rPlayer;
+  const d = p.z - midZ;
+  const ad = Math.abs(d);
+  if (ad <= inner || ad >= outer) return;
+  const sign = d >= 0 ? 1 : -1;
+  const toOut = outer - ad;
+  const toIn = ad - inner;
+  p.z = midZ + sign * (toOut <= toIn ? outer : inner);
+}
+
 export function resolveHabCollision(pos, radius = PLAYER_RADIUS) {
   let x = pos.x;
   let z = pos.z;
   const rPlayer = radius + SKIN;
 
   for (let i = 0; i < PUSH_ITERS; i++) {
+    const side = { x, z };
+    resolveTubeSides(side, rPlayer);
+    x = side.x;
+    z = side.z;
     if (inAirlockCorridor(x, z)) {
       const lo = AIRLOCK.minX + rPlayer;
       const hi = AIRLOCK.maxX - rPlayer;
@@ -179,7 +198,7 @@ export const BLOCKERS = [
   { x: -3.45, z: 4.15, r: 1.05 },
   { x: 3.55, z: 10.35, r: 0.68 },
   { x: 3.4, z: 5.2, r: 0.42 },
-  { x: -0.4, z: 11.4, r: 0.34 },
+  { x: -2.6, z: 10.8, r: 0.34 },
 ];
 
 export function resolveBlockers(pos, radius = PLAYER_RADIUS) {

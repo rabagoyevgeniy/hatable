@@ -449,7 +449,7 @@ must(game.includes("build-still"), "still pad builds in place like the leak patc
 must(game.includes("pushLog(\"HAB\", t(\"stillYardHint\"))"), "still yard hint stays in the log, not only a 2s toast");
 must(game.includes("still-hint"), "empty still ring names the recipe like the leak");
 must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("need: { scrap: 2, fabric: 1 }"), "still hull is scrap+canvas; ice is fuel");
-must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("x: -7.5, z: 12.6"), "still pad has starter scrap so hammer does not starve the water loop");
+must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("x: -10.2, z: 15.9"), "still pad has starter scrap so hammer does not starve the water loop");
 const i18n = readFileSync(resolve(root, "src/i18n.js"), "utf8");
 must(i18n.includes("buildStill"), "build-still prompt is translated, not a raw key");
 must(i18n.includes("helpDrop"), "Q drop hint is translated, not a raw key");
