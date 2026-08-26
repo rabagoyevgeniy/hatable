@@ -724,6 +724,17 @@ async function bootGame() {
         player.enteredHab = true;
         toast(t("enterHab"));
       }
+      if (
+        player.tools.hammer &&
+        !player.sawStillYard &&
+        !world.stations.some((s) => s.type === "still")
+      ) {
+        const pad = YARD_PADS.find((p) => p.station === "still");
+        if (pad && Math.hypot(player.root.position.x - pad.x, player.root.position.z - pad.z) < 9) {
+          player.sawStillYard = true;
+          toast(t("stillYardHint"));
+        }
+      }
       updateWorld(world, dt, player.root.position, scanning, true);
       tickStill(
         dt,

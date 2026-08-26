@@ -173,6 +173,7 @@ export function createPlayer(scene) {
     harvestedCrop: false,
     enteredHab: false,
     usedConsole: false,
+    sawStillYard: false,
     placing: null,
     heldId: null,
     hammerMesh: null,

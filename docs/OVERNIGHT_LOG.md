@@ -183,3 +183,7 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - Follow-up: hammer in pockets, cream pole on screen, prompt still «СОБРАТЬ · Камень» because E only armed on the 1.25 m plinth
 - Pad range matches the machine (4.2 m): walk to the stake you can see, not a hidden tile under it
+
+### Cycle U — still yard toasts the recipe
+
+- First time you walk the west yard with a hammer: toast names 2 scrap + canvas and E at the pole (ice after), same idea as the leak entry toast

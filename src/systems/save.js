@@ -40,6 +40,7 @@ export function collectSave(player, world, journal) {
       harvestedCrop: player.harvestedCrop,
       enteredHab: player.enteredHab,
       usedConsole: player.usedConsole,
+      sawStillYard: player.sawStillYard,
     },
     world: {
       clock: world.clock,
@@ -117,6 +118,7 @@ export function applySave(data, { player, world, journal, placeStation, updatePl
   player.harvestedCrop = !!p.harvestedCrop;
   player.enteredHab = !!p.enteredHab;
   player.usedConsole = !!p.usedConsole;
+  player.sawStillYard = !!p.sawStillYard;
 
   const w = data.world;
   world.clock = w.clock;
