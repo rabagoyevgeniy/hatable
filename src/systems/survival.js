@@ -70,6 +70,8 @@ export function suitDrainRates(world) {
   return {
     o2: SURVIVAL.o2Outside + (world.habSealed ? 0.05 : 0.22) + storm * SURVIVAL.o2Storm,
     warmth: (night ? SURVIVAL.warmthNight : SURVIVAL.warmthDay) * (storm + 0.55),
+    thirst: SURVIVAL.thirstWalk,
+    hunger: SURVIVAL.hungerWalk,
   };
 }
 
@@ -82,12 +84,14 @@ export function walkMetersPerSecond(player, world) {
   return walk;
 }
 
-/** Round-trip metres you can survive on current O₂ and warmth. */
+/** Round-trip metres you can survive on current O₂, warmth, thirst, and hunger. Missing gut stats assume full. */
 export function estimateRangeM(player, world) {
   const rates = suitDrainRates(world);
   const o2Seconds = (player.oxygen ?? 0) / Math.max(0.08, rates.o2);
   const warmthSeconds = (player.warmth ?? 0) / Math.max(0.08, rates.warmth);
-  const seconds = Math.min(o2Seconds, warmthSeconds);
+  const thirstSeconds = (player.thirst ?? 100) / Math.max(0.08, rates.thirst);
+  const hungerSeconds = (player.hunger ?? 100) / Math.max(0.08, rates.hunger);
+  const seconds = Math.min(o2Seconds, warmthSeconds, thirstSeconds, hungerSeconds);
   return (seconds * walkMetersPerSecond(player, world)) / 2;
 }
 

@@ -472,6 +472,11 @@ must(
     estimateRangeM({ oxygen: 100, warmth: 70 }, { habSealed: true, daylight: 0.12, storm: 0.78 }),
   "storm night cuts suit range vs a clear day"
 );
+must(
+  estimateRangeM({ oxygen: 100, warmth: 70, thirst: 100 }, { habSealed: true, daylight: 0.9, storm: 0.05 }) >
+    estimateRangeM({ oxygen: 100, warmth: 70, thirst: 22 }, { habSealed: true, daylight: 0.9, storm: 0.05 }),
+  "dry mouth cuts range even when O2 and warmth are full"
+);
 must(readFileSync(resolve(root, "src/player.js"), "utf8").includes("WALK_MPS"), "body speed and range line share one walk constant");
 must(lootBeaconVisible({ starter: true, playTime: 10, storm: 0 }), "starter rings show during the leak emergency");
 must(!lootBeaconVisible({ starter: false, storm: 0.5, scanning: false }), "dust eats debug loot rings");
@@ -552,6 +557,10 @@ must(ui.includes("packingLines"), "Hab console shows a packing list, not a new H
   must(packingLines(suit, { ...noon, habSealed: false }, "en").length === 0, "leaking desk has no packing list");
   const stormPack = packingLines(suit, gale, "en");
   must(stormPack.some((l) => l.includes("MAV") && l.includes("OUT OF RANGE")), "storm-night packing refuses the MAV");
+  must(
+    packingLines({ oxygen: 100, warmth: 70, thirst: 22 }, noon, "en").some((l) => l.includes("PATHFINDER") && l.includes("OUT OF RANGE")),
+    "thirsty packing refuses Pathfinder"
+  );
 }
 must(i18n.includes("radioListening"), "radio listening toast is translated");
 must(i18n.includes("earthHeard"), "Earth heard toast is translated");

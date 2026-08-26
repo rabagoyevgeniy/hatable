@@ -46,7 +46,7 @@ HABITAT (world.hab)
 PLAYER
   suit O₂, hunger, thirst, warmth
   pockets, hammer, sleep (bunk)
-  round-trip range = min(O₂ time, warmth time) × actual walk / 2
+  round-trip range = min(O₂ time, warmth time, thirst time, hunger time) × actual walk / 2
   walk speed shared with the body; storm shove derates the estimate
   solar-wreck wire is outside a storm-night leash
   desk packing list: wire / Pathfinder / MAV in-range vs out (only after the hull is sealed; storm night refuses the long walks)

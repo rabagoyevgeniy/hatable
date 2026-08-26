@@ -607,6 +607,18 @@ export function runStabilizeCoupling() {
     fail("stabilize", "storm-night desk should refuse the MAV walk");
   }
   notes.push("console-packing-list");
+  const dry = { oxygen: 100, warmth: 70, thirst: 22, hunger: 80 };
+  if (!(estimateRangeM(suit, noon) > estimateRangeM(dry, noon) + 80)) {
+    fail("stabilize", "dry mouth should cut range even when tanks are full");
+  }
+  if (canRoundTrip(dry, noon, probe, HAB_POS)) {
+    fail("stabilize", "thirsty clear-day walk must not treat Pathfinder as safe");
+  }
+  const packDry = packingLines(dry, noon, "en");
+  if (!packDry.some((l) => l.includes("PATHFINDER") && l.includes("OUT OF RANGE"))) {
+    fail("stabilize", "thirsty desk should refuse Pathfinder");
+  }
+  notes.push("range-includes-gut");
 
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");

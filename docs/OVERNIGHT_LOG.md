@@ -383,6 +383,13 @@ Overnight timer still listed desk/night. Repo: overlay names gated to 22 m, but 
 - Scan-mode rings share ident/pulse reach. Dust still hides yard rings unless F is in range. Walk to the wreck
 - No rover. No Pointer Lock playtest
 
+### Cycle AR — range includes the gut
+
+Overnight timer still listed desk/night. Repo: scanner reach closed. Packing list still treated a thirsty EVA as an O₂ problem.
+
+- Round-trip range is min(O₂, warmth, thirst, hunger). Dry mouth refuses Pathfinder on a clear day. No new HUD meters
+- No rover. No Pointer Lock playtest
+
 
 
 
