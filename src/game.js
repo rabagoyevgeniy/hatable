@@ -5,6 +5,7 @@ import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { repairStillPump, stillCanRun, repairArrayCable } from "./systems/machines.js";
 import { sipHabitatTank } from "./systems/survival.js";
+import { consumeHabEvents } from "./systems/habitat.js";
 import {
   createPlayer,
   updatePlayer,
@@ -753,6 +754,12 @@ async function bootGame() {
         }
       }
       updateWorld(world, dt, player.root.position, scanning, true);
+      for (const ev of consumeHabEvents(world.hab)) {
+        if (ev === "cable-snap") {
+          toast(t("cableSnapped"));
+          pushLog("HAB", t("cableFailHint"));
+        }
+      }
       tickStill(
         dt,
         world.stations.some((s) => stillCanRun(s, world))

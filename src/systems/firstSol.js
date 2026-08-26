@@ -5,7 +5,7 @@
  */
 
 import { RECIPES, YARD_PADS, HAB_LEAK, LOCKER_START } from "../data.js";
-import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP } from "./habitat.js";
+import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
 import { createScience } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
@@ -482,6 +482,26 @@ export function runStabilizeCoupling() {
   tickHabitat(bypass, 1);
   if (!(bypass.hab.solarKw > deadRoof + 0.4)) fail("stabilize", "yard panel should bypass a dead roof cable");
   notes.push("yard-panel-bypasses-cable");
+
+  const nap = createHeadlessWorld();
+  nap.playTime = 300;
+  nap.habSealed = true;
+  nap.hab.arrayHealth = 0.7;
+  nap.hab.heaterOn = false;
+  applyWeatherState(nap, "storm");
+  const napHealth = nap.hab.arrayHealth;
+  simulateSleep(nap, 96);
+  if (!nap.hab.cableFault) fail("stabilize", "sleeping through a storm should snap the cable");
+  if (!(nap.hab.arrayHealth < napHealth - 0.04)) fail("stabilize", "sleeping through a storm should scar the array");
+  if (!nap.hab.cableSnapEvent) fail("stabilize", "snap should raise a Hab event for the log");
+  nap.hab.solarKw = 0;
+  nap.hab.loadKw = 1;
+  const why = habAlerts(nap, "en");
+  if (!why[0] || !why[0].includes("CABLE")) {
+    fail("stabilize", `HUD should name the cable before deficit, got ${why[0]}`);
+  }
+  if (!habStatusLine(nap, "en").includes("CABLE")) fail("stabilize", "status line should not hide the cable under POWER DEFICIT");
+  notes.push("sleep-through-storm");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

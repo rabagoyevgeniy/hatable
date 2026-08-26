@@ -50,7 +50,7 @@ export function collectSave(player, world, journal) {
       habSealed: world.habSealed,
       powered: world.powered,
       contacted: world.contacted,
-      hab: { ...world.hab },
+      hab: { ...world.hab, cableSnapEvent: false },
       weather: world.weather ? { ...world.weather } : null,
       science: world.science ? { known: { ...world.science.known } } : { known: {} },
       locker: { ...world.locker.storage },

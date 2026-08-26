@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
+import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
 import { noteScan, createScience } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
@@ -430,6 +430,15 @@ must(
 );
 const cableRead = habReadout({ hab: { ...createHabitat(), cableFault: true }, habSealed: true }, "en");
 must(cableRead.includes("CABLE"), "console names an open array cable");
+must(
+  habAlerts(
+    { hab: { ...createHabitat(), cableFault: true, solarKw: 0, loadKw: 1 }, habSealed: true, stations: [] },
+    "en"
+  )[0].includes("CABLE"),
+  "open cable beats POWER DEFICIT on the status line"
+);
+must(game.includes("consumeHabEvents"), "cable snap raises a Hab log, not only a silent kW drop");
+must(i18n.includes("cableSnapped"), "storm-snapped cable toast is translated");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

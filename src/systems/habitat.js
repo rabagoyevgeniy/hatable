@@ -174,11 +174,11 @@ export function habAlerts(world, lang = "ru") {
   const out = [];
   if (!world.habSealed) out.push(ru ? "УТЕЧКА · ДАВЛЕНИЕ ПАДАЕТ" : "LEAK · PRESSURE FALLING");
   else if (h.pressure < 0.55) out.push(ru ? `ДАВЛЕНИЕ ${(h.pressure * 100).toFixed(0)}%` : `PRESSURE ${(h.pressure * 100).toFixed(0)}%`);
+  if (h.cableFault) out.push(ru ? "КАБЕЛЬ МАССИВА · ПРОВОД НА КЛАДБИЩЕ ПАНЕЛЕЙ" : "ARRAY CABLE OPEN — wire at the solar wreck");
+  else if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
   if (h.solarKw + 0.05 < h.loadKw) out.push(ru ? "ДЕФИЦИТ МОЩНОСТИ" : "POWER DEFICIT");
   if (h.battery < 0.2) out.push(ru ? `БАТАРЕЯ ${(h.battery * 100).toFixed(0)}%` : `BATTERY ${(h.battery * 100).toFixed(0)}%`);
   if ((world.daylight || 0) < 0.32 && h.solarKw < 0.08) out.push(ru ? "НОЧЬ · СОЛНЦА НЕТ" : "NIGHT · NO SOLAR");
-  if (h.cableFault) out.push(ru ? "КАБЕЛЬ МАССИВА · ПРОВОД НА КЛАДБИЩЕ ПАНЕЛЕЙ" : "ARRAY CABLE OPEN — wire at the solar wreck");
-  else if (h.arrayHealth < 0.5) out.push(ru ? `МАССИВ ${(h.arrayHealth * 100).toFixed(0)}%` : `ARRAY ${(h.arrayHealth * 100).toFixed(0)}%`);
   if (h.waterTank < 1.0) out.push(ru ? "ВОДА HAB НИЗКАЯ" : "HAB WATER LOW");
   const fueled = (world.stations || []).some((s) => s.type === "still" && s.fuel > 0);
   if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");
@@ -198,4 +198,14 @@ export function habStatusLine(world, lang = "ru") {
   const alerts = habAlerts(world, lang);
   if (alerts[0]) return alerts[0];
   return `P ${(h.pressure * 100).toFixed(0)}%  BAT ${(h.battery * 100).toFixed(0)}%  ${h.solarKw.toFixed(1)}kW`;
+}
+
+export function consumeHabEvents(hab) {
+  const events = [];
+  if (!hab) return events;
+  if (hab.cableSnapEvent) {
+    events.push("cable-snap");
+    hab.cableSnapEvent = false;
+  }
+  return events;
 }

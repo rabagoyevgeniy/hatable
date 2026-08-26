@@ -27,6 +27,9 @@ HABITAT (world.hab)
     → load kW
     → inside temperature
     → player warmth while inside
+  roof array
+    → cableFault: roof kW = 0; HUD names the cable before deficit
+    → arrayHealth sandblasted in storms; replace cells
   still (fueled AND grid live)
     → station.water tap
     → hab.waterTank (starts as ~2 L leftover; still is the real supply)

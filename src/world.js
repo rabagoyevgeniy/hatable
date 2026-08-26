@@ -832,7 +832,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   for (let i = 0; i < 3; i++) {
     const cell = hab?.group.getObjectByName(`roofCell${i}`);
     if (!cell?.material) continue;
-    const ok = (world.hab?.arrayHealth ?? 0) > 0.22 + i * 0.24;
+    const ok = !world.hab?.cableFault && (world.hab?.arrayHealth ?? 0) > 0.22 + i * 0.24;
     cell.material.color?.setHex(ok ? 0x243044 : 0x1a1210);
     if (cell.material.emissive) cell.material.emissive.setHex(ok && world.daylight > 0.2 ? 0x1a3050 : 0x000000);
   }

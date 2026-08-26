@@ -100,7 +100,10 @@ export function tickStormDamage(world, dt) {
   }
   if (s > CABLE_STORM_MIN && !h.cableFault) {
     h.cableStress = (h.cableStress || 0) + dt;
-    if (h.cableStress >= CABLE_SNAP_S) h.cableFault = true;
+    if (h.cableStress >= CABLE_SNAP_S) {
+      h.cableFault = true;
+      h.cableSnapEvent = true;
+    }
   }
 }
 

@@ -15,7 +15,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Still (ice/hydrazine → water **if grid is live**; E at the cream pole with 2 scrap + canvas, ice is fuel)
 - **First Sol vertical slice** gated by `scripts/first-sol.mjs`: leak → repair → power → sleep → still → ice → water → drink → crop (headless; browser E-build of the still still unverified in one sitting)
 - Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest. Sleep growth is a day, not the night you wake into. Sealed + live grid shelters the crop; dead grid uses Mars cold
-- Coupled stabilize (harness): storm cuts solar and crop light; grid death freezes plots; storm scars the array and can snap the roof cable (wire from the solar wreck)
+- Coupled stabilize (harness): storm cuts solar and crop light; grid death freezes plots; storm scars the array and can snap the roof cable (wire from the solar wreck). Sleep-through-storm is a diagnosis, not a silent kW drop
 - Seal patch visual
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA

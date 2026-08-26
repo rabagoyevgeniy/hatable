@@ -230,4 +230,15 @@ Overnight loop: First Sol is gated; do not rewind to the desk/night checklist. D
 - First-sol leak minutes are protected. Harness: grace, dust-is-not-a-scar, scar remains after clear, splice, yard bypass
 - No rover. No Pointer Lock playtest this cycle
 
+### Cycle Y — the snap is the diagnosis
+
+Overnight timer still listed the old desk/night checklist. Repo: First Sol gated, storms already scar. Next was “felt in play.”
+
+- HUD names **КАБЕЛЬ МАССИВА** before generic POWER DEFICIT
+- Sleeping through a storm snaps the cable and scars the array (harness)
+- Rising-edge toast + HAB log: wire at the solar wreck. Roof cells go dark while the cable is open
+- Save does not replay the snap toast
+- No rover. No Pointer Lock playtest
+
+
 
