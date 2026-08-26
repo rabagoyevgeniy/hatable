@@ -162,3 +162,9 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 
 - Replay: HUD label «ДИСТИЛЛЯТОР» sat on a tiny ground smear — 5 cm pole + fog ate the marker
 - Still pad is now a dark plinth, thick unlit stake, lamp, and a double-sided sign that ignores fog
+
+### Cycle R playtest (browser)
+
+- From the Hab: cream stakes read as landmarks; HUD «ДИСТИЛЛЯТОР» sits on a pole, not bare dirt
+- Plot pads also stake — the yard is a set of posts, not one camouflaged ring
+- Next gate: actually E-build and ice-fuel now that the post is findable

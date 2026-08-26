@@ -7,7 +7,7 @@
 ## P1
 
 - Keep leak / power / water / first harvest stable — no rover until that holds
-- Confirm still playtest: hammer → west scrap/canvas → E-build → ice fuel → drip prompt → tank sip
+- Confirm still playtest: E-build on the stake → ice fuel → drip prompt → tank sip
 
 ## P2
 

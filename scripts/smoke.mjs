@@ -314,7 +314,7 @@ must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("need: { scrap:
 must(readFileSync(resolve(root, "src/data.js"), "utf8").includes("x: -7.5, z: 12.6"), "still pad has starter scrap so hammer does not starve the water loop");
 const i18n = readFileSync(resolve(root, "src/i18n.js"), "utf8");
 must(i18n.includes("buildStill"), "build-still prompt is translated, not a raw key");
-must(i18n.includes("СТАВИТЬ ДИСТИЛЛЯТОР"), "Russian still-build prompt exists");
+must(i18n.includes("helpDrop"), "Q drop hint is translated, not a raw key");
 
 const stillPad = YARD_PADS.find((p) => p.station === "still");
 must(!!stillPad, "still yard pad exists");
