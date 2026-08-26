@@ -1,6 +1,7 @@
 /** Journal catch-up — no Three.js. Systems complete goals; the card follows. */
 
 import { GOALS } from "../data.js";
+import { hasMavCargo } from "./survival.js";
 
 export const GOAL_IDS = GOALS.map((g) => g.id);
 
@@ -11,7 +12,6 @@ export function playerAtMav(player) {
 }
 
 export function goalsDone(player, world) {
-  const inv = player.inv || {};
   return {
     gather: (player.gathered || 0) >= 3 || !!world.habSealed,
     hammer: !!player.tools?.hammer,
@@ -20,7 +20,7 @@ export function goalsDone(player, world) {
     farm: !!player.harvestedCrop,
     power: !!world.powered,
     contact: !!world.contacted,
-    escape: !!(world.contacted && playerAtMav(player) && (inv.water || 0) >= 1 && (inv.potato || 0) >= 1),
+    escape: !!(world.contacted && playerAtMav(player) && hasMavCargo(player)),
   };
 }
 

@@ -930,14 +930,25 @@ export function runStabilizeCoupling() {
   if (!earthPack.some((l) => l.includes("MAV") && l.includes("NO CARGO"))) {
     fail("stabilize", "after Earth the MAV walk needs water and a potato");
   }
-  const loaded = { ...suit, inv: { water: 1, potato: 1 } };
+  const loaded = { ...suit, inv: { water: 1, potato: 1 }, harvestedCrop: true };
   if (!packingLines(loaded, { ...noon, contacted: true }, "en").some((l) => l.includes("MAV") && l.includes("IN RANGE"))) {
-    fail("stabilize", "cargo plus a clear day should pack the MAV");
+    fail("stabilize", "harvested cargo plus a clear day should pack the MAV");
+  }
+  const seedWalk = { ...suit, inv: { water: 1, potato: 1 }, harvestedCrop: false };
+  if (!packingLines(seedWalk, { ...noon, contacted: true }, "en").some((l) => l.includes("MAV") && l.includes("NO CARGO"))) {
+    fail("stabilize", "the last seed potato is not MAV cargo");
   }
   if (packingLines(loaded, gale, "en").some((l) => l.includes("MAV") && l.includes("IN RANGE"))) {
     fail("stabilize", "cargo does not make a storm-night MAV walk safe");
   }
   notes.push("mav-pack-needs-cargo");
+  if (goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 } }, { contacted: true }).escape) {
+    fail("stabilize", "walking the last seed to the MAV must not finish the journal");
+  }
+  if (!goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 }, harvestedCrop: true }, { contacted: true }).escape) {
+    fail("stabilize", "harvested cargo at the MAV after Earth should finish the walk");
+  }
+  notes.push("seed-is-not-mav-cargo");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

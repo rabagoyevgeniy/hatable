@@ -51,7 +51,7 @@ PLAYER
   solar-wreck wire is outside a storm-night leash
   desk packing list: wire / Pathfinder / MAV in-range vs out (only after the hull is sealed; storm night and a dry mouth refuse the long walks)
   leftover Hab tank sips restore packing range — drink, then walk
-  after Earth, MAV packing wants water + potato in pockets (range is not the win)
+  after Earth, MAV packing wants water + a potato that is not the last seed
 
 SCIENCE
   world.science.known[type] from scanner

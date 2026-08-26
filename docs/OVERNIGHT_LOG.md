@@ -411,6 +411,13 @@ Overnight timer still listed desk/night. Repo: journal waits for Earth. Escape s
 - After Earth, the MAV line is NO CARGO until pockets hold water and a potato. Storm night still refuses the walk. No rover
 - No Pointer Lock playtest
 
+### Cycle AV — the last seed is not MAV cargo
+
+Overnight timer still listed desk/night. Repo: MAV packing wanted a potato. The last tuber is seed until harvest — walking it to Schiaparelli is eating the farm.
+
+- Desk NO CARGO and the escape card both wait for a harvested copy. No rover
+- No Pointer Lock playtest
+
 
 
 

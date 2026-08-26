@@ -6,7 +6,7 @@ import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStil
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS, RECIPES } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
-import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank } from "../src/systems/survival.js";
+import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank, hasMavCargo } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
 import { goalsDone, advanceJournal, GOAL_IDS } from "../src/systems/goals.js";
@@ -303,6 +303,16 @@ must(afterSleepHunger > afterSleepThirst, "thirst kills first");
 must(canEatPotato({ inv: { potato: 2 }, harvestedCrop: false }), "one of two potatoes is lunch");
 must(!canEatPotato({ inv: { potato: 1 }, harvestedCrop: false }), "last potato is seed until harvest");
 must(canEatPotato({ inv: { potato: 1 }, harvestedCrop: true }), "harvested copies can be eaten");
+must(!hasMavCargo({ inv: { water: 1, potato: 1 }, harvestedCrop: false }), "last seed is not MAV cargo");
+must(hasMavCargo({ inv: { water: 1, potato: 1 }, harvestedCrop: true }), "harvested potato plus water is MAV cargo");
+must(
+  !goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 } }, { contacted: true }).escape,
+  "walking the seed to the MAV is not the win"
+);
+must(
+  goalsDone({ x: 196, z: -158, inv: { water: 1, potato: 1 }, harvestedCrop: true }, { contacted: true }).escape,
+  "harvested cargo at the MAV after Earth is the win"
+);
 must(game.includes("seedPotato"), "eating seed potato is blocked in play");
 must(existsSync(resolve(root, "src/systems/survival.js")), "first-sol gut lives in systems/survival");
 
@@ -573,10 +583,16 @@ must(ui.includes("packingLines"), "Hab console shows a packing list, not a new H
     "after Earth the MAV line wants cargo, not only range"
   );
   must(
-    packingLines({ ...suit, inv: { water: 1, potato: 1 } }, { ...noon, contacted: true }, "en").some(
+    packingLines({ ...suit, inv: { water: 1, potato: 1 }, harvestedCrop: true }, { ...noon, contacted: true }, "en").some(
       (l) => l.includes("MAV") && l.includes("IN RANGE")
     ),
-    "water and a potato pack the MAV on a clear day"
+    "harvested potato and water pack the MAV on a clear day"
+  );
+  must(
+    packingLines({ ...suit, inv: { water: 1, potato: 1 } }, { ...noon, contacted: true }, "en").some(
+      (l) => l.includes("MAV") && l.includes("NO CARGO")
+    ),
+    "the last seed potato is not MAV cargo on the desk"
   );
 }
 must(i18n.includes("radioListening"), "radio listening toast is translated");

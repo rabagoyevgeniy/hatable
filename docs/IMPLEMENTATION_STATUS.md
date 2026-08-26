@@ -31,7 +31,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 ## PARTIAL
 
 - Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples. Place ident, overlay names, and loot rings share the 22 m scan pulse. Hold-F is not a planet detector. Rover identified as dead, not driven)
-- Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk; after Earth the MAV line wants cargo)
+- Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk; after Earth the MAV line wants water + a harvested potato, not the last seed)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)
 - Story / delayed Earth (radio listens on a clear day or a clear-day sleep; storms bury S-band. Placing is not Hello, Earth. Journal contact waits for the reply)

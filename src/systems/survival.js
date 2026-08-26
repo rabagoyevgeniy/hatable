@@ -22,6 +22,11 @@ export function canEatPotato(player) {
   return true;
 }
 
+/** Escape cargo: water plus a potato that is not the last seed. */
+export function hasMavCargo(player) {
+  return (player.inv?.water || 0) >= 1 && canEatPotato(player);
+}
+
 export function tankSipsLeft(liters, sip = TANK_SIP_L, min = TANK_MIN_L) {
   let n = 0;
   let t = liters;
@@ -127,10 +132,8 @@ export function packingLines(player, world, lang = "en") {
     const km = trip < 100 ? "<0.1" : (trip / 1000).toFixed(1);
     const name = ru ? d.ru : d.en;
     let flag = ok ? (ru ? "ДОСЯГАЕМ" : "IN RANGE") : ru ? "ДАЛЕКО" : "OUT OF RANGE";
-    if (ok && d.id === "mav" && world.contacted) {
-      const water = player.inv?.water || 0;
-      const potato = player.inv?.potato || 0;
-      if (water < 1 || potato < 1) flag = ru ? "НЕТ ГРУЗА" : "NO CARGO";
+    if (ok && d.id === "mav" && world.contacted && !hasMavCargo(player)) {
+      flag = ru ? "НЕТ ГРУЗА" : "NO CARGO";
     }
     out.push(`${name}  ${km} km  ${flag}`);
   }
