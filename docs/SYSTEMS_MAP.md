@@ -57,6 +57,7 @@ SCIENCE
   wire scan → splice the roof cable / rebuild the still pump (first-sol cell replace stays ungated)
   F also identifies a sample in hand / pockets when nothing is underfoot
   radio listen (after place; storms / night pause S-band)
+  pathfinder scan → names the S-band lander (not XP)
   contacted after RADIO_CONTACT_S of clear daylight — not on place
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
   distant (>22 m) non-starter rings stay off even in clear weather

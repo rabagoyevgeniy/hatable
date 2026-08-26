@@ -482,7 +482,10 @@ must(lootBeaconVisible({ starter: false, storm: 0, dist: 40, scanning: true }), 
 must(world.includes("lootBeaconVisible"), "world hides loot marks from storm, not only the HUD");
 must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "scan at the solar wreck names the farm");
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");
+must(pickScanTarget({ outpostKind: "pathfinder", outpostD: 8 }) === "pathfinder", "scan at Pathfinder names the lander");
+must(pickScanTarget({ nodeType: "comms", nodeD: 0.8, outpostKind: "pathfinder", outpostD: 3 }) === "comms", "comms underfoot still scans as comms");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("solaryard"), "solar farm has a scan ident");
+must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("Storms bury the signal"), "Pathfinder scan names the delayed uplink");
 must(game.includes("pickScanTarget"), "F uses the shared scan picker");
 must(game.includes("heldId: player.heldId"), "F identifies a sample in the hand");
 must(game.includes("canFuelStill"), "still fuel requires an ice scan");

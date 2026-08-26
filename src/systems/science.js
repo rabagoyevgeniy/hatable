@@ -61,6 +61,10 @@ export const SCAN_DB = {
     en: "Ares III solar farm. Spare cells and copper. The roof-cable splice lives here.",
     ru: "Солнечная ферма Арис III. Запасные элементы и медь. Здесь жила для кабеля крыши.",
   },
+  pathfinder: {
+    en: "Ares III Pathfinder. S-band uplink if you bring a radio. Storms bury the signal.",
+    ru: "Pathfinder Арис III. S-диапазон, если принесёшь рацию. Буря хоронит сигнал.",
+  },
 };
 
 import { STORM_GRACE_S } from "./weather.js";

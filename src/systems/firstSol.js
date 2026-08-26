@@ -564,6 +564,20 @@ export function runStabilizeCoupling() {
   if (!(estimateRangeM(suit, gale) < trip)) fail("stabilize", "storm night should crush the range line");
   notes.push("storm-blocks-wire-run");
 
+  const probe = OUTPOSTS.find((o) => o.id === "pathfinder");
+  const comms = NODE_SPAWNS.find((n) => n.type === "comms");
+  if (!probe || !comms) fail("stabilize", "Pathfinder / comms board missing");
+  const earthTrip = roundTripM(HAB_POS, probe);
+  if (earthTrip < 300 || earthTrip > 420) {
+    fail("stabilize", `Pathfinder should be a longer leash than the solar wreck (${earthTrip.toFixed(0)} m)`);
+  }
+  if (!(earthTrip > trip + 40)) fail("stabilize", "Pathfinder must sit past the wire run");
+  if (!canRoundTrip(suit, noon, probe, HAB_POS)) {
+    fail("stabilize", `clear day should reach Pathfinder (range ${estimateRangeM(suit, noon).toFixed(0)} vs ${earthTrip.toFixed(0)})`);
+  }
+  if (canRoundTrip(suit, gale, probe, HAB_POS)) fail("stabilize", "storm night must not be a safe Pathfinder walk");
+  notes.push("pathfinder-is-a-longer-leash");
+
   if (!lootBeaconVisible({ starter: true, playTime: 10, storm: 0 })) fail("stabilize", "starter rings must show on Sol 19");
   if (!lootBeaconVisible({ starter: false, storm: 0.2, scanning: false, dist: 8 })) fail("stabilize", "clear-day yard loot still has a ring");
   if (lootBeaconVisible({ starter: false, storm: 0, scanning: false, dist: 40 })) {
@@ -591,6 +605,19 @@ export function runStabilizeCoupling() {
   }
   if (noteScan(look, "solaryard")) fail("stabilize", "repeat farm scan is not XP");
   notes.push("scan-names-solar-farm");
+
+  if (pickScanTarget({ outpostKind: "pathfinder", outpostD: 8 }) !== "pathfinder") {
+    fail("stabilize", "scan at Pathfinder should name the lander, not a comms board");
+  }
+  if (pickScanTarget({ nodeType: "comms", nodeD: 1.2, outpostKind: "pathfinder", outpostD: 4 }) !== "comms") {
+    fail("stabilize", "comms board underfoot still identifies as comms");
+  }
+  const lander = noteScan(look, "pathfinder");
+  if (!lander || !String(lander.en || "").toLowerCase().includes("s-band")) {
+    fail("stabilize", "first Pathfinder scan should mention S-band");
+  }
+  if (noteScan(look, "pathfinder")) fail("stabilize", "repeat Pathfinder scan is not XP");
+  notes.push("scan-names-pathfinder");
 
   const recipe = createHeadlessWorld();
   if (canFuelStill(recipe, "ice")) fail("stabilize", "unscanned ice is not still feedstock");

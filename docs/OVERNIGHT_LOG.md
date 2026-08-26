@@ -311,6 +311,14 @@ Overnight timer still listed desk/night. P2 leftover after copper: delayed Earth
 - Sleeping through a storm misses Earth. Console names LISTEN / DUST / NIGHT / EARTH
 - No rover. No Pointer Lock playtest
 
+### Cycle AH — Pathfinder is a longer leash
+
+Overnight timer still listed desk/night. Repo: Earth is delayed. Next reconnect beat: the walk, not a rover.
+
+- F at Pathfinder names the lander and the S-band job. Comms underfoot still scan as the board. Repeat is silent
+- Round trip is past the solar-wreck wire run. Clear day reaches; storm night does not
+- No rover. No Pointer Lock playtest
+
 
 
 
