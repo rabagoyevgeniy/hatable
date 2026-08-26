@@ -34,7 +34,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Range estimate (O₂ ∩ warmth ∩ thirst ∩ hunger round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed; tank sips restore the walk)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)
-- Story / delayed Earth (radio listens on a clear day; storms bury S-band. Placing is not Hello, Earth)
+- Story / delayed Earth (radio listens on a clear day or a clear-day sleep; storms bury S-band. Placing is not Hello, Earth. Journal contact waits for the reply)
 
 ## NOT IMPLEMENTED
 

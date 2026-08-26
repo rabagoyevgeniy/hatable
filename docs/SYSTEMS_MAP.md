@@ -63,7 +63,8 @@ SCIENCE
   pathfinder scan → names the S-band lander (not XP)
   farm / rover / mav scans → name the leftover expedition (rover is not a taxi; MAV is a project)
   comms scan → radio recipe (hammer / still / plot stay ungated)
-  contacted after RADIO_CONTACT_S of clear daylight — not on place
+  contacted after RADIO_CONTACT_S of clear daylight — not on place; a clear-day sleep can finish the listen
+  journal «Hello, Earth» waits for contacted, not the radio station
   dust/storm hides loot rings unless scanning **within 22 m** (starter rings survive the first emergency)
   distant (>22 m) rings stay off — even while holding F; walk in
   place ident uses the same 22 m as loot rings — F names the wreck you can see, not the horizon

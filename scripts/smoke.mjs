@@ -9,7 +9,7 @@ import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeS
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM, packingLines, sipHabitatTank } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
-import { goalsDone, advanceJournal } from "../src/systems/goals.js";
+import { goalsDone, advanceJournal, GOAL_IDS } from "../src/systems/goals.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -579,6 +579,16 @@ must(i18n.includes("earthHeard"), "Earth heard toast is translated");
   must(radioCanListen(uplink), "clear noon can listen");
   for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(uplink, 1);
   must(!!uplink.contacted, "clear-day S-band listen reaches Earth");
+}
+{
+  const placed = { contacted: false, stations: [{ type: "radio" }] };
+  must(!goalsDone({ inv: {} }, placed).contact, "journal contact waits for Earth, not the radio place");
+  const hello = { index: GOAL_IDS.indexOf("contact"), finished: false };
+  advanceJournal(hello, goalsDone({ inv: {} }, placed));
+  must(hello.index === GOAL_IDS.indexOf("contact"), "radio place does not skip Hello Earth");
+  placed.contacted = true;
+  advanceJournal(hello, goalsDone({ inv: {} }, placed));
+  must(hello.index === GOAL_IDS.indexOf("escape"), "Earth reply advances the contact card");
 }
 must(labLines({ science: { known: {} } }).length === 0, "empty desk has no lab lines");
 must(labLines({ science: { known: { ice: true } } }, "en").some((s) => s.includes("FEEDSTOCK")), "desk logs identified ice");

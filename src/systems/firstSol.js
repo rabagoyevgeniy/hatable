@@ -12,7 +12,7 @@ import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines } from "./survival.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickArrayAction, dist } from "./interact.js";
-import { goalsDone, advanceJournal } from "./goals.js";
+import { goalsDone, advanceJournal, GOAL_IDS } from "./goals.js";
 
 export const FIRST_SOL_CHAIN = ["leak", "repair", "power", "sleep", "still", "ice", "water", "drink", "crop"];
 
@@ -891,6 +891,40 @@ export function runStabilizeCoupling() {
   simulateSleep(napRadio, 96);
   if (napRadio.contacted) fail("stabilize", "sleeping through a storm should not reach Earth");
   notes.push("storm-sleep-misses-earth");
+
+  const napClear = createHeadlessWorld();
+  napClear.habSealed = true;
+  napClear.hab.heaterOn = false;
+  napClear.clock = 0.25;
+  tickTime(napClear, 0);
+  applyWeatherState(napClear, "clear");
+  placeStationSim(napClear, "radio", -138, -92);
+  if (napClear.contacted) fail("stabilize", "radio is still not Hello Earth before sleep");
+  simulateSleep(napClear, 96);
+  if (!napClear.contacted) fail("stabilize", "sleeping a clear day should finish the S-band listen");
+  if (!napClear.hab.earthHeardEvent) fail("stabilize", "clear-day sleep should raise Earth heard");
+  if (!habReadout(napClear, "en").includes("EARTH")) {
+    fail("stabilize", "console should name EARTH after a clear sleep");
+  }
+  notes.push("clear-day-sleep-reaches-earth");
+
+  const hello = { index: GOAL_IDS.indexOf("contact"), finished: false };
+  const placed = createHeadlessWorld();
+  placed.habSealed = true;
+  placeStationSim(placed, "radio", -138, -92);
+  if (goalsDone(createHeadlessPlayer(), placed).contact) {
+    fail("stabilize", "journal contact must wait for Earth, not the radio place");
+  }
+  advanceJournal(hello, goalsDone(createHeadlessPlayer(), placed));
+  if (hello.index !== GOAL_IDS.indexOf("contact")) {
+    fail("stabilize", "radio place must not skip Hello, Earth");
+  }
+  placed.contacted = true;
+  advanceJournal(hello, goalsDone(createHeadlessPlayer(), placed));
+  if (hello.index !== GOAL_IDS.indexOf("escape")) {
+    fail("stabilize", "Earth reply should advance the contact card");
+  }
+  notes.push("journal-waits-for-earth");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

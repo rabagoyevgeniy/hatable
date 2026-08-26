@@ -397,6 +397,13 @@ Overnight timer still listed desk/night. Repo: range includes gut. Thirsty packi
 - Two console sips put Pathfinder back in range. An empty tank does not. No new HUD meters
 - No rover. No Pointer Lock playtest
 
+### Cycle AT — sleep can finish Earth; the journal waits
+
+Overnight timer still listed desk/night. Repo: desk sip packs the walk. Reconnect leftover: clear-day sleep already ticked S-band, but the harness only locked storm-sleep-misses.
+
+- Sleeping a clear noon finishes the listen and names EARTH on the desk. Placing the radio does not complete «Hello, Earth»
+- No rover. No Pointer Lock playtest
+
 
 
 
