@@ -47,7 +47,7 @@ import {
   refreshContinue,
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
-import { noteScan } from "./systems/science.js";
+import { noteScan, pickScanTarget } from "./systems/science.js";
 
 export async function boot() {
   try {
@@ -778,17 +778,34 @@ async function bootGame() {
         scanAcc += dt;
         if (scanAcc > 0.35) {
           scanAcc = 0;
-          let nearest = null;
-          let nd = 5.2;
+          let nodeType = null;
+          let nodeD = 99;
           for (const n of world.nodes) {
             if (n.taken) continue;
             const d = Math.hypot(player.root.position.x - n.mesh.position.x, player.root.position.z - n.mesh.position.z);
-            if (d < nd) {
-              nd = d;
-              nearest = n.type;
+            if (d < nodeD) {
+              nodeD = d;
+              nodeType = n.type;
             }
           }
-          if (!nearest && result.inside) nearest = world.habSealed ? "hab" : "leak";
+          let outpostKind = null;
+          let outpostD = 99;
+          for (const o of world.outposts || []) {
+            if (o.kind === "hab") continue;
+            const d = Math.hypot(player.root.position.x - o.x, player.root.position.z - o.z);
+            if (d < outpostD) {
+              outpostD = d;
+              outpostKind = o.kind;
+            }
+          }
+          const nearest = pickScanTarget({
+            nodeType,
+            nodeD,
+            inside: result.inside,
+            sealed: world.habSealed,
+            outpostKind,
+            outpostD,
+          });
           const entry = noteScan(world, nearest);
           if (entry) toast(`${t("scanned")} · ${loc(entry)}`);
         }

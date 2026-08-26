@@ -57,6 +57,10 @@ export const SCAN_DB = {
     en: "Hull puncture. Pressure falling. Canvas + tape.",
     ru: "Пробой корпуса. Давление падает. Брезент + скотч.",
   },
+  solaryard: {
+    en: "Ares III solar farm. Spare cells and copper. The roof-cable splice lives here.",
+    ru: "Солнечная ферма Арис III. Запасные элементы и медь. Здесь жила для кабеля крыши.",
+  },
 };
 
 import { STORM_GRACE_S } from "./weather.js";
@@ -87,4 +91,21 @@ export function noteScan(world, id) {
 
 export function scanCount(world) {
   return Object.keys(world.science?.known || {}).length;
+}
+
+/** What F identifies this frame. Loot underfoot beats a place. No XP. */
+export function pickScanTarget({
+  nodeType = null,
+  nodeD = 99,
+  inside = false,
+  sealed = true,
+  outpostKind = null,
+  outpostD = 99,
+} = {}) {
+  if (nodeType && nodeD < 5.2) return nodeType;
+  if (inside) return sealed ? "hab" : "leak";
+  if (outpostKind && outpostKind !== "hab" && outpostD < 16) {
+    return outpostKind === "solar" ? "solaryard" : outpostKind;
+  }
+  return null;
 }

@@ -268,6 +268,15 @@ Overnight timer still listed desk/night. Repo: stabilize leash is honest. Next v
 - Wire at the solar wreck is not starter — after a storm you scan for it, you do not follow a glowing cookie
 - No rover. No Pointer Lock playtest
 
+### Cycle AC — scan names the solar farm
+
+Overnight timer still listed desk/night. Repo: dust hides rings. Next understand beat: the wreck is a place, not XP.
+
+- F at the solar graveyard identifies the farm (spare cells + copper for the roof cable). Repeat scan is silent
+- Wire underfoot still scans as wire. Shared `pickScanTarget` in the harness
+- No rover. No Pointer Lock playtest
+
+
 
 
 

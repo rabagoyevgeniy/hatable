@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -534,6 +534,20 @@ export function runStabilizeCoupling() {
     fail("stabilize", "after the emergency, even starter rings vanish in dust");
   }
   notes.push("dust-hides-loot-rings");
+
+  const look = createHeadlessWorld();
+  if (pickScanTarget({ outpostKind: "solar", outpostD: 8 }) !== "solaryard") {
+    fail("stabilize", "scan at the solar wreck should name the farm, not a cell");
+  }
+  if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
+    fail("stabilize", "copper underfoot still identifies as wire");
+  }
+  const yard = noteScan(look, "solaryard");
+  if (!yard || !String(yard.en || "").toLowerCase().includes("copper")) {
+    fail("stabilize", "first solar-farm scan should mention copper for the cable");
+  }
+  if (noteScan(look, "solaryard")) fail("stabilize", "repeat farm scan is not XP");
+  notes.push("scan-names-solar-farm");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }
