@@ -108,7 +108,6 @@ async function bootGame() {
   let last = performance.now();
   const touchMove = { x: 0, y: 0 };
   const touchLook = { x: 0, y: 0 };
-  const coarse = isMobileView();
   let touchScan = false;
   let saveAcc = 0;
   let scanAcc = 0;
@@ -138,14 +137,13 @@ async function bootGame() {
     }
     const g = currentGoal(journal);
     if (g) pushLog(goalText(g).from, goalText(g).log);
-    const touchUi = document.getElementById("touch-ui");
-    if (coarse && touchUi) touchUi.classList.remove("hidden");
     try {
-      if (!coarse) canvas.requestPointerLock?.();
+      if (!isMobileView()) canvas.requestPointerLock?.();
     } catch {
       /* pointer lock is optional */
     }
     persist();
+    placeCamera(1 / 60, true);
   }
 
   bindUi({
@@ -231,7 +229,7 @@ async function bootGame() {
   if (queuedStart !== null) beginPlay(queuedStart);
 
   canvas.addEventListener("click", () => {
-    if (playing && !menusOpen()) canvas.requestPointerLock?.();
+    if (playing && !menusOpen() && !isMobileView()) canvas.requestPointerLock?.();
   });
 
   document.addEventListener("mousemove", (e) => {
@@ -645,7 +643,11 @@ async function bootGame() {
     el.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      el.setPointerCapture(e.pointerId);
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* DevTools / reused responses can reject capture; window listeners still track the id. */
+      }
       id = e.pointerId;
       setFromTouch(e);
     });
@@ -653,14 +655,18 @@ async function bootGame() {
       if (e.pointerId !== id) return;
       setFromTouch(e);
     });
-    el.addEventListener("pointerup", (e) => {
+    window.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== id) return;
+      setFromTouch(e);
+    });
+    const endPtr = (e) => {
       if (e.pointerId !== id) return;
       reset();
-    });
-    el.addEventListener("pointercancel", (e) => {
-      if (e.pointerId !== id) return;
-      reset();
-    });
+    };
+    el.addEventListener("pointerup", endPtr);
+    el.addEventListener("pointercancel", endPtr);
+    window.addEventListener("pointerup", endPtr);
+    window.addEventListener("pointercancel", endPtr);
   }
 
   function bindTouch() {
@@ -720,7 +726,7 @@ async function bootGame() {
     player.pitch = THREE.MathUtils.clamp((player.pitch || 0) + player.lookVelY * dt, -0.22, 0.62);
   }
 
-  function placeCamera(dt) {
+  function placeCamera(dt, snap = false) {
     const inside = isSheltered(player.root.position.x, player.root.position.z);
     const camYaw = player.camYaw || 0;
     const dist = inside ? 6.1 : 15.4;
@@ -730,7 +736,8 @@ async function bootGame() {
       player.root.position.y + height,
       player.root.position.z + Math.cos(camYaw) * dist
     );
-    camera.position.lerp(desired, 1 - Math.pow(0.012, dt));
+    if (snap) camera.position.copy(desired);
+    else camera.position.lerp(desired, 1 - Math.pow(0.012, dt));
     const segs = world.terrainSegments || 168;
     const minY = meshHeightAt(camera.position.x, camera.position.z, segs, heightAt) + (inside ? 1.35 : 1.85);
     if (camera.position.y < minY) camera.position.y = minY;

@@ -1,7 +1,15 @@
 /** Phone / coarse-pointer detection. Kept tiny to avoid gfx ↔ world import cycles. */
 export function isMobileView() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(pointer: coarse)").matches || innerWidth < 720;
+  const w = window.visualViewport?.width || innerWidth;
+  const h = window.visualViewport?.height || innerHeight;
+  const phoneLandscape = Math.max(w, h) <= 920 && Math.min(w, h) <= 540;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(hover: none)").matches ||
+    Math.min(w, h) <= 480 ||
+    phoneLandscape
+  );
 }
 
 export function isPortraitView() {
