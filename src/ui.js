@@ -401,6 +401,15 @@ export function findInteract(player, world) {
     }
   }
 
+  const stillRec = RECIPES.find((r) => r.station === "still");
+  const stillPad = YARD_PADS.find((p) => p.station === "still");
+  if (stillRec && stillPad && !world.stations.some((s) => s.type === "still")) {
+    const padD = Math.hypot(p.x - stillPad.x, p.z - stillPad.z);
+    if (padD < 2.8 && player.tools.hammer && canAfford(player, stillRec.need)) {
+      return { kind: "build-still", label: t("buildStill") };
+    }
+  }
+
   for (const st of world.stations) {
     const d = Math.hypot(p.x - st.x, p.z - st.z);
     if (d > 4.2) continue;

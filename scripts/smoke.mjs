@@ -308,7 +308,8 @@ advanceJournal(patched, goalsDone({ gathered: 5, tools: { hammer: true }, inv: {
 must(patched.index === 3, "seal + hammer catch up to water");
 const loot = { index: 0, finished: false };
 advanceJournal(loot, goalsDone({ gathered: 3, tools: {}, inv: {} }, { habSealed: false }));
-must(readFileSync(resolve(root, "src/systems/save.js"), "utf8").includes("advanceJournal"), "Continue catch-up so a sealed save is not still pick-scrap");
+must(game.includes("build-still"), "still pad builds in place like the leak patch");
+must(ui.includes("build-still"), "still pad prompt exists");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

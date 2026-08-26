@@ -114,6 +114,7 @@ const strings = {
     leakHint: "LEAK · 2 canvas + tape from locker",
     patched: "HULL SEALED — pressure holding",
     patchedHome: "HULL SEALED — RIGHT: console (heater). Deeper left: bunk.",
+    buildStill: "E  BUILD STILL",
     consoleDeeper: "deeper — cyan screen",
   },
   ru: {
@@ -229,6 +230,7 @@ const strings = {
     leakHint: "УТЕЧКА · 2 брезента + скотч из шкафа",
     patched: "КОРПУС ЗАДЕЛАН — давление держится",
     patchedHome: "КОРПУС ЗАДЕЛАН — справа консоль (печь). Глубже слева — койка.",
+    buildStill: "E  СТАВИТЬ ДИСТИЛЛЯТОР",
     consoleDeeper: "глубже — голубой экран",
   },
 };

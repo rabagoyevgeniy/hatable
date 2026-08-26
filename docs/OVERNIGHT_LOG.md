@@ -125,3 +125,8 @@ First-Sol path leak → seal → console → sleep is playable. Rover still wait
 - Catch-up skips finished goals in one tick (patch + hammer → water)
 - Journal still does not create the sim — it only stops lying about it
 - Continue/applySave runs the same catch-up so an old sealed save is not stuck on scrap
+
+### Cycle M — still pad builds like the leak
+
+- On the amber STILL ring with hammer + 2 scrap + canvas + ice, E places the distiller (craft-then-place still works)
+- Ice on the west pad is gather until you have the recipe; then the ring is the interact

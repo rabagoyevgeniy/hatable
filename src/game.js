@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { applyDom, toggleLang, t, loc } from "./i18n.js";
 import { startAudio, setAmbience, pickupTone, deliverTone, sleepTone, tickStill, switchTone } from "./audio.js";
-import { RECIPES, SURVIVAL, HAB_LEAK } from "./data.js";
+import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { repairStillPump, stillCanRun } from "./systems/machines.js";
 import { TANK_SIP_L, TANK_MIN_L, TANK_SIP_THIRST } from "./systems/survival.js";
@@ -356,6 +356,22 @@ async function bootGame() {
       setGhost(world, null);
       deliverTone();
       toast(t("patchedHome"));
+      maybeGoal();
+      persist();
+      return;
+    }
+    if (hit.kind === "build-still") {
+      const rec = RECIPES.find((r) => r.station === "still");
+      const pad = YARD_PADS.find((p) => p.station === "still");
+      if (!rec || !pad || !player.tools.hammer || !takeItems(player, rec.need)) {
+        toast(t("needMats"));
+        return;
+      }
+      placeStation(world, "still", pad.x, pad.z);
+      player.placing = null;
+      setGhost(world, null);
+      deliverTone();
+      toast(`${t("placed")} · ${loc(rec.title)}`);
       maybeGoal();
       persist();
       return;
