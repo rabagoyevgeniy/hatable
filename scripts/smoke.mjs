@@ -2,10 +2,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire } from "../src/systems/science.js";
+import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, radioCanListen, RADIO_CONTACT_S } from "../src/systems/science.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
-import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
+import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL, placeStationSim } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
@@ -501,6 +501,20 @@ must(pickScanTarget({ heldId: "ice" }) === "ice", "F identifies held ice");
 must(pickScanTarget({ heldId: "ice", outpostKind: "solar", outpostD: 8 }) === "solaryard", "farm ident beats a pocket sample");
 must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes("iceBonus"), "still has no scan XP bonus");
 must(!readFileSync(resolve(root, "src/systems/habitat.js"), "utf8").includes("known?.soil"), "crops have no scan XP bonus");
+must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes('type === "radio") world.contacted'), "placing radio is not instant Earth");
+must(!world.includes("station === \"radio\") world.contacted"), "world place does not instantly contact Earth");
+must(game.includes("earth-heard"), "Earth reply raises a Hab log");
+must(i18n.includes("radioListening"), "radio listening toast is translated");
+must(i18n.includes("earthHeard"), "Earth heard toast is translated");
+{
+  const uplink = { clock: 0.25, daylight: 1, storm: 0, contacted: false, stations: [], hab: createHabitat(), radio: { listenS: 0 } };
+  tickTime(uplink, 0);
+  placeStationSim(uplink, "radio", -138, -92);
+  must(!uplink.contacted, "placeStationSim radio does not set contacted");
+  must(radioCanListen(uplink), "clear noon can listen");
+  for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(uplink, 1);
+  must(!!uplink.contacted, "clear-day S-band listen reaches Earth");
+}
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

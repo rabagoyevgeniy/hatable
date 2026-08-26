@@ -56,7 +56,8 @@ SCIENCE
   soil scan → plot accepts the seed potato (not a growth buff)
   wire scan → splice the roof cable / rebuild the still pump (first-sol cell replace stays ungated)
   F also identifies a sample in hand / pockets when nothing is underfoot
-  solaryard → first ident of the copper/cell wreck (not XP)
+  radio listen (after place; storms / night pause S-band)
+  contacted after RADIO_CONTACT_S of clear daylight — not on place
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
   distant (>22 m) non-starter rings stay off even in clear weather
 

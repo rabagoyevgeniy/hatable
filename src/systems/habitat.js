@@ -2,6 +2,7 @@
 
 import { tickStillOnSleep } from "./machines.js";
 import { tickStormDamage } from "./weather.js";
+import { tickRadio, radioPlaced } from "./science.js";
 
 export const SOL_SECONDS = 220;
 /** Sleep jump toward harvest. Four watered Sols can finish. */
@@ -110,6 +111,7 @@ export function tickHabitat(world, dt) {
   for (const st of stillsFueled) {
     if (h.gridOn) h.waterTank = Math.min(40, h.waterTank + dt * 0.028);
   }
+  tickRadio(world, dt);
 }
 
 export function simulateSleep(world, seconds = 96) {
@@ -149,7 +151,7 @@ export function habReadout(world, lang = "ru") {
   const grid = h.gridOn ? (ru ? "СЕТЬ ЖИВА" : "GRID LIVE") : (ru ? "СЕТЬ МЕРТВА" : "GRID DEAD");
   const heat = h.heaterOn ? (ru ? "ВКЛ" : "ON") : (ru ? "ВЫКЛ" : "OFF");
   const lights = h.lightsOn ? (ru ? "ВКЛ" : "ON") : (ru ? "ВЫКЛ" : "OFF");
-  return [
+  const lines = [
     `${ru ? "ДАВЛЕНИЕ" : "PRESSURE"}  ${(h.pressure * 100).toFixed(0)}%   ${leak}`,
     `${ru ? "БАТАРЕЯ" : "BATTERY"}   ${(h.battery * 100).toFixed(0)}%   ${grid}`,
     `${ru ? "СОЛНЦЕ" : "SOLAR"}     ${h.solarKw.toFixed(2)} kW`,
@@ -161,7 +163,14 @@ export function habReadout(world, lang = "ru") {
     `${ru ? "МАССИВ" : "ARRAY"}     ${h.cableFault ? (ru ? "КАБЕЛЬ" : "CABLE") : `${(h.arrayHealth * 100).toFixed(0)}%`}`,
     `${ru ? "ПЕЧЬ" : "HEATER"}    ${heat}   ${ru ? "СВЕТ" : "LIGHTS"} ${lights}`,
     `${ru ? "ДИСТИЛЛ" : "STILL"}    ${h.gridOn ? (ru ? "СЕТЬ ОК" : "GRID OK") : (ru ? "НЕТ СЕТИ" : "NO GRID")}`,
-  ].join("\n");
+  ];
+  if (radioPlaced(world)) {
+    let band = world.contacted ? (ru ? "ЗЕМЛЯ" : "EARTH") : ru ? "СЛУШАЕМ" : "LISTEN";
+    if (!world.contacted && (world.storm || 0) >= 0.42) band = ru ? "ПЫЛЬ" : "DUST";
+    else if (!world.contacted && (world.daylight || 0) < 0.28) band = ru ? "НОЧЬ" : "NIGHT";
+    lines.push(`${ru ? "S-ДИАП" : "S-BAND"}    ${band}`);
+  }
+  return lines.join("\n");
 }
 
 export function habAlerts(world, lang = "ru") {
@@ -181,6 +190,11 @@ export function habAlerts(world, lang = "ru") {
   if (fueled && !h.gridOn) out.push(ru ? "ДИСТИЛЛЯТОР БЕЗ СЕТИ" : "STILL OFFLINE — NO POWER");
   if ((world.stations || []).some((s) => s.type === "still" && s.fault === "pump")) {
     out.push(ru ? "НАСОС ДИСТИЛЛЯТОРА" : "STILL PUMP FAILED");
+  }
+  if (radioPlaced(world) && !world.contacted) {
+    if ((world.storm || 0) >= 0.42) out.push(ru ? "S-ДИАПАЗОН В ПЫЛИ" : "S-BAND BURIED IN DUST");
+    else if ((world.daylight || 0) < 0.28) out.push(ru ? "S-ДИАПАЗОН · ЖДИ ДНЯ" : "S-BAND — WAIT FOR DAY");
+    else out.push(ru ? "СЛУШАЕМ ЗЕМЛЮ" : "LISTENING FOR EARTH");
   }
   return out;
 }
@@ -203,6 +217,10 @@ export function consumeHabEvents(hab) {
   if (hab.cableSnapEvent) {
     events.push("cable-snap");
     hab.cableSnapEvent = false;
+  }
+  if (hab.earthHeardEvent) {
+    events.push("earth-heard");
+    hab.earthHeardEvent = false;
   }
   return events;
 }

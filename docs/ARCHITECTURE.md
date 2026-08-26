@@ -10,7 +10,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `systems/inventory.js` | count / add / take / afford (no Three) |
 | `systems/habitat.js` | pressure, battery, solar, temperatures, water tank, sleep Sol, crop factors |
 | `systems/weather.js` | CLEAR/DUST/STORM → `world.storm`; `applyWeatherState`; storm array/cable damage |
-| `systems/science.js` | scan discoveries; ice/soil/wire scans unlock still fuel, planting, and electrical repair |
+| `systems/science.js` | scan discoveries; ice/soil/wire scans unlock tools; S-band listen after radio |
 | `systems/machines.js` | station records, still pump, headless `placeStationSim` |
 | `systems/survival.js` | seed potato, tank sip, bunk `trySleepSol`, suit range (O₂ ∩ warmth) |
 | `systems/firstSol.js` | sequential First Sol + stabilize harness |

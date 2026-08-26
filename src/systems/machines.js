@@ -30,7 +30,7 @@ export function placeStationSim(world, type, x = 0, z = 0) {
   const st = makeStation(type, x, z);
   world.stations.push(st);
   if (type === "solar") world.powered = true;
-  if (type === "radio") world.contacted = true;
+  if (type === "radio" && !world.radio) world.radio = { listenS: 0 };
   return st;
 }
 

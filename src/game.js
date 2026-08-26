@@ -313,7 +313,15 @@ async function bootGame() {
       player.placing = null;
       setGhost(world, null);
       deliverTone();
-      toast(rec.station === "seal" ? t("patchedHome") : rec.station === "still" ? t("fuelStillHint") : `${t("placed")} · ${loc(rec.title)}`);
+      toast(
+        rec.station === "seal"
+          ? t("patchedHome")
+          : rec.station === "still"
+            ? t("fuelStillHint")
+            : rec.station === "radio"
+              ? t("radioListening")
+              : `${t("placed")} · ${loc(rec.title)}`
+      );
       maybeGoal();
       persist();
       return;
@@ -780,6 +788,11 @@ async function bootGame() {
         if (ev === "cable-snap") {
           toast(t("cableSnapped"));
           pushLog("HAB", t("cableFailHint"));
+        }
+        if (ev === "earth-heard") {
+          toast(t("earthHeard"));
+          pushLog("HAB", t("earthHeard"));
+          maybeGoal();
         }
       }
       tickStill(

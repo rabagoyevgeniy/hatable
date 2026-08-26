@@ -143,3 +143,30 @@ export function pickScanTarget({
   }
   return null;
 }
+
+/** Clear-day S-band listen after the radio is placed. Storms bury it. Placing is not Hello Earth. */
+export const RADIO_CONTACT_S = 48;
+export const SBAND_DAY = 0.28;
+
+export function radioPlaced(world) {
+  return (world.stations || []).some((s) => s.type === "radio");
+}
+
+export function radioCanListen(world) {
+  if (!radioPlaced(world) || world.contacted) return false;
+  if ((world.storm || 0) >= DUST_HIDES_BEACONS) return false;
+  if ((world.daylight || 0) < SBAND_DAY) return false;
+  return true;
+}
+
+export function tickRadio(world, dt) {
+  if (!world || world.contacted) return;
+  if (!radioPlaced(world)) return;
+  if (!world.radio) world.radio = { listenS: 0 };
+  if (!radioCanListen(world)) return;
+  world.radio.listenS += dt;
+  if (world.radio.listenS >= RADIO_CONTACT_S) {
+    world.contacted = true;
+    if (world.hab) world.hab.earthHeardEvent = true;
+  }
+}

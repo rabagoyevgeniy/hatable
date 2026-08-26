@@ -126,6 +126,7 @@ export function createWorld(scene) {
     habSealed: false,
     powered: false,
     contacted: false,
+    radio: { listenS: 0 },
     hab: createHabitat(),
     weather: createWeather(),
     science: createScience(),
@@ -551,7 +552,9 @@ export function placeStation(world, station, x, z) {
       if (o.name === "habWindow" && o.material) o.material.emissiveIntensity = 0.85;
     });
   }
-  if (station === "radio") world.contacted = true;
+  if (station === "radio") {
+    if (!world.radio) world.radio = { listenS: 0 };
+  }
   const pad = (world.pads || []).find((p) => p.station === station && Math.hypot(p.x - x, p.z - z) < 2.2);
   if (pad) {
     pad.taken = true;

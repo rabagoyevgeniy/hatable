@@ -302,6 +302,15 @@ Overnight timer still listed desk/night. Repo: ice/soil scans unlock tools. Next
 - First-sol array cell stays ungated (pressure/power emergency is not a science quiz)
 - Farm ident still beats a pocket sample. No rover. No Pointer Lock playtest
 
+### Cycle AG — Earth is delayed, not a checkbox
+
+Overnight timer still listed desk/night. P2 leftover after copper: delayed Earth after radio.
+
+- Placing the Pathfinder radio starts an S-band listen. It does not set `contacted`
+- Dust/storm and night pause the uplink. ~48 s of clear daylight (or a clear-day sleep) reaches Earth and raises a Hab log
+- Sleeping through a storm misses Earth. Console names LISTEN / DUST / NIGHT / EARTH
+- No rover. No Pointer Lock playtest
+
 
 
 

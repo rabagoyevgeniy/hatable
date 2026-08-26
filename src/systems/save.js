@@ -50,7 +50,8 @@ export function collectSave(player, world, journal) {
       habSealed: world.habSealed,
       powered: world.powered,
       contacted: world.contacted,
-      hab: { ...world.hab, cableSnapEvent: false },
+      radio: { listenS: world.radio?.listenS || 0 },
+      hab: { ...world.hab, cableSnapEvent: false, earthHeardEvent: false },
       weather: world.weather ? { ...world.weather } : null,
       science: world.science ? { known: { ...world.science.known } } : { known: {} },
       locker: { ...world.locker.storage },
@@ -128,6 +129,7 @@ export function applySave(data, { player, world, journal, placeStation, updatePl
   world.habSealed = !!w.habSealed;
   world.powered = !!w.powered;
   world.contacted = !!w.contacted;
+  world.radio = { listenS: w.radio?.listenS || 0 };
   if (w.hab) Object.assign(world.hab, w.hab);
   if (w.weather) Object.assign(world.weather, w.weather);
   if (w.science?.known) world.science.known = { ...w.science.known };

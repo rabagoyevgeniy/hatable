@@ -5,9 +5,9 @@
  */
 
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
-import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
+import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
@@ -26,6 +26,7 @@ export function createHeadlessWorld() {
     habSealed: false,
     powered: false,
     contacted: false,
+    radio: { listenS: 0 },
     stations: [],
     hab: createHabitat(),
     weather: createWeather(),
@@ -646,6 +647,57 @@ export function runStabilizeCoupling() {
   }
   notes.push("scan-unlocks-recipes");
   notes.push("scan-unlocks-copper-repair");
+
+  const link = createHeadlessWorld();
+  link.habSealed = true;
+  link.clock = 0.25;
+  tickTime(link, 0);
+  applyWeatherState(link, "clear");
+  placeStationSim(link, "radio", -138, -92);
+  if (link.contacted) fail("stabilize", "placing the radio is not Hello, Earth");
+  if (!radioPlaced(link)) fail("stabilize", "radio station should exist after place");
+  if (!radioCanListen(link)) fail("stabilize", "clear day should let S-band listen");
+  const consoleListen = habReadout(link, "en");
+  if (!consoleListen.includes("LISTEN") && !consoleListen.includes("S-BAND")) {
+    fail("stabilize", `console should name S-band while listening, got ${consoleListen}`);
+  }
+  for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(link, 1);
+  if (!link.contacted) fail("stabilize", "clear-day listen should reach Earth");
+  if (!link.hab.earthHeardEvent) fail("stabilize", "Earth reply should raise a Hab event");
+  notes.push("clear-day-reaches-earth");
+
+  const buried = createHeadlessWorld();
+  buried.habSealed = true;
+  buried.clock = 0.25;
+  tickTime(buried, 0);
+  applyWeatherState(buried, "storm");
+  placeStationSim(buried, "radio", -138, -92);
+  if (radioCanListen(buried)) fail("stabilize", "storm must bury S-band");
+  for (let i = 0; i < RADIO_CONTACT_S + 10; i++) tickHabitat(buried, 1);
+  if (buried.contacted) fail("stabilize", "a storm must not deliver Earth");
+  notes.push("storm-buries-sband");
+
+  const dusk = createHeadlessWorld();
+  dusk.habSealed = true;
+  dusk.clock = 0.78;
+  tickTime(dusk, 0);
+  applyWeatherState(dusk, "clear");
+  placeStationSim(dusk, "radio", -138, -92);
+  if (radioCanListen(dusk)) fail("stabilize", "night should pause S-band");
+  for (let i = 0; i < RADIO_CONTACT_S + 2; i++) tickHabitat(dusk, 1);
+  if (dusk.contacted) fail("stabilize", "night listen without a day should not reach Earth");
+  notes.push("night-pauses-sband");
+
+  const napRadio = createHeadlessWorld();
+  napRadio.habSealed = true;
+  napRadio.hab.heaterOn = false;
+  napRadio.clock = 0.25;
+  tickTime(napRadio, 0);
+  applyWeatherState(napRadio, "storm");
+  placeStationSim(napRadio, "radio", -138, -92);
+  simulateSleep(napRadio, 96);
+  if (napRadio.contacted) fail("stabilize", "sleeping through a storm should not reach Earth");
+  notes.push("storm-sleep-misses-earth");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }

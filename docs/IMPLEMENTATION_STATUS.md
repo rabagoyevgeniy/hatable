@@ -34,7 +34,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Range estimate (O₂ **and** warmth round-trip; no full sunset packing list yet)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)
-- Story / delayed Earth (journal logs only)
+- Story / delayed Earth (radio listens on a clear day; storms bury S-band. Placing is not Hello, Earth)
 
 ## NOT IMPLEMENTED
 
