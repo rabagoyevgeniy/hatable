@@ -369,6 +369,13 @@ Overnight timer still listed desk/night. Repo: ident reach is 22 m, but hold-F p
 - Overlay names a wreck only within ident reach, or after F. Hab stays home. Scanning is not an atlas
 - No rover. No Pointer Lock playtest
 
+### Cycle AP — overlay is not a loot inventory
+
+Overnight timer still listed desk/night. Repo: wreck names gated; loot tags still printed ICE / WIRE to 48 m while F is held. The scan pulse is already 22 m.
+
+- Overlay names a pile only inside ident/ring reach. Distant 3D rings may still glint; they do not caption copper
+- No rover. No Pointer Lock playtest
+
 
 
 

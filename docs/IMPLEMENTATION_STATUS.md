@@ -30,7 +30,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 
 ## PARTIAL
 
-- Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples. Place ident shares the 22 m loot-ring reach. Overlay names match that reach unless already identified. Rover identified as dead, not driven)
+- Scanner science (F names expedition sites; ice/soil/wire/comms unlock tools; desk console lists identified samples. Place ident shares the 22 m loot-ring reach. Overlay names match that reach unless already identified. Overlay loot names stop at 22 m even while scanning. Rover identified as dead, not driven)
 - Range estimate (O₂ **and** warmth round-trip; Hab console packing list for wire / Pathfinder / MAV after the hull is sealed)
 - Weather vs equipment damage (array sandblast + roof cable snap; no remote cable runs / extra machines yet)
 - Diegetic HUD (console exists; default HUD still has meters)

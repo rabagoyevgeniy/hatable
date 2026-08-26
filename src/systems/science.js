@@ -105,6 +105,12 @@ export function overlayNamesOutpost(world, kind, dist, { scanning = false, overl
   return outpostOverlayNamed(world, kind, dist);
 }
 
+/** Overlay may name a loot pile only within ident/ring reach. Scanning is not a 48 m inventory. */
+export function overlayNamesLoot(dist, { scanning = false, lootRange = 18 } = {}) {
+  if (scanning) return dist < LOOT_RING_RANGE;
+  return dist <= lootRange;
+}
+
 /** Debug loot rings. Dust eats them; distance eats them; hold F / Scan to see. */
 export function lootBeaconVisible({
   starter = false,

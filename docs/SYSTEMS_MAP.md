@@ -67,6 +67,7 @@ SCIENCE
   distant (>22 m) non-starter rings stay off even in clear weather
   place ident uses the same 22 m as loot rings — F names the wreck you can see, not the horizon
   scan overlay names a wreck only within that 22 m, or after F; hold-F is not a horizon atlas (Hab stays named)
+  scan overlay names loot only within that 22 m; 3D rings may still glint farther while scanning
 
 WORLD
   nodes (loot), stations, locker, outposts

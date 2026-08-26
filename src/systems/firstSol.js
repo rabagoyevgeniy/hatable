@@ -7,7 +7,7 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts, habReadout } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, canUseWire, isKnown, radioCanListen, radioPlaced, RADIO_CONTACT_S, canBuildRadio, recipeKnown, LOOT_RING_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip, packingLines } from "./survival.js";
@@ -654,6 +654,17 @@ export function runStabilizeCoupling() {
     fail("stabilize", "after F, overlay may remember Pathfinder at range");
   }
   notes.push("overlay-is-not-a-horizon-atlas");
+  if (overlayNamesLoot(40, { scanning: true })) {
+    fail("stabilize", "hold-F must not name ice piles at 40 m");
+  }
+  if (!overlayNamesLoot(8)) fail("stabilize", "yard loot may still be named in sight");
+  if (!overlayNamesLoot(LOOT_RING_RANGE - 2, { scanning: true })) {
+    fail("stabilize", "scan overlay may name loot inside ident reach");
+  }
+  if (overlayNamesLoot(20, { scanning: false, lootRange: 18 })) {
+    fail("stabilize", "without F, loot names stay inside gather sight");
+  }
+  notes.push("overlay-is-not-a-loot-atlas");
   if (pickScanTarget({ nodeType: "wire", nodeD: 1.2, outpostKind: "solar", outpostD: 4 }) !== "wire") {
     fail("stabilize", "copper underfoot still identifies as wire");
   }

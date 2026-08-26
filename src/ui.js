@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
 import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
-import { isKnown, recipeKnown, SCAN_PLACE_RANGE, overlayNamesOutpost } from "./systems/science.js";
+import { isKnown, recipeKnown, SCAN_PLACE_RANGE, overlayNamesOutpost, overlayNamesLoot } from "./systems/science.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -618,8 +618,7 @@ function updateScanLabels(player, world, camera, scanning) {
     for (const n of world.nodes) {
       if (n.taken) continue;
       const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
-      if (d > lootRange && !scanning) continue;
-      if (d > 48) continue;
+      if (!overlayNamesLoot(d, { scanning, lootRange })) continue;
       targets.push({
         x: n.mesh.position.x,
         y: n.mesh.position.y + 0.95,
