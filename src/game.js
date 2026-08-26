@@ -47,7 +47,7 @@ import {
   refreshContinue,
 } from "./ui.js";
 import { applySave, collectSave, writeSave, readSave, clearSave } from "./systems/save.js";
-import { noteScan, pickScanTarget } from "./systems/science.js";
+import { noteScan, pickScanTarget, canFuelStill, canPlantCrop } from "./systems/science.js";
 
 export async function boot() {
   try {
@@ -449,9 +449,16 @@ async function bootGame() {
       toast(t("stillDripHint"));
       return;
     }
+    if (hit.kind === "still-scan") {
+      toast(t("needFuelScan"));
+      return;
+    }
     if (hit.kind === "still-fuel") {
-      const fuel = count(player, "hydrazine") > 0 ? "hydrazine" : "ice";
-      takeItems(player, { [fuel]: 1 });
+      const fuel = count(player, "hydrazine") > 0 && canFuelStill(world, "hydrazine") ? "hydrazine" : "ice";
+      if (!canFuelStill(world, fuel) || !takeItems(player, { [fuel]: 1 })) {
+        toast(t("needFuelScan"));
+        return;
+      }
       hit.station.fuel += fuel === "hydrazine" ? 50 : 28;
       pickupTone(fuel);
       toast(t("fueled"));
@@ -467,8 +474,15 @@ async function bootGame() {
       persist();
       return;
     }
+    if (hit.kind === "plot-scan") {
+      toast(t("needSoilScan"));
+      return;
+    }
     if (hit.kind === "plant") {
-      takeItems(player, { potato: 1 });
+      if (!canPlantCrop(world) || !takeItems(player, { potato: 1 })) {
+        toast(t("needSoilScan"));
+        return;
+      }
       hit.station.planted = true;
       hit.station.grow = 0;
       hit.station.moisture = 0.85;
@@ -805,6 +819,8 @@ async function bootGame() {
             sealed: world.habSealed,
             outpostKind,
             outpostD,
+            heldId: player.heldId,
+            pocketIds: pocketSlots(player).map(([id]) => id),
           });
           const entry = noteScan(world, nearest);
           if (entry) toast(`${t("scanned")} · ${loc(entry)}`);

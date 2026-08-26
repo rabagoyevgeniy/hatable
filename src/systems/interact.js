@@ -81,15 +81,28 @@ export function pickStillMachineAction({
   gridOn = false,
   hasIce = false,
   hasHydrazine = false,
+  iceKnown = false,
+  hydrazineKnown = false,
   canRepair = false,
 } = {}) {
   if (d > STILL_MACHINE_RANGE) return null;
   if (water >= 1) return { kind: "still-take", d };
   if (fault === "pump") return { kind: canRepair ? "still-repair" : "still-diag", d };
   if (fuel > 0 && !gridOn) return { kind: "still-wait", d };
-  if (hasIce || hasHydrazine) return { kind: "still-fuel", d };
+  if ((hasHydrazine && hydrazineKnown) || (hasIce && iceKnown)) return { kind: "still-fuel", d };
+  if (hasIce || hasHydrazine) return { kind: "still-scan", d };
   if (fuel > 0 && gridOn && d < STILL_DRIP_RANGE) return { kind: "still-drip", d };
   return null;
+}
+
+/** Empty plot: last potato is seed, but only after you know the soil. */
+export function pickPlotPlantAction({
+  planted = false,
+  hasPotato = false,
+  soilKnown = false,
+} = {}) {
+  if (planted || !hasPotato) return null;
+  return { kind: soilKnown ? "plant" : "plot-scan" };
 }
 
 export const ARRAY_RANGE = 3.4;

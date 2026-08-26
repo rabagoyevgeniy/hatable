@@ -284,6 +284,16 @@ Overnight timer still listed desk/night. P2: drop loot rings in clear weather to
 - Yard ice/canvas still ring on a clear day. Dust still eats everything without scan
 - No rover. No Pointer Lock playtest
 
+### Cycle AE — scan is a recipe, not a buff
+
+Overnight timer still listed desk/night. Repo: First Sol gated, scanner is a mode. P2 leftover was lab/recipes from samples.
+
+- Unscanned ice in the still is a diagnosis (`F` identify), not fuel. Unscanned soil will not take the last potato
+- F identifies a sample in hand / pockets when nothing is underfoot. The solar farm ident still beats a pocket sample
+- Removed the +12% ice/soil rate bonuses — discovery unlocks the tool, not XP
+- First-sol chain still leak → crop; ice and crop steps now require the scan
+- No rover. No Pointer Lock playtest
+
 
 
 

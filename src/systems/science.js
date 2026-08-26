@@ -88,6 +88,20 @@ export function createScience() {
   return { known: {} };
 }
 
+export function isKnown(world, id) {
+  return !!(id && world?.science?.known?.[id]);
+}
+
+/** Ice / hydrazine is still feedstock only after a scan. Not a +12% buff. */
+export function canFuelStill(world, fuelId) {
+  return fuelId === "ice" || fuelId === "hydrazine" ? isKnown(world, fuelId) : false;
+}
+
+/** Perchlorate soil is crop substrate only after a scan. */
+export function canPlantCrop(world) {
+  return isKnown(world, "soil");
+}
+
 export function noteScan(world, id) {
   if (!id) return null;
   if (!world.science) world.science = createScience();
@@ -102,7 +116,7 @@ export function scanCount(world) {
   return Object.keys(world.science?.known || {}).length;
 }
 
-/** What F identifies this frame. Loot underfoot beats a place. No XP. */
+/** What F identifies this frame. Loot underfoot beats a place. A held sample beats nothing. No XP. */
 export function pickScanTarget({
   nodeType = null,
   nodeD = 99,
@@ -110,11 +124,17 @@ export function pickScanTarget({
   sealed = true,
   outpostKind = null,
   outpostD = 99,
+  heldId = null,
+  pocketIds = [],
 } = {}) {
   if (nodeType && nodeD < 5.2) return nodeType;
   if (inside) return sealed ? "hab" : "leak";
   if (outpostKind && outpostKind !== "hab" && outpostD < 16) {
     return outpostKind === "solar" ? "solaryard" : outpostKind;
+  }
+  if (heldId && SCAN_DB[heldId]) return heldId;
+  for (const id of pocketIds) {
+    if (id && SCAN_DB[id]) return id;
   }
   return null;
 }

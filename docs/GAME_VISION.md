@@ -29,7 +29,7 @@ Loop: observe problem → understand cause → prepare → leave safety → scav
 
 Leak + power emergency. Patch pressure. Salvage. Trickle-charge a damaged array. Night kills solar. Battery is the lifeline. Ice → water. First crop is a moment, not a click.
 
-Closed when `scripts/first-sol.mjs` stays green (leak → repair → power → sleep → still → ice → water → drink → crop). After that, deepen **stabilize** (storm → solar → battery → heater/grid → crops; storms scar the array and can snap the roof cable). Fetching splice wire is a daylight walk, not a storm-night stroll. Rover waits.
+Closed when `scripts/first-sol.mjs` stays green (leak → repair → power → sleep → still → ice → water → drink → crop). Ice must be scanned before it fuels the still; soil must be scanned before the last potato goes in the dirt. After that, deepen **stabilize** (storm → solar → battery → heater/grid → crops; storms scar the array and can snap the roof cable). Fetching splice wire is a daylight walk, not a storm-night stroll. Rover waits.
 
 ## Constraints
 

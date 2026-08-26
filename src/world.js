@@ -866,8 +866,7 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
     if (st.type === "plot" && st.planted && st.grow < 1) {
       const f = cropFactors(world);
       st.moisture = Math.max(0, (st.moisture ?? 0.4) - dt * 0.007);
-      const soil = world.science?.known?.soil ? 1.12 : 1;
-      st.grow += dt * CROP_LIVE * f.light * f.temp * Math.max(0.12, st.moisture) * soil;
+      st.grow += dt * CROP_LIVE * f.light * f.temp * Math.max(0.12, st.moisture);
       updatePlotVisual(st);
     }
   }

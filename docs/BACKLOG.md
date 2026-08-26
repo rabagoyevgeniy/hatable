@@ -12,7 +12,7 @@
 
 ## P2
 
-- Scanner as a mode: dust and distance hide loot rings — lab / recipes from samples still wait
+- Scanner as a mode: dust/distance hide rings; ice/soil scans unlock still fuel and planting. Lab bench / extra sample recipes still wait
 - Suit tablet instead of MMO meters
 - Delayed Earth after radio
 

@@ -2,8 +2,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHabitat, tickTime, tickHabitat, simulateSleep, habReadout, habStatusLine, habAlerts, stillOnline, CROP_SLEEP, CROP_LIVE, SOL_SECONDS } from "../src/systems/habitat.js";
 import { createWeather, tickWeather } from "../src/systems/weather.js";
-import { noteScan, createScience, lootBeaconVisible, pickScanTarget } from "../src/systems/science.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
+import { noteScan, createScience, lootBeaconVisible, pickScanTarget, canFuelStill, canPlantCrop } from "../src/systems/science.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction, dist } from "../src/systems/interact.js";
 import { HAB_DESK, HAB_BUNK, HAB_LEAK, HAB_HATCH, HAB_POS, NODE_SPAWNS, YARD_PADS } from "../src/data.js";
 import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from "../src/systems/machines.js";
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST, estimateRangeM, roundTripM } from "../src/systems/survival.js";
@@ -384,8 +384,20 @@ must(
   "ice pile ~3.3 m from the still still gathers"
 );
 must(
-  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true }).kind === "still-fuel",
-  "ice in pockets at the machine is fuel"
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true }).kind === "still-scan",
+  "unidentified ice at the machine is a scan, not fuel"
+);
+must(
+  pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true, iceKnown: true }).kind === "still-fuel",
+  "identified ice in pockets at the machine is fuel"
+);
+must(
+  pickPlotPlantAction({ planted: false, hasPotato: true }).kind === "plot-scan",
+  "last potato without a soil scan must not plant"
+);
+must(
+  pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true }).kind === "plant",
+  "identified soil lets you plant the seed"
 );
 must(
   pickStillMachineAction({ d: 0.4, water: 1.2, fuel: 10, gridOn: true }).kind === "still-take",
@@ -460,6 +472,19 @@ must(pickScanTarget({ outpostKind: "solar", outpostD: 8 }) === "solaryard", "sca
 must(pickScanTarget({ nodeType: "wire", nodeD: 0.8, outpostKind: "solar", outpostD: 3 }) === "wire", "wire underfoot still scans as wire");
 must(readFileSync(resolve(root, "src/systems/science.js"), "utf8").includes("solaryard"), "solar farm has a scan ident");
 must(game.includes("pickScanTarget"), "F uses the shared scan picker");
+must(game.includes("heldId: player.heldId"), "F identifies a sample in the hand");
+must(game.includes("canFuelStill"), "still fuel requires an ice scan");
+must(game.includes("canPlantCrop"), "planting requires a soil scan");
+must(i18n.includes("needFuelScan"), "unidentified ice toast is translated");
+must(i18n.includes("needSoilScan"), "unidentified soil toast is translated");
+must(!canFuelStill({ science: { known: {} } }, "ice"), "unscanned ice is not feedstock");
+must(canFuelStill({ science: { known: { ice: true } } }, "ice"), "ice scan unlocks the still");
+must(!canPlantCrop({ science: { known: {} } }), "unscanned soil is not substrate");
+must(canPlantCrop({ science: { known: { soil: true } } }), "soil scan unlocks planting");
+must(pickScanTarget({ heldId: "ice" }) === "ice", "F identifies held ice");
+must(pickScanTarget({ heldId: "ice", outpostKind: "solar", outpostD: 8 }) === "solaryard", "farm ident beats a pocket sample");
+must(!readFileSync(resolve(root, "src/systems/machines.js"), "utf8").includes("iceBonus"), "still has no scan XP bonus");
+must(!readFileSync(resolve(root, "src/systems/habitat.js"), "utf8").includes("known?.soil"), "crops have no scan XP bonus");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

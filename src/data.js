@@ -133,7 +133,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { scrap: 2, fabric: 1 },
     title: { en: "Water still", ru: "Дистиллятор" },
-    brief: { en: "2 scrap + canvas. Place on the amber STILL ring west of the airlock, then E ice to fuel it.", ru: "2 лома + брезент. Ставь на янтарное кольцо ДИСТИЛЛЯТОР слева от шлюза, потом E лёд — заправка." },
+    brief: { en: "2 scrap + canvas. Place on the amber STILL ring west of the airlock, then F ice and E to fuel it.", ru: "2 лома + брезент. Ставь на янтарное кольцо ДИСТИЛЛЯТОР слева от шлюза, потом F лёд и E — заправка." },
   },
   {
     id: "plot",
@@ -142,7 +142,7 @@ export const RECIPES = [
     requireTool: "hammer",
     need: { soil: 2, scrap: 1 },
     title: { en: "Farm plot", ru: "Грядка" },
-    brief: { en: "2 soil west of Hab + scrap. Place on a PLOT ring. Plant the seed potato, water, sleep four Sols. Harvest is three copies — not a bottle mash.", ru: "2 грунта к западу от Hab + лом. Ставь на кольцо ГРЯДКА. Посади семена, поливай, спи четыре сола. Урожай — три копии, не десяток бутылок." },
+    brief: { en: "2 soil west of Hab + scrap. Place on a PLOT ring. Scan the soil (F), plant the seed potato, water, sleep four Sols. Harvest is three copies — not a bottle mash.", ru: "2 грунта к западу от Hab + лом. Ставь на кольцо ГРЯДКА. F грунт, посади семена, поливай, спи четыре сола. Урожай — три копии, не десяток бутылок." },
   },
   {
     id: "solar",
@@ -224,8 +224,8 @@ export const GOALS = [
     sol: 26,
     title: { en: "Make water", ru: "Добудь воду" },
     brief: {
-      en: "Hab tank is leftover — a few sips at the desk. Craft/E-build the still (scrap + canvas) on the amber ring, then fuel with ice. Thirst kills first.",
-      ru: "Бак Hab — остаток на консоли. Дистиллятор (лом + брезент) на янтарном кольце, заправь льдом. Жажда убивает первой.",
+      en: "Hab tank is leftover — a few sips at the desk. Craft/E-build the still (scrap + canvas) on the amber ring, scan ice (F), then fuel. Thirst kills first.",
+      ru: "Бак Hab — остаток на консоли. Дистиллятор (лом + брезент) на янтарном кольце, F лёд, потом заправь. Жажда убивает первой.",
     },
     log: {
       from: "WATNEY",
@@ -238,8 +238,8 @@ export const GOALS = [
     sol: 32,
     title: { en: "Farm potatoes", ru: "Вырасти картошку" },
     brief: {
-      en: "Two potatoes in the Hab locker — eat one, plant the last. The last tuber is seed until you harvest a copy.",
-      ru: "В шкафу Hab две картофелины: одну съешь, последнюю посади. Пока нет урожая, последняя — семена, не обед.",
+      en: "Two potatoes in the Hab locker — eat one, plant the last. Scan the soil (F) before you bury the seed. The last tuber is seed until you harvest a copy.",
+      ru: "В шкафу Hab две картофелины: одну съешь, последнюю посади. Сначала F грунт. Пока нет урожая, последняя — семена, не обед.",
     },
     log: {
       from: "WATNEY",

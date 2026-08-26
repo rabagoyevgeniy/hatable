@@ -68,8 +68,6 @@ export function tickHabitat(world, dt) {
   const night = 1 - day;
   const storm = world.storm || 0;
   const solarCount = (world.stations || []).filter((s) => s.type === "solar").length;
-  const iceBonus = world.science?.known?.ice ? 1.12 : 1;
-
   const roof = h.cableFault ? 0 : 2.85 * h.arrayHealth * day * (1 - storm * 0.82);
   const extra = solarCount * 1.7 * day * (1 - storm * 0.82);
   h.solarKw = roof + extra;
@@ -110,7 +108,7 @@ export function tickHabitat(world, dt) {
     h.waterTank = Math.max(0, h.waterTank - 0.0028 * dt);
   }
   for (const st of stillsFueled) {
-    if (h.gridOn) h.waterTank = Math.min(40, h.waterTank + dt * 0.028 * iceBonus);
+    if (h.gridOn) h.waterTank = Math.min(40, h.waterTank + dt * 0.028);
   }
 }
 
@@ -128,11 +126,10 @@ export function simulateSleep(world, seconds = 96) {
 
 export function tickCropsOnSleep(world) {
   const f = cropSleepFactors(world);
-  const soil = world.science?.known?.soil ? 1.12 : 1;
   for (const st of world.stations || []) {
     if (st.type !== "plot" || !st.planted) continue;
     const moist = st.moisture ?? 0.4;
-    st.grow = Math.min(1, st.grow + CROP_SLEEP * f.light * f.temp * Math.max(0.22, moist) * soil);
+    st.grow = Math.min(1, st.grow + CROP_SLEEP * f.light * f.temp * Math.max(0.22, moist));
     st.moisture = Math.max(0.08, moist * 0.72);
   }
 }

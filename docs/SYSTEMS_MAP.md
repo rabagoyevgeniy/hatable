@@ -38,7 +38,7 @@ HABITAT (world.hab)
     → eat one; last tuber is seed until harvest
     → eating dries thirst; tank sip at console, then ice → still
   plot
-    → grow = light × temp × moisture × (soil scan bonus)
+    → grow = light × temp × moisture
     → sleep uses a day of light (not wake-up night)
     → temp = Hab inside °C if sealed + gridOn, else outside
     → storm cuts light; dead grid freezes the greenhouse
@@ -52,8 +52,9 @@ PLAYER
 
 SCIENCE
   world.science.known[type] from scanner
-  ice → still efficiency
-  soil → crop rate
+  ice scan → still accepts ice as feedstock (not a +12% buff)
+  soil scan → plot accepts the seed potato (not a growth buff)
+  F also identifies a sample in hand / pockets when nothing is underfoot
   solaryard → first ident of the copper/cell wreck (not XP)
   dust/storm hides loot rings unless scanning (starter rings survive the first emergency)
   distant (>22 m) non-starter rings stay off even in clear weather

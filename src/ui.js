@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { t, getLang, loc } from "./i18n.js";
 import { ITEMS, RECIPES, SURVIVAL, GOALS, GOAL_DEST, YARD_PADS, HAB_DESK, HAB_BUNK, HAB_ARRAY, HAB_LEAK, HAB_HATCH } from "./data.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickHatchAction, pickArrayAction } from "./systems/interact.js";
+import { isKnown } from "./systems/science.js";
 import { count, canAfford, itemName, isInsideHab, pocketSlots, estimateRangeM } from "./player.js";
 import { currentGoal, goalText } from "./journal.js";
 import { nearestOutpost, resolvePlacement } from "./world.js";
@@ -438,6 +439,8 @@ export function findInteract(player, world) {
         gridOn: !!world.hab?.gridOn,
         hasIce: count(player, "ice") > 0,
         hasHydrazine: count(player, "hydrazine") > 0,
+        iceKnown: isKnown(world, "ice"),
+        hydrazineKnown: isKnown(world, "hydrazine"),
         canRepair: !!(player.tools.hammer && count(player, "wire") > 0 && count(player, "scrap") > 0),
       });
       if (act?.kind === "still-take") {
@@ -447,10 +450,17 @@ export function findInteract(player, world) {
       if (act?.kind === "still-diag") return { kind: "still-diag", station: st, label: t("pumpFail") };
       if (act?.kind === "still-wait") return { kind: "still-wait", station: st, label: t("stillNoPower") };
       if (act?.kind === "still-fuel") return { kind: "still-fuel", station: st, label: t("fuel") };
+      if (act?.kind === "still-scan") return { kind: "still-scan", station: st, label: t("scanIceFuel") };
       if (act?.kind === "still-drip") return { kind: "still-drip", station: st, label: t("stillDrip") };
     }
     if (st.type === "plot") {
-      if (!st.planted && count(player, "potato") > 0) return { kind: "plant", station: st, label: t("plant") };
+      const plantAct = pickPlotPlantAction({
+        planted: !!st.planted,
+        hasPotato: count(player, "potato") > 0,
+        soilKnown: isKnown(world, "soil"),
+      });
+      if (plantAct?.kind === "plot-scan") return { kind: "plot-scan", station: st, label: t("scanSoilPlant") };
+      if (plantAct?.kind === "plant") return { kind: "plant", station: st, label: t("plant") };
       if (st.planted && st.grow < 1 && count(player, "water") > 0) {
         return { kind: "water-plot", station: st, label: `${t("waterPlot")}  ·  ${Math.floor(st.grow * 100)}%` };
       }

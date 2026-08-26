@@ -53,10 +53,9 @@ export function stillCanRun(st, world) {
 export function tickStillMachine(st, dt, world) {
   if (!st || st.type !== "still") return;
   if (!stillCanRun(st, world)) return;
-  const iceBonus = world.science?.known?.ice ? 1.12 : 1;
   st.fuel -= dt;
   st.runtime = (st.runtime || 0) + dt;
-  st.water += dt * 0.045 * iceBonus;
+  st.water += dt * 0.045;
   if (!st.repaired && st.runtime >= STILL_PUMP_FAIL) st.fault = "pump";
 }
 

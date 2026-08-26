@@ -7,11 +7,11 @@
 import { RECIPES, YARD_PADS, HAB_LEAK, HAB_POS, LOCKER_START, OUTPOSTS, NODE_SPAWNS } from "../data.js";
 import { createHabitat, tickTime, tickHabitat, cropSleepFactors, CROP_SLEEP, simulateSleep, habStatusLine, habAlerts } from "./habitat.js";
 import { createWeather, applyWeatherState, CABLE_SNAP_S } from "./weather.js";
-import { createScience, lootBeaconVisible, noteScan, pickScanTarget } from "./science.js";
+import { createScience, lootBeaconVisible, noteScan, pickScanTarget, canFuelStill, canPlantCrop, isKnown } from "./science.js";
 import { tickStillMachine, placeStationSim, stillCanRun, repairArrayCable } from "./machines.js";
 import { addItem, takeItems, canAfford, count } from "./inventory.js";
 import { trySleepSol, sipHabitatTank, canEatPotato, estimateRangeM, roundTripM, canRoundTrip } from "./survival.js";
-import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickArrayAction, dist } from "./interact.js";
+import { pickInteriorAction, pickStillPadAction, pickStillMachineAction, pickPlotPlantAction, pickArrayAction, dist } from "./interact.js";
 import { goalsDone, advanceJournal } from "./goals.js";
 
 export const FIRST_SOL_CHAIN = ["leak", "repair", "power", "sleep", "still", "ice", "water", "drink", "crop"];
@@ -196,15 +196,30 @@ export function runFirstSol() {
     mark("still");
   }
 
-  /* 6. ICE — E at the machine loads 28s of fuel. */
+  /* 6. ICE — scan first, then E at the machine loads 28s of fuel. */
   {
     const still = world.stations.find((s) => s.type === "still");
+    const blind = pickStillMachineAction({
+      d: 0.4,
+      water: still.water,
+      fuel: still.fuel,
+      gridOn: world.hab.gridOn,
+      hasIce: count(player, "ice") > 0,
+      iceKnown: false,
+    });
+    if (blind?.kind !== "still-scan") fail("ice", `unidentified ice is not fuel, got ${blind?.kind}`);
+    if (canFuelStill(world, "ice")) fail("ice", "unscanned ice must not be feedstock");
+    const iceId = noteScan(world, "ice");
+    if (!iceId) fail("ice", "ice scan should identify feedstock");
+    if (pickScanTarget({ heldId: "ice" }) !== "ice") fail("ice", "F on a held sample should identify ice");
+    if (!canFuelStill(world, "ice")) fail("ice", "scanned ice should unlock the still");
     const fuelAct = pickStillMachineAction({
       d: 0.4,
       water: still.water,
       fuel: still.fuel,
       gridOn: world.hab.gridOn,
       hasIce: count(player, "ice") > 0,
+      iceKnown: isKnown(world, "ice"),
     });
     if (fuelAct?.kind !== "still-fuel") fail("ice", `machine should take ice, got ${fuelAct?.kind}`);
     if (!takeItems(player, { ice: 1 })) fail("ice", "no ice to fuel");
@@ -261,6 +276,13 @@ export function runFirstSol() {
 
     if (!addItem(player, "potato", 1)) fail("crop", "no seed potato");
     if (canEatPotato(player)) fail("crop", "last tuber must stay seed until harvest");
+    const blindPlant = pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: false });
+    if (blindPlant?.kind !== "plot-scan") fail("crop", `unidentified soil is not a bed, got ${blindPlant?.kind}`);
+    if (canPlantCrop(world)) fail("crop", "unscanned soil must not take the last potato");
+    if (!noteScan(world, "soil")) fail("crop", "soil scan should unlock planting");
+    if (!canPlantCrop(world)) fail("crop", "scanned soil should unlock the plot");
+    const plantAct = pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true });
+    if (plantAct?.kind !== "plant") fail("crop", `identified soil should plant, got ${plantAct?.kind}`);
     if (!takeItems(player, { potato: 1 })) fail("crop", "could not plant");
     plot.planted = true;
     plot.grow = 0;
@@ -553,6 +575,43 @@ export function runStabilizeCoupling() {
   }
   if (noteScan(look, "solaryard")) fail("stabilize", "repeat farm scan is not XP");
   notes.push("scan-names-solar-farm");
+
+  const recipe = createHeadlessWorld();
+  if (canFuelStill(recipe, "ice")) fail("stabilize", "unscanned ice is not still feedstock");
+  if (canPlantCrop(recipe)) fail("stabilize", "unscanned soil is not crop substrate");
+  if (pickStillMachineAction({ d: 0.4, water: 0, fuel: 0, gridOn: true, hasIce: true }).kind !== "still-scan") {
+    fail("stabilize", "ice in pockets without a scan is a diagnosis, not fuel");
+  }
+  if (pickPlotPlantAction({ planted: false, hasPotato: true }).kind !== "plot-scan") {
+    fail("stabilize", "last potato without a soil scan must not plant");
+  }
+  if (pickScanTarget({ heldId: "ice" }) !== "ice") fail("stabilize", "F should identify a held ice sample");
+  if (pickScanTarget({ pocketIds: ["scrap", "ice"] }) !== "scrap") {
+    fail("stabilize", "F should identify a pocket sample when nothing is underfoot");
+  }
+  if (pickScanTarget({ heldId: "ice", outpostKind: "solar", outpostD: 8 }) !== "solaryard") {
+    fail("stabilize", "farm ident still beats a pocket sample");
+  }
+  noteScan(recipe, "ice");
+  if (!canFuelStill(recipe, "ice")) fail("stabilize", "ice scan should unlock the still recipe");
+  if (
+    pickStillMachineAction({
+      d: 0.4,
+      water: 0,
+      fuel: 0,
+      gridOn: true,
+      hasIce: true,
+      iceKnown: isKnown(recipe, "ice"),
+    }).kind !== "still-fuel"
+  ) {
+    fail("stabilize", "identified ice at the machine is fuel");
+  }
+  noteScan(recipe, "soil");
+  if (!canPlantCrop(recipe)) fail("stabilize", "soil scan should unlock planting");
+  if (pickPlotPlantAction({ planted: false, hasPotato: true, soilKnown: true }).kind !== "plant") {
+    fail("stabilize", "identified soil lets you plant the seed");
+  }
+  notes.push("scan-unlocks-recipes");
 
   return { ok: true, notes, clearKw, stormKw: storm.hab.solarKw, clearJump, stormJump, deadJump };
 }
