@@ -118,3 +118,9 @@ Next: Hab-as-home audio if the gut loop stays stable. Rover still waits.
 - Bunk sleep: «СОН — сола меньше до Гермеса», Sol 19→20, O₂ 100, warmth 86; food/water spent
 
 First-Sol path leak → seal → console → sleep is playable. Rover still waits.
+
+### Cycle L — journal follows the hull
+
+- Sealing the Hab completes the scrap card so the order is not «Подбери лом» over a patched tear
+- Catch-up skips finished goals in one tick (patch + hammer → water)
+- Journal still does not create the sim — it only stops lying about it

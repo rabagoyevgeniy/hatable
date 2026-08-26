@@ -15,7 +15,7 @@ Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = e
 - Still (ice/hydrazine → water **if grid is live**, pipes into Hab tank)
 - Plot with persistent moisture / light / temperature; ~4 watered **sleeps** to harvest (watering is not a click)
 - Seal patch visual
-- Journal 8-step (guidance only)
+- Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
 - Hab interior furniture (bunk/desk/crates)
 - Weather state machine CLEAR / DUST / STORM (after first emergency minutes)

@@ -461,7 +461,6 @@ async function bootGame() {
   }
 
   function maybeGoal() {
-    const prev = currentGoal(journal);
     if (!checkProgress(journal, player, world)) return;
     if (journal.finished) {
       showEnd(journal, player);
@@ -470,8 +469,11 @@ async function bootGame() {
       return;
     }
     const next = currentGoal(journal);
-    if (next) pushLog(goalText(next).from, goalText(next).log);
-    if (prev) toast(loc(prev.title));
+    if (next) {
+      const text = goalText(next);
+      pushLog(text.from, text.log);
+      toast(text.title);
+    }
   }
 
   function dropHeld() {

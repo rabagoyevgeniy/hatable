@@ -9,6 +9,7 @@ import { tickStillMachine, stillCanRun, repairStillPump, STILL_PUMP_FAIL } from 
 import { canEatPotato, tankSipsLeft, gutAfterHab, SLEEP_HUNGER, SLEEP_THIRST, TANK_SIP_THIRST } from "../src/systems/survival.js";
 import { SURVIVAL } from "../src/data.js";
 import { ambienceTargets } from "../src/audio.js";
+import { goalsDone, advanceJournal } from "../src/systems/goals.js";
 
 const root = resolve(import.meta.dirname, "..");
 const fail = [];
@@ -298,6 +299,16 @@ const deadMix = ambienceTargets({ inside: true, sealed: true, leak: false, grid:
 must(deadMix.hum === 0 && deadMix.heater === 0, "dead grid silences machines");
 must(game.includes("heater: !!(world.hab?.heaterOn"), "frame passes heater into ambience");
 must(readFileSync(resolve(root, "src/audio.js"), "utf8").includes("setTargetAtTime"), "Hab mix swells instead of switching");
+
+const card = { index: 0, finished: false };
+must(advanceJournal(card, goalsDone({ gathered: 0, tools: {}, inv: {} }, { habSealed: true })) >= 1, "seal completes the scrap card");
+must(card.index === 1, "after a patch the card is hammer, not pick scrap");
+const patched = { index: 0, finished: false };
+advanceJournal(patched, goalsDone({ gathered: 5, tools: { hammer: true }, inv: {} }, { habSealed: true }));
+must(patched.index === 3, "seal + hammer catch up to water");
+const loot = { index: 0, finished: false };
+advanceJournal(loot, goalsDone({ gathered: 3, tools: {}, inv: {} }, { habSealed: false }));
+must(loot.index === 1, "three picks still unlock the hammer card");
 
 if (fail.length) {
   console.error(fail.map((m) => `FAIL ${m}`).join("\n"));

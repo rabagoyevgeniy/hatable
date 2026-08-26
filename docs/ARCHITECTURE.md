@@ -15,6 +15,7 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `systems/save.js` | localStorage snapshot `stranded-mars-save-v1` |
 | `ui.js` / `i18n.js` | HUD, menus, language, Hab console |
 | `data.js` | items, recipes, spawns, goals, Hab interact points |
+| `systems/goals.js` | journal catch-up (card follows the hull) |
 | `journal.js` | linear guidance (not the simulation) |
 | `audio.js` | wind / hum / leak hiss / heater rumble / beeps |
 | `models.js` / `gfx.js` | GLB + materials |
