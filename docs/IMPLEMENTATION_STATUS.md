@@ -2,9 +2,30 @@
 
 Updated as systems land. **IMPLEMENTED** = plays and was tested. **PARTIAL** = exists, incomplete. **NOT IMPLEMENTED** = specified, absent.
 
+## P0 STATION FOUNDATION (2026-08-27 overnight)
+
+Human playtest after P0.1: feet on the mesh, packedYard gone, look stick OK — but the Hab **floated** over dunes because modules shared one Y while terrain stayed raw.
+
+| Item | Code status | Human retest |
+| --- | --- | --- |
+| Graded mission site | **IN CODE** — `heightAt` mixes dunes → pad at Hab origin; irregular footprint; wide falloff (inner ~27 m, outer ~45 m) so 120-seg mobile mesh cannot pull a dune vertex under the station | pending |
+| One ground function | **IN CODE** — mesh, player, loot, props, save all sample `heightAt` then `meshHeightAt` | pending |
+| Module seating | **IN CODE** — Hab/lab plinths, deck `HAB_FLOOR_LIFT` 0.28 m, airlock/tube to grade, solar legs, still slab | pending |
+| Airlock step | **IN CODE** — `airlockRampT` blends sand → deck; no Y teleport | pending |
+| packedYard disc | **STILL GONE** | pending |
+| Dual-stick / look | unchanged this pass | pending |
+
+**AUTOMATED VERIFIED:** `npm run smoke`. Playability: pad Y, far dunes = `rawHeight`, hatch/lab/still/solar/greenhouse **mesh** Y within 8–10 cm of Hab pad, no 0.55 m cliff along +Z, airlock ramp monotonic, walls/airlock/lab tube.
+
+**HUMAN PHONE TEST REQUIRED:** walk the whole base; confirm Hab/lab/greenhouse/solar rest on prepared ground (not hovering over a gully); enter/exit шлюз; both sticks; feet on sand; still see+hear if you build it.
+
+**Do not begin Rover.**
+
 ## P0.1 MOBILE PLAYABILITY (2026-08-27)
 
-Human retest of the control pass: feet were *on* the mesh, but a flat **packedYard** disc covered the astronaut; right stick was inverted (left↔right).
+Human retest of the control pass: feet were *on* the mesh, but a flat **packedYard** disc covered the astronaut; right stick was inverted (left↔right). Still true: disc is gone; stick signs were fixed. Foundation work above is the next physical gate.
+
+## IMPLEMENTED
 
 | Item | Code status | Human retest |
 | --- | --- | --- |
@@ -40,7 +61,7 @@ Previous pass (still in the build): mesh grounding, dual-stick layout, third-per
 - Journal 8-step (guidance only; catch-up so a sealed hull is not still «pick scrap»)
 - RU/EN, mobile touch, PWA
 - **Phone landscape gate:** portrait shows «Поверните телефон» and pauses; landscape HUD (left move stick, right look stick, large Interact). Camera behind the astronaut (FOV 42, dist ~15.4). iPhone safe-area insets.
-- **Visual-terrain grounding:** player Y samples the same PlaneGeometry bilinear the mesh uses (mobile 96 segs). Three.js vertex Z is `iy * cell - half`. Feet sit on mesh + 7 cm. Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground. Camera does not hide sink. The flat packedYard disc is gone so it cannot cover the astronaut.
+- **Visual-terrain grounding:** player Y samples the same PlaneGeometry bilinear the mesh uses (mobile **120** segs). Three.js vertex Z is `iy * cell - half`. Feet sit on mesh + 7 cm. Station site is `heightAt` with foundation mask. Emergency snap if Y falls below terrain. Spawn/save/blackout use the same ground. The flat packedYard disc is gone.
 - **Hab station:** living module (~6.8 m radius) + dedicated airlock + west lab/tube + greenhouse silhouette + yard solar + antenna + night beacon. Hull walls block; airlock at +Z is the only door; lab tube is a second interior. Locker/bunk/desk/crates are circle blockers.
 - **Distiller:** spatial pump hiss (distance + stereo pan), silent when off; steam/lamp/spin when working. Prompts: ICE → WATER / LOAD ICE / COLLECT WATER. QA plates remain.
 - Hab interior furniture (bunk/desk/crates)

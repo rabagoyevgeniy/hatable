@@ -21,12 +21,15 @@ Vite + Three.js r170. Entry: `src/main.js` → `src/game.js`.
 | `journal.js` | linear guidance (not the simulation) |
 | `audio.js` | wind / hum / leak hiss / heater rumble / beeps |
 | `models.js` / `gfx.js` | GLB + materials |
+| `systems/foundation.js` | Irregular station-site mask. Final Y lives in `noise.heightAt`. |
 
 **Update order each frame (playing):** input → player vitals → `tickTime` → weather visual lerp → `tickWeather` → `tickHabitat` → stations/crops → HUD → render.
 
 **Save boundary:** player vitals/inv/tools/pose, world.hab, weather, science.known, clock, storm, flags, locker, node taken flags, stations (type/pose/water/fuel/grow/moisture), journal index.
 
 Do not grow `game.js` into a god object. New coupled sim goes in `src/systems/`.
+
+**Authoritative ground:** `noise.heightAt` = `rawHeight` dunes, then `mix(raw, stationPadHeight, foundationMask)` with a wide irregular falloff, plus small outpost pads. The terrain `PlaneGeometry` writes `heightAt` into vertices. Player `snapToGround` / loot / props / save sample `meshHeightAt(..., heightAt)` — the same function, bilinear on the same grid. There is no second ground mesh and no `packedYard` disc.
 
 **Design decision — battery:** kW integrated as `(net kW × dt × 4.2 h) / 220 s / 7.5 kWh` so a night can empty a weak battery without draining it in two real seconds.
 

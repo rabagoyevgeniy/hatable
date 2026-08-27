@@ -519,6 +519,19 @@ Human playtest: astronaut looked buried around Hab; right stick left/right was i
 - Automated: playability lookRates + packedYard absent + grounding/airlock. Human phone still required for dual-stick feel.
 - STOP. No rover.
 
+### 2026-08-27 — overnight P0 foundation (floating Hab)
+
+Human: packedYard gone and sticks better, but Hab hung over dunes (shared module Y vs raw `heightAt`).
+
+- `src/systems/foundation.js` — irregular core (Hab, шлюз, lab, greenhouse, yards) + wide wobbly envelope. `heightAt = mix(rawHeight, stationPadHeight, mask)`. Pad Y is natural height at Hab origin, not a constant 0.15.
+- Same `heightAt` for mesh / player / loot / props / save. Mobile segs 96→120; inner grade ~27 m so a ~5 m cell cannot bilinear a dune under solar/lab.
+- Playability: mesh Y at hatch/lab/still/solar/greenhouse matches Hab pad; no 0.55 m cliff; airlock ramp monotonic.
+- Seating: Hab/lab plinths, deck 0.28 m, airlock+tube to grade, solar pads/legs, still slab, drip when running.
+- Night: sun intensity follows elevation (no 0.95 mobile floor); darker fog/hemi; terrain emissive drops; habBeacon stronger.
+- packedYard still absent. Controls not redesigned.
+- AUTOMATED: `npm run smoke` + `vite build`. HUMAN PHONE: walk the base, шлюз, sticks, no sink.
+- STOP. No rover.
+
 
 
 
