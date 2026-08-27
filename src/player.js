@@ -281,7 +281,7 @@ export function updatePlayer(player, dt, input, world) {
 
   if (moving && player.vel.lengthSq() > 0.12) {
     const targetFace = Math.atan2(player.vel.x, player.vel.z);
-    player.facingYaw = lerpAngle(player.facingYaw ?? Math.PI, targetFace, 1 - Math.pow(0.012, dt));
+    player.facingYaw = lerpAngle(player.facingYaw ?? Math.PI, targetFace, 1 - Math.exp(-10 * dt));
   }
   player.yaw = player.facingYaw;
   player.root.rotation.y = player.facingYaw;

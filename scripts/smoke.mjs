@@ -23,6 +23,7 @@ must(game.includes("const result = trySleep(player, world)"), "sleep must call t
 must(game.includes("preloadRest()"), "far Meshy models load in background");
 must(game.includes("look-joy"), "right stick is wired");
 must(game.includes("applyLookStick"), "right stick orbits camera");
+must(!readFileSync(resolve(root, "src/world.js"), "utf8").includes("packedYard"), "packedYard disc is not in the scene");
 must(game.includes("tickStillSpatial"), "still hiss is spatial");
 must(game.includes("queuedStart"), "WAKE UP during load must queue");
 must(game.includes("applySave"), "continue applies save");

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { heightAt, fbm, normalAt } from "./noise.js";
 import { OUTPOSTS, ITEMS, NODE_SPAWNS, LOCKER_START, YARD_PADS, HAB_LEAK, HAB_POS } from "./data.js";
-import { maps, makeSky, makeSunHalo, packedYard, std, phys, makeHaze, dustSprite } from "./gfx.js";
+import { maps, makeSky, makeSunHalo, std, phys, makeHaze, dustSprite } from "./gfx.js";
 import { takeModel, hasModel } from "./models.js";
 import { tickMotion, makeLeakSteam, makeClothFlag } from "./motion.js";
 import { createHabitat, tickTime, tickHabitat, cropFactors, CROP_LIVE, advanceSolSim } from "./systems/habitat.js";
@@ -77,9 +77,6 @@ export function createWorld(scene) {
   const terrain = makeTerrain();
   terrain.receiveShadow = true;
   scene.add(terrain);
-  const yard = packedYard();
-  yard.position.set(0, heightAt(0, 8) + 0.03, 8);
-  scene.add(yard);
   scene.add(makeRocks());
   scene.add(makePebbles());
   scene.add(makeYardDressing());

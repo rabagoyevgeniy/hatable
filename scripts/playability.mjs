@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { lookRates, cameraLookXZ, clampPitch } from "../src/systems/orbit.js";
 import { heightAt } from "../src/noise.js";
 import { SPAWN, HAB_POS, HAB_HATCH } from "../src/data.js";
 import {
@@ -60,7 +61,35 @@ const playerSrc = readFileSync(resolve(root, "src/player.js"), "utf8");
 must(playerSrc.includes("snapToGround"), "player snaps to visual terrain");
 must(playerSrc.includes("resolvePlayerXZ"), "player resolves Hab walls");
 must(playerSrc.includes("facingYaw"), "character facing is split from camera yaw");
-must(playerSrc.includes("lerpAngle"), "facing rotates smoothly");
+must(playerSrc.includes("if (moving && player.vel.lengthSq() > 0.12)"), "idle camera orbit does not spin the body");
+
+/* Thumb-right looks to screen-right. At yaw=0 camera is on +Z; screen-right is +X. */
+{
+  const right = lookRates(1, 0);
+  const left = lookRates(-1, 0);
+  const up = lookRates(0, -1);
+  const down = lookRates(0, 1);
+  must(right.yawRate < 0, "thumb right decreases yaw");
+  must(left.yawRate > 0, "thumb left increases yaw");
+  let yaw = 0;
+  yaw += right.yawRate * 0.35;
+  const look = cameraLookXZ(yaw);
+  must(look.x > 0.2, "after thumb-right the camera looks toward +X (screen right at spawn)");
+  yaw = 0;
+  yaw += left.yawRate * 0.35;
+  must(cameraLookXZ(yaw).x < -0.2, "after thumb-left the camera looks toward −X (screen left)");
+  must(up.pitchRate < 0, "thumb up lowers pitch (look skyward)");
+  must(down.pitchRate > 0, "thumb down raises pitch (look toward the sand)");
+  must(clampPitch(-9) === -0.22 && clampPitch(9) === 0.62, "pitch stays in orbit limits");
+}
+
+/* Forward relative to camera shows the astronaut's back (facing −Z when yaw=0). */
+{
+  const camYaw = 0;
+  const forward = { x: -Math.sin(camYaw), z: -Math.cos(camYaw) };
+  const face = Math.atan2(forward.x, forward.z);
+  must(Math.abs(Math.cos(face) + 1) < 1e-9, "forward run at spawn faces −Z, back to the camera");
+}
 must(!playerSrc.includes("Math.hypot(player.root.position.x - 0, player.root.position.z - 8) < 6.2"), "old 6.2 m Hab circle is gone");
 
 const worldSrc = readFileSync(resolve(root, "src/world.js"), "utf8");
@@ -68,6 +97,8 @@ must(worldSrc.includes("terrainSegments()"), "mobile terrain matches collision g
 must(!worldSrc.includes("isMobileView() ? 48 : 168"), "coarse 48-seg mobile mesh is gone");
 must(worldSrc.includes("habBeacon"), "Hab has a night beacon");
 must(worldSrc.includes("stillSteam"), "working still shows vapor");
+must(!worldSrc.includes("packedYard"), "flat packedYard disc is not placed over the dunes");
+must(!readFileSync(resolve(root, "src/gfx.js"), "utf8").includes("function packedYard"), "packedYard helper is gone");
 
 const i18n = readFileSync(resolve(root, "src/i18n.js"), "utf8");
 must(i18n.includes("LOAD ICE"), "ice load prompt is explicit");

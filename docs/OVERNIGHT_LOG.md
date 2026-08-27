@@ -509,6 +509,16 @@ Overnight: not another dead-grid / locker / S-band lock. First Sol already trade
 - Live grid + heater-off slows sleep growth vs a warm house, and still beats Mars-outside. No new HUD. No rover
 - No Pointer Lock playtest
 
+### 2026-08-27 — P0.1 packedYard + inverted look stick
+
+Human playtest: astronaut looked buried around Hab; right stick left/right was inverted.
+
+- Removed `packedYard` (`CircleGeometry` 32 m disc at Hab height). It was a second flat mesh over the real dunes, so feet on terrain still vanished under the disc. No replacement plane.
+- Look stick now matches mouse: thumb right looks right (`yawRate` negative at +stickX; camera at +Z, screen-right is +X). Up/down: thumb up lowers pitch (look skyward).
+- Tuning: dead 0.11, curve 1.28, damp 16, camera follow `1-exp(-16 dt)`, equal 104 px sticks on landscape.
+- Automated: playability lookRates + packedYard absent + grounding/airlock. Human phone still required for dual-stick feel.
+- STOP. No rover.
+
 
 
 

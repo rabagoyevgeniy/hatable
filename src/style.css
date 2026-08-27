@@ -833,8 +833,8 @@ li.ready .recipe {
   pointer-events: auto;
   touch-action: none;
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: rgba(12, 7, 5, 0.42);
@@ -1213,8 +1213,13 @@ body.mobile:not(.need-landscape) .hb-slot small {
 body.mobile:not(.need-landscape) #joy {
   left: calc(12px + env(safe-area-inset-left, 0px));
   bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  width: 96px;
-  height: 96px;
+  width: 104px;
+  height: 104px;
+}
+
+body.mobile:not(.need-landscape) #look-joy {
+  width: 104px;
+  height: 104px;
 }
 
 body.mobile:not(.need-landscape) #look-cluster {

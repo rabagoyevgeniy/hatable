@@ -5,6 +5,7 @@ import { RECIPES, SURVIVAL, HAB_LEAK, YARD_PADS } from "./data.js";
 import { createWorld, updateWorld, placeStation, resolvePlacement, setGhost, spawnNode, updatePlotVisual, refreshOutpostModels, isMobileView } from "./world.js";
 import { needsLandscape, syncOrientationClass } from "./device.js";
 import { isSheltered, meshHeightAt } from "./systems/collision.js";
+import { lookRates, clampPitch, LOOK_DAMP, LOOK_DEAD } from "./systems/orbit.js";
 import { repairStillPump, stillCanRun, repairArrayCable } from "./systems/machines.js";
 import { sipHabitatTank } from "./systems/survival.js";
 import { consumeHabEvents } from "./systems/habitat.js";
@@ -612,7 +613,7 @@ async function bootGame() {
   function bindStick(el, knob, store, onEnd) {
     if (!el) return;
     let id = null;
-    const dead = 0.14;
+    const dead = LOOK_DEAD;
     function setFromTouch(t) {
       const r = el.getBoundingClientRect();
       const max = r.width * 0.42;
@@ -721,13 +722,11 @@ async function bootGame() {
   }
 
   function applyLookStick(dt) {
-    const curve = (v) => Math.sign(v) * Math.pow(Math.abs(v), 1.35);
-    const ax = curve(touchLook.x) * 2.55;
-    const ay = curve(touchLook.y) * 1.65;
-    player.lookVelX = THREE.MathUtils.damp(player.lookVelX || 0, ax, 8.5, dt);
-    player.lookVelY = THREE.MathUtils.damp(player.lookVelY || 0, ay, 8.5, dt);
+    const { yawRate, pitchRate } = lookRates(touchLook.x, touchLook.y);
+    player.lookVelX = THREE.MathUtils.damp(player.lookVelX || 0, yawRate, LOOK_DAMP, dt);
+    player.lookVelY = THREE.MathUtils.damp(player.lookVelY || 0, pitchRate, LOOK_DAMP, dt);
     player.camYaw = (player.camYaw || 0) + player.lookVelX * dt;
-    player.pitch = THREE.MathUtils.clamp((player.pitch || 0) + player.lookVelY * dt, -0.22, 0.62);
+    player.pitch = clampPitch((player.pitch || 0) + player.lookVelY * dt);
   }
 
   function placeCamera(dt, snap = false) {
@@ -741,7 +740,7 @@ async function bootGame() {
       player.root.position.z + Math.cos(camYaw) * dist
     );
     if (snap) camera.position.copy(desired);
-    else camera.position.lerp(desired, 1 - Math.pow(0.012, dt));
+    else camera.position.lerp(desired, 1 - Math.exp(-16 * dt));
     const segs = world.terrainSegments || 168;
     const minY = meshHeightAt(camera.position.x, camera.position.z, segs, heightAt) + (inside ? 1.35 : 1.85);
     if (camera.position.y < minY) camera.position.y = minY;

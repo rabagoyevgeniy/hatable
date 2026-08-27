@@ -366,20 +366,6 @@ export function bakeEnvironment(renderer) {
   return tex;
 }
 
-export function packedYard() {
-  const mat = std({
-    map: maps().mars,
-    color: 0x8a5a38,
-    roughness: 0.98,
-    metalness: 0.02,
-  });
-  const m = new THREE.Mesh(new THREE.CircleGeometry(32, 48), mat);
-  m.rotation.x = -Math.PI / 2;
-  m.position.y = 0.04;
-  m.receiveShadow = true;
-  return m;
-}
-
 export function dustSprite() {
   const t = canvasTex(64, (ctx, s) => {
     const g = ctx.createRadialGradient(s / 2, s / 2, 1, s / 2, s / 2, s / 2);

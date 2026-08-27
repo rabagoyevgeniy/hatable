@@ -1,34 +1,31 @@
 # Backlog
 
-## P0 PLAYER CONTROL & WORLD SCALE (CURRENT GATE)
+## P0.1 MOBILE PLAYABILITY (CURRENT GATE)
 
-Human playtest failed again. **Gameplay expansion is frozen** until a human can say:
+Human playtest after the control/scale pass found two remaining P0 bugs. **Gameplay expansion stays frozen.**
+
+Closed in code this pass (awaiting **human phone** retest):
+
+1. **packedYard removed** — the dark `CircleGeometry` sat as a flat disc over the real dunes. Feet were on the mesh, but the disc covered the astronaut and looked like sinking. Ground around Hab is the real terrain. No replacement plane.
+2. **Right stick direction** — thumb right looks right, left looks left, up looks up, down looks down. Orbit math matches mouse look (`camYaw` decreases for look-right when the camera sits on +Z).
+3. **Dual-stick tuning** — dead zone 0.11, curve 1.28, look damp 16, follow `1-exp(-16 dt)`. Look stick matches move-stick size on landscape phones. Idle orbit still does not spin the body.
+
+Human gate is unchanged:
 
 > «Мне приятно просто бегать по Марсу и крутить камерой. Я понимаю, где моя база. Я вижу, куда я иду. Я не проваливаюсь под землю.»
 
-Closed in code this pass (awaiting **human** retest — harness is not a phone):
-
-1. **Terrain grounding** — player Y uses the same PlaneGeometry bilinear as the rendered mesh (Three.js `iy=0 → worldZ = −half`). Feet sit on `terrainHeight + footOffset`. Emergency snap if underground. Spawn / save / blackout use the same snap. Camera offset is not a sink hide.
-2. **Dual-stick mobile** — left stick: camera-relative move. Right stick: camera orbit (dead zone, curve, damp, pitch limits). No random full-screen drag.
-3. **Third-person camera** — behind + slightly above. Character faces travel when moving; orbit does not spin the body while idle. Landscape FOV 42, follow distance ~15.4 m. Character should occupy ~10–18% of screen height.
-4. **Buttons** — large Interact above the look stick; Scan / Craft / Inventory smaller. iPhone safe areas.
-5. **Station scale** — living module + dedicated airlock + lab tube + greenhouse silhouette + yard solar / antenna / beacon. Not a 300% tent scale.
-6. **Distiller communication** — spatial hiss (distance + pan), silent when off; steam / lamp / spin when working. Prompt: NEED ICE → LOAD ICE → COLLECT WATER. QA plates (LEAK / HAB / ДИСТИЛЛЯТОР) stay until the replacement is understandable.
-
-Human gate for the next build: spawn, walk 3–5 minutes without sinking, both sticks, face away while running forward, enter/exit Hab, walk the station, find the still by sight + sound, understand ice → water without a manual.
-
-**STOP.** Do not start Rover. Do not add survival systems. Do not add scan-gates.
+**STOP.** No Rover. No new survival. No scan-gates.
 
 ## P0
 
-- Human retest of the control/scale pass above
+- Human retest of P0.1 (packedYard gone, stick direction, walk around Hab)
 - Do not break gather / craft / mobile / journal
 - Do not add rover, suit-tablet, or new survival couplings until that retest
 
 ## P1
 
 - Do not break `npm run smoke` / `npm run first-sol` / playability
-- Optional after the P0 gate: pinch zoom; E-build still on the stake → ice fuel → drip; storm wire splice
+- Optional after the P0 gate: pinch zoom; packed landing *on the same terrain geometry*; E-build still
 - Do not add more scan-gates (fabric / tape / hammer). Scanner reach is 22 m
 
 ## P2
