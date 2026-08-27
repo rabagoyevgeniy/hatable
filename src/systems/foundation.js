@@ -41,14 +41,17 @@ export function stationCoreMask(x, z) {
   return 1 - u;
 }
 
-/** Wide prepared terrace with an uneven rim — not a stamped circle. */
+/** Wide prepared terrace with an uneven rim — not a stamped circle.
+ *  Inner must outrun one mobile terrain cell (~6.5 m) past the outer modules
+ *  so bilinear mesh samples cannot pull a dune vertex under the station.
+ */
 export function stationEnvelopeMask(x, z) {
   const dx = x - HAB_POS.x;
   const dz = z - HAB_POS.z;
   const d = Math.hypot(dx, dz);
   const ang = Math.atan2(dz, dx);
-  const inner = 16.5 + 2.4 * Math.sin(ang * 2.15 + 0.35) + 1.1 * Math.sin(ang * 4.8);
-  const outer = 31.5 + 4.8 * Math.sin(ang * 2.15 + 0.35) + 2.6 * Math.sin(ang * 5.1 - 0.4);
+  const inner = 26.8 + 2.6 * Math.sin(ang * 2.15 + 0.35) + 1.2 * Math.sin(ang * 4.8);
+  const outer = 44.5 + 5.4 * Math.sin(ang * 2.15 + 0.35) + 2.7 * Math.sin(ang * 5.1 - 0.4);
   if (d <= inner) return 1;
   if (d >= outer) return 0;
   return fade(1 - (d - inner) / Math.max(0.8, outer - inner));

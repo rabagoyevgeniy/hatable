@@ -15,7 +15,7 @@ export const PLAYER_RADIUS = 0.38;
 /** Soles sit on the sand, not in it. Physics Y, not a camera cheat. */
 export const FOOT_OFFSET = 0.07;
 export const TERRAIN_SIZE = 620;
-export const MOBILE_TERRAIN_SEGS = 96;
+export const MOBILE_TERRAIN_SEGS = 120;
 export const DESKTOP_TERRAIN_SEGS = 168;
 
 /** Dedicated airlock tunnel in world XZ — only legal door (+Z). */

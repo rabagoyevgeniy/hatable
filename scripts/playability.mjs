@@ -273,6 +273,12 @@ must(existsSync(resolve(root, "src/systems/foundation.js")), "foundation mask mo
   const still = YARD_PADS.find((p) => p.station === "still");
   must(still && foundationMask(still.x, still.z) > 0.85, "still pad is on prepared ground");
   must(Math.abs(heightAt(still.x, still.z) - pad) < 0.12, "still pad Y matches station grade");
+  const habMesh = meshHeightAt(HAB_POS.x, HAB_POS.z, segs, heightAt);
+  must(Math.abs(meshHeightAt(LAB.x, LAB.z, segs, heightAt) - habMesh) < 0.08, "lab visual mesh matches Hab pad");
+  must(Math.abs(meshHeightAt(HAB_HATCH.x, HAB_HATCH.z, segs, heightAt) - habMesh) < 0.08, "hatch visual mesh matches Hab pad");
+  must(Math.abs(meshHeightAt(still.x, still.z, segs, heightAt) - habMesh) < 0.08, "still visual mesh matches Hab pad");
+  must(Math.abs(meshHeightAt(13.6, 2.6, segs, heightAt) - habMesh) < 0.1, "solar visual mesh matches Hab pad");
+  must(Math.abs(meshHeightAt(-14.6, 0.8, segs, heightAt) - habMesh) < 0.1, "greenhouse visual mesh matches Hab pad");
   must(foundationMask(100, 100) < 1e-4, "far dunes are not flattened");
   must(Math.abs(heightAt(100, 100) - rawHeight(100, 100)) < 1e-9, "untouched terrain equals rawHeight");
 }
