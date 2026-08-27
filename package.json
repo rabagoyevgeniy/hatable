@@ -1,0 +1,24 @@
+{
+  "name": "hatable",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Stranded Mars — a Mars survival-crafting game inspired by The Martian and Stranded Deep",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "smoke": "node scripts/smoke.mjs && node scripts/first-sol.mjs && node scripts/playability.mjs",
+    "first-sol": "node scripts/first-sol.mjs",
+    "meshy": "node scripts/meshy-generate.mjs",
+    "meshy:motion": "node scripts/meshy-motion.mjs",
+    "meshy:props": "node scripts/meshy-generate.mjs ice scrap rock potato fabric tape hydrazine locker bunk hammer soil crate",
+    "meshy:scene": "node scripts/meshy-generate.mjs wire comms solarcell desk farm"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
