@@ -9,7 +9,8 @@ import { tickStillMachine, stillCanRun, makeStation } from "./systems/machines.j
 import { createWeather, tickWeather } from "./systems/weather.js";
 import { createScience, lootBeaconVisible, LOOT_RING_RANGE } from "./systems/science.js";
 import { isMobileView } from "./device.js";
-import { TERRAIN_SIZE, segsForMobile, meshHeightAt } from "./systems/collision.js";
+import { TERRAIN_SIZE, segsForMobile, meshHeightAt, HAB_FLOOR_LIFT } from "./systems/collision.js";
+import { foundationMask, stationCoreMask } from "./systems/foundation.js";
 
 export { isMobileView };
 
@@ -75,6 +76,7 @@ export function createWorld(scene) {
   scene.add(stars);
 
   const terrain = makeTerrain();
+  terrain.name = "marsTerrain";
   terrain.receiveShadow = true;
   scene.add(terrain);
   scene.add(makeRocks());
@@ -96,7 +98,7 @@ export function createWorld(scene) {
 
   const outposts = OUTPOSTS.map((data) => {
     const group = buildOutpost(data);
-    const y = heightAt(data.x, data.z);
+    const y = visualY(data.x, data.z);
     group.position.set(data.x, y, data.z);
     scene.add(group);
     return { ...data, group, beacon: group.userData.beacon, baseY: y };
@@ -126,6 +128,7 @@ export function createWorld(scene) {
     stormTarget: 0.05,
     playTime: 0,
     daylight: 1,
+    terrain,
     habSealed: false,
     powered: false,
     contacted: false,
@@ -338,12 +341,13 @@ function makeLocker(x, z) {
   const light = new THREE.PointLight(0xffc878, 1.25, 11);
   light.position.set(0, 2.1, 0.4);
   g.add(light);
+  g.add(box(std({ color: 0xb08960, map: maps().rock, roughness: 0.94 }), 1.55, 0.12, 0.95, 0, 0.06, 0));
   if (!isMobileView()) {
     const plate = makePlate("LOCKER", 1.1, 0.28);
     plate.position.set(0, 1.25, 0.43);
     g.add(plate);
   }
-  g.position.set(x, heightAt(x, z), z);
+  g.position.set(x, visualY(x, z), z);
   g.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
@@ -374,7 +378,7 @@ function makePlate(text, w, h) {
 
 /** Yard pads must read from the hatch: a stake with volume, not a 5 cm twig in orange fog. */
 function dressYardPad(scene, p) {
-  const y = heightAt(p.x, p.z);
+  const y = visualY(p.x, p.z);
   const hot = p.station === "still";
   const group = new THREE.Group();
   group.position.set(p.x, y, p.z);
@@ -462,7 +466,7 @@ export function resolvePlacement(world, rec, player) {
   const raw = placementSpot(player);
   if (rec.station === "seal") {
     const d = Math.hypot(player.root.position.x - HAB_LEAK.x, player.root.position.z - HAB_LEAK.z);
-    return { x: HAB_LEAK.x, z: HAB_LEAK.z, y: heightAt(HAB_LEAK.x, HAB_LEAK.z), valid: d < 4.2 && !world.habSealed, snap: true };
+    return { x: HAB_LEAK.x, z: HAB_LEAK.z, y: visualY(HAB_LEAK.x, HAB_LEAK.z), valid: d < 4.2 && !world.habSealed, snap: true };
   }
   if (rec.station === "radio") {
     const site = OUTPOSTS.find((o) => o.id === "pathfinder");
@@ -479,7 +483,7 @@ export function resolvePlacement(world, rec, player) {
       best = pad;
     }
   }
-  if (best) return { x: best.x, z: best.z, y: heightAt(best.x, best.z), valid: true, snap: true, pad: best };
+  if (best) return { x: best.x, z: best.z, y: visualY(best.x, best.z), valid: true, snap: true, pad: best };
   const habD = Math.hypot(raw.x, raw.z - 8);
   const free = habD < 22 && habD > 5.8;
   return { ...raw, valid: free };
@@ -545,7 +549,7 @@ export function placeStation(world, station, x, z) {
     return st;
   }
   const mesh = buildStation(station);
-  mesh.position.set(x, heightAt(x, z), z);
+  mesh.position.set(x, visualY(x, z), z);
   world.scene.add(mesh);
   const st = { ...makeStation(station, x, z), mesh };
   world.stations.push(st);
@@ -592,6 +596,14 @@ function buildStation(type) {
       lamp.name = "stillLamp";
       lamp.position.set(0.2, 1.85, 0.35);
       ready.add(lamp);
+      const drip = new THREE.Mesh(
+        new THREE.SphereGeometry(0.045, 8, 8),
+        std({ color: 0x7ed8f0, emissive: 0x4ec4e8, emissiveIntensity: 0.9 })
+      );
+      drip.name = "stillDrip";
+      drip.position.set(0.4, 1.5, 0);
+      drip.visible = false;
+      ready.add(drip);
     }
     if (type === "radio") {
       const blink = new THREE.PointLight(0x7ed8f0, 0.55, 8);
@@ -609,6 +621,7 @@ function buildStation(type) {
   const dark = std({ color: 0x1c2430, map: tex.solar, roughness: 0.28, metalness: 0.48 });
   const gold = std({ color: 0xc9a227, roughness: 0.28, metalness: 0.62 });
   if (type === "still") {
+    g.add(mesh(new THREE.BoxGeometry(1.7, 0.1, 1.45), rust, 0, 0.05, 0));
     g.add(mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.4, 14), scrap, 0, 0.8, 0));
     g.add(mesh(new THREE.TorusGeometry(0.58, 0.05, 8, 16), rust, 0, 1.35, 0));
     g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.2, 10), rust, 0.55, 1.45, 0));
@@ -654,6 +667,19 @@ function buildStation(type) {
     );
     lamp.name = "stillLamp";
     g.add(lamp);
+    const can = mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.42, 10), scrap, 0.72, 0.28, 0.48);
+    can.name = "stillCan";
+    g.add(can);
+    const drip = mesh(
+      new THREE.SphereGeometry(0.045, 8, 8),
+      std({ color: 0x7ed8f0, emissive: 0x4ec4e8, emissiveIntensity: 0.9 }),
+      0.55,
+      1.42,
+      0
+    );
+    drip.name = "stillDrip";
+    drip.visible = false;
+    g.add(drip);
   } else if (type === "plot") {
     g.add(mesh(new THREE.BoxGeometry(2.25, 0.38, 2.25), rust, 0, 0.2, 0));
     g.add(mesh(new THREE.BoxGeometry(1.95, 0.22, 1.95), soil, 0, 0.42, 0));
@@ -732,7 +758,7 @@ function mesh(geo, mat, x, y, z) {
 export function placementSpot(player) {
   const x = player.root.position.x - Math.sin(player.yaw) * 3.2;
   const z = player.root.position.z - Math.cos(player.yaw) * 3.2;
-  return { x, z, y: heightAt(x, z) };
+  return { x, z, y: visualY(x, z) };
 }
 
 export function updateWorld(world, dt, playerPos, scanning, playing = true) {
@@ -896,6 +922,16 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
       if (steam) steam.visible = stillCanRun(st, world);
       const lamp = st.mesh.getObjectByName("stillLamp");
       if (lamp?.material) lamp.material.emissiveIntensity = stillCanRun(st, world) ? 1.1 + Math.sin(performance.now() / 180) * 0.45 : 0.08;
+      const drip = st.mesh.getObjectByName("stillDrip");
+      if (drip) {
+        const on = stillCanRun(st, world);
+        drip.visible = on;
+        if (on) {
+          const phase = (performance.now() / 420) % 1;
+          drip.position.y = 1.48 - phase * 0.85;
+          drip.scale.setScalar(0.65 + (1 - phase) * 0.55);
+        }
+      }
       const gauge = st.mesh.getObjectByName("waterGauge");
       if (gauge) gauge.scale.set(1, 1 + Math.min(6, st.water * 0.4), 1);
     }
@@ -946,6 +982,7 @@ function makeTerrain() {
   const crest = new THREE.Color(0xd4a078);
   const rock = new THREE.Color(0x5a2e1c);
   const gully = new THREE.Color(0x6a3318);
+  const packed = new THREE.Color(0xa87848);
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
@@ -959,6 +996,13 @@ function makeTerrain() {
     color.lerp(crest, Math.max(0, y / 14) * 0.45);
     color.lerp(gully, Math.max(0, -y / 6) * 0.4);
     color.lerp(rock, Math.min(1, slope * 1.8));
+    const site = foundationMask(x, z);
+    if (site > 0.1) {
+      packed.r = isMobileView() ? 0.82 : 0.66;
+      packed.g = isMobileView() ? 0.58 : 0.46;
+      packed.b = isMobileView() ? 0.38 : 0.28;
+      color.lerp(packed, site * 0.34);
+    }
     colors.push(color.r, color.g, color.b);
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
@@ -990,9 +1034,9 @@ function makeRocks() {
     guard++;
     const x = (Math.random() - 0.5) * 540;
     const z = (Math.random() - 0.5) * 540;
-    if (Math.hypot(x, z - 8) < 9) continue;
+    if (foundationMask(x, z) > 0.32) continue;
     if (OUTPOSTS.some((o) => o.kind !== "hab" && Math.hypot(x - o.x, z - o.z) < 18)) continue;
-    dummy.position.set(x, heightAt(x, z) + 0.18, z);
+    dummy.position.set(x, visualY(x, z) + 0.18, z);
     dummy.rotation.set(Math.random(), Math.random(), Math.random());
     const s = 0.55 + Math.random() * 2.6;
     dummy.scale.set(s, s * (0.45 + Math.random() * 0.7), s);
@@ -1013,14 +1057,19 @@ function makePebbles() {
   const meshInst = new THREE.InstancedMesh(geo, mat, count);
   meshInst.receiveShadow = true;
   const dummy = new THREE.Object3D();
-  for (let i = 0; i < count; i++) {
-    const x = (Math.random() - 0.5) * 70;
-    const z = 8 + (Math.random() - 0.5) * 70;
-    dummy.position.set(x, heightAt(x, z) + 0.04, z);
+  let placed = 0;
+  let guard = 0;
+  while (placed < count && guard < 8000) {
+    guard++;
+    const x = (Math.random() - 0.5) * 90;
+    const z = 8 + (Math.random() - 0.5) * 90;
+    if (stationCoreMask(x, z) > 0.42) continue;
+    dummy.position.set(x, visualY(x, z) + 0.04, z);
     dummy.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
     dummy.scale.setScalar(0.4 + Math.random() * 1.4);
     dummy.updateMatrix();
-    meshInst.setMatrixAt(i, dummy.matrix);
+    meshInst.setMatrixAt(placed, dummy.matrix);
+    placed++;
   }
   return meshInst;
 }
@@ -1046,8 +1095,9 @@ function makeYardDressing() {
     [-12.2, 19.5, 0.95],
   ];
   for (const [x, z, s] of spots) {
+    if (stationCoreMask(x, z) > 0.55) continue;
     const m = new THREE.Mesh(new THREE.DodecahedronGeometry(1.05, 0), rock);
-    m.position.set(x, heightAt(x, z) + 0.12, z);
+    m.position.set(x, visualY(x, z) + 0.12, z);
     m.scale.set(s, s * 0.52, s);
     m.rotation.set(0.25, x * 0.3, 0.18);
     g.add(m);
@@ -1066,7 +1116,7 @@ function makeYardDressing() {
   ]) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.45, r, 22), scar);
     ring.rotation.x = -Math.PI / 2;
-    ring.position.set(x, heightAt(x, z) + 0.045, z);
+    ring.position.set(x, visualY(x, z) + 0.045, z);
     g.add(ring);
   }
   return g;
@@ -1168,7 +1218,7 @@ function makeDebris() {
   for (const [id, fit, x, z, rot] of spots) {
     const m = takeModel(id, fit);
     if (!m) continue;
-    m.position.set(x, heightAt(x, z), z);
+    m.position.set(x, visualY(x, z), z);
     m.rotation.y = rot;
     g.add(m);
     used++;
@@ -1184,14 +1234,14 @@ function makeDebris() {
     ];
     for (const [x, z, w, h, mat] of spots) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.7), mat);
-      m.position.set(x, heightAt(x, z) + h * 0.5, z);
+      m.position.set(x, visualY(x, z) + h * 0.5, z);
       m.rotation.y = x * 0.3;
       m.castShadow = true;
       g.add(m);
     }
   }
   const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4.2, 6), pale);
-  strut.position.set(-3.4, heightAt(-3.4, 3.2) + 0.4, 3.2);
+  strut.position.set(-3.4, visualY(-3.4, 3.2) + 0.4, 3.2);
   strut.rotation.z = 1.05;
   g.add(strut);
   return g;
@@ -1310,56 +1360,96 @@ function buildOutpost(data) {
     const bunkMat = std({ color: 0x6a3a22, roughness: 0.8 });
     const sheet = std({ color: 0xd8c8b0, roughness: 0.7 });
 
+    const deck = new THREE.Group();
+    deck.name = "habDeck";
+    deck.position.y = HAB_FLOOR_LIFT;
+    g.add(deck);
+
+    const padMat = std({ color: 0xb08960, map: tex.rock, roughness: 0.94 });
+    const shoe = std({ color: 0xd0c8bc, map: tex.metal, roughness: 0.42, metalness: 0.32 });
+    const pierH = HAB_FLOOR_LIFT + 0.08;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + 0.18;
+      if (Math.cos(a) > 0.72) continue;
+      const px = Math.sin(a) * 6.58;
+      const pz = Math.cos(a) * 6.58;
+      g.add(box(padMat, 1.35, 0.22, 0.82, px, 0.11, pz));
+      g.add(box(shoe, 0.22, pierH, 0.22, px, pierH * 0.5, pz));
+    }
+    g.add(box(shoe, 0.28, pierH, 4.9, -1.18, pierH * 0.5, 9.15));
+    g.add(box(shoe, 0.28, pierH, 4.9, 1.18, pierH * 0.5, 9.15));
+    g.add(box(padMat, 2.7, 0.1, 1.85, 0, 0.05, 12.45));
+    g.add(box(padMat, 2.45, 0.1, 0.85, 0, HAB_FLOOR_LIFT * 0.4, 12.05));
+    g.add(box(padMat, 2.4, 0.1, 0.8, 0, HAB_FLOOR_LIFT * 0.78, 11.52));
+    for (const [ox, oz] of [
+      [-2.2, 1.8],
+      [2.2, 1.8],
+      [-2.2, -1.8],
+      [2.2, -1.8],
+    ]) {
+      g.add(box(padMat, 1.15, 0.2, 0.78, -12.35 + ox, 0.1, oz));
+      g.add(box(shoe, 0.2, pierH, 0.2, -12.35 + ox, pierH * 0.5, oz));
+    }
+    g.add(box(padMat, 8.6, 0.16, 1.25, -14.6, 0.08, -5.8));
+    const solarLegH = HAB_FLOOR_LIFT + 1.12;
+    for (let i = 0; i < 4; i++) {
+      const pz = -4.2 + i * 2.15;
+      g.add(box(padMat, 0.55, 0.1, 0.55, 11.55, 0.05, pz));
+      g.add(box(padMat, 0.55, 0.1, 0.55, 12.85, 0.05, pz));
+      g.add(box(shoe, 0.14, solarLegH, 0.14, 11.55, solarLegH * 0.5, pz));
+      g.add(box(shoe, 0.14, solarLegH, 0.14, 12.85, solarLegH * 0.5, pz));
+    }
+
     const wall = new THREE.Mesh(
       new THREE.CylinderGeometry(6.8, 6.8, 4.35, habSegs, 1, true, Math.PI * 0.16, Math.PI * 1.68),
       hull
     );
     wall.position.y = 2.15;
-    g.add(wall);
+    deck.add(wall);
     const dome = new THREE.Mesh(
       new THREE.SphereGeometry(6.8, isMobileView() ? 16 : 32, isMobileView() ? 10 : 16, Math.PI * 0.16, Math.PI * 1.68, 0, Math.PI / 2),
       hull
     );
     dome.position.y = 4.32;
-    g.add(dome);
+    deck.add(dome);
     for (const y of [0.55, 2.15, 3.7]) {
       const rib = new THREE.Mesh(new THREE.TorusGeometry(6.82, 0.11, 8, habSegs, Math.PI * 1.68), ribMat);
       rib.rotation.set(Math.PI / 2, 0, Math.PI * 0.16);
       rib.position.y = y;
-      g.add(rib);
+      deck.add(rib);
     }
     for (const a of [2.15, 3.35, 4.55]) {
       const w = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.85, 0.08), glassMat);
       w.position.set(Math.sin(a) * 6.72, 2.05, Math.cos(a) * 6.72);
       w.lookAt(0, 2.05, 0);
       w.name = "habWindow";
-      g.add(w);
+      deck.add(w);
     }
-    g.add(box(hull, 2.7, 2.6, 4.9, 0, 1.35, 9.15));
-    g.add(box(hull, 0.32, 2.6, 0.18, -1.22, 1.35, 11.52));
-    g.add(box(hull, 0.32, 2.6, 0.18, 1.22, 1.35, 11.52));
-    g.add(box(hull, 2.7, 0.28, 0.18, 0, 2.55, 11.52));
+    deck.add(box(hull, 2.7, 2.6, 4.9, 0, 1.35, 9.15));
+    deck.add(box(hull, 0.32, 2.6, 0.18, -1.22, 1.35, 11.52));
+    deck.add(box(hull, 0.32, 2.6, 0.18, 1.22, 1.35, 11.52));
+    deck.add(box(hull, 2.7, 0.28, 0.18, 0, 2.55, 11.52));
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.24), orange);
     lamp.position.set(0, 2.72, 11.62);
-    g.add(lamp);
+    deck.add(lamp);
     const hatchSign = new THREE.Mesh(
       new THREE.PlaneGeometry(2.15, 0.52),
       new THREE.MeshBasicMaterial({ map: padSignTexture("ШЛЮЗ"), side: THREE.DoubleSide, fog: false })
     );
     hatchSign.position.set(0, 2.45, 11.88);
     hatchSign.name = "hatchSign";
-    g.add(hatchSign);
+    deck.add(hatchSign);
     const airLight = new THREE.PointLight(0xffb15a, 2.4, 28);
     airLight.position.set(0, 2.7, 11.2);
-    g.add(airLight);
+    deck.add(airLight);
     const beacon = new THREE.PointLight(0xff7a32, isMobileView() ? 3.2 : 2.1, 48);
     beacon.position.set(0, 7.4, 0);
     beacon.name = "habBeacon";
-    g.add(beacon);
+    deck.add(beacon);
     const inner = new THREE.PointLight(0xffe0b0, isMobileView() ? 2.55 : 1.05, isMobileView() ? 20 : 16);
     inner.position.set(0, 2.4, 0.4);
     inner.name = "innerLight";
-    g.add(inner);
+    deck.add(inner);
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(6.55, habSegs),
       std({
@@ -1372,62 +1462,63 @@ function buildOutpost(data) {
     );
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.06;
-    g.add(floor);
-    dressHabRoom(g, { hull, orange, bunkMat, sheet, tex });
+    deck.add(floor);
+
+    dressHabRoom(deck, { hull, orange, bunkMat, sheet, tex });
 
     const labHull = hull;
     const lab = new THREE.Mesh(new THREE.CylinderGeometry(3.22, 3.22, 3.4, habSegs, 1, true), labHull);
     lab.position.set(-12.35, 1.7, 0);
-    g.add(lab);
+    deck.add(lab);
     const labDome = new THREE.Mesh(new THREE.SphereGeometry(3.22, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), labHull);
     labDome.position.set(-12.35, 3.4, 0);
-    g.add(labDome);
+    deck.add(labDome);
     const labFloor = new THREE.Mesh(
       new THREE.CircleGeometry(3.05, 20),
       std({ color: 0xb8c8c4, map: tex.floor, roughness: 0.78, emissive: 0x2a4a48, emissiveIntensity: 0.16 })
     );
     labFloor.rotation.x = -Math.PI / 2;
     labFloor.position.set(-12.35, 0.06, 0);
-    g.add(labFloor);
-    g.add(box(hull, 6.4, 2.25, 2.15, -9.15, 1.2, 0));
+    deck.add(labFloor);
+    deck.add(box(hull, 6.4, 2.25, 2.15, -9.15, 1.2, 0));
     const labTag = makePlate(mobile ? "LAB" : "LAB", 1.1, 0.28);
     labTag.position.set(-12.35, 2.35, 3.35);
-    g.add(labTag);
+    deck.add(labTag);
     const labLight = new THREE.PointLight(0x7ed8f0, mobile ? 1.4 : 0.7, 10);
     labLight.position.set(-12.35, 2.4, 0);
-    g.add(labLight);
-    g.add(box(hull, 1.35, 0.85, 0.08, -12.35, 1.85, 3.18));
+    deck.add(labLight);
+    deck.add(box(hull, 1.35, 0.85, 0.08, -12.35, 1.85, 3.18));
 
     const hoop = new THREE.Mesh(new THREE.TorusGeometry(4.4, 0.09, 8, 22, Math.PI), white);
     hoop.rotation.z = Math.PI / 2;
     hoop.position.set(-14.6, 0.2, -7.2);
-    g.add(hoop);
+    deck.add(hoop);
     const hoop2 = hoop.clone();
     hoop2.position.z = -4.4;
-    g.add(hoop2);
+    deck.add(hoop2);
     const plastic = new THREE.Mesh(
       new THREE.CylinderGeometry(4.4, 4.4, 6.2, 16, 1, true, 0, Math.PI),
       std({ color: 0x7ec98a, transparent: true, opacity: 0.2, roughness: 0.12, side: THREE.DoubleSide })
     );
     plastic.rotation.z = Math.PI / 2;
     plastic.position.set(-14.6, 2.1, -5.8);
-    g.add(plastic);
+    deck.add(plastic);
     const farmTag = makePlate(mobile ? "ТЕПЛИЦА" : "GREENHOUSE", 1.6, 0.28);
     farmTag.position.set(-14.6, 2.4, -2.6);
-    g.add(farmTag);
+    deck.add(farmTag);
 
     const flag = makeClothFlag();
     flag.position.set(2.35, 3.15, 11.55);
     flag.rotation.y = 0.35;
-    g.add(flag);
-    g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.32, 1.8, 5.4, 0.95, 3.2));
-    g.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.32, 1.8, 5.4, 0.95, 4.1));
+    deck.add(flag);
+    deck.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.32, 1.8, 5.4, 0.95, 3.2));
+    deck.add(cyl(std({ color: 0xd8d2c6, map: tex.metal, metalness: 0.4, roughness: 0.35 }), 0.32, 1.8, 5.4, 0.95, 4.1));
     const antenna = cyl(std({ color: 0xc8c0b4, metalness: 0.5, roughness: 0.3 }), 0.05, 4.8, -3.4, 6.6, -2.2);
     antenna.name = "habAntenna";
-    g.add(antenna);
+    deck.add(antenna);
     const plate = makePlate("ARES III", 2.6, 0.6);
     plate.position.set(0, 3.05, 11.7);
-    g.add(plate);
+    deck.add(plate);
     const cellMat = std({ color: 0x243044, map: tex.solar, roughness: 0.32, metalness: 0.42 });
     const deadMat = std({ color: 0x1a1210, roughness: 0.7, metalness: 0.15 });
     for (let i = 0; i < 3; i++) {
@@ -1435,12 +1526,12 @@ function buildOutpost(data) {
       const cell = box((ok ? cellMat : deadMat).clone(), 1.45, 0.06, 0.9, (i - 1) * 1.55, 6.55, -2.1);
       cell.rotation.x = ok ? -0.12 : -0.38;
       cell.name = `roofCell${i}`;
-      g.add(cell);
+      deck.add(cell);
     }
     for (let i = 0; i < 4; i++) {
       const yardCell = box(cellMat.clone(), 1.7, 0.06, 3.4, 12.2, 1.15, -4.2 + i * 2.15);
       yardCell.rotation.z = -0.18;
-      g.add(yardCell);
+      deck.add(yardCell);
     }
     const leakLocal = { x: HAB_LEAK.x - HAB_POS.x, z: HAB_LEAK.z - HAB_POS.z };
     const wallX = leakLocal.x;
@@ -1457,7 +1548,7 @@ function buildOutpost(data) {
     hole.position.set(wallX, 1.72, wallZ);
     hole.lookAt(0, 1.72, 0);
     hole.name = "leak";
-    g.add(hole);
+    deck.add(hole);
     const rag = new THREE.Mesh(
       new THREE.PlaneGeometry(1.35, 1.05, 6, 4),
       std({
@@ -1472,18 +1563,18 @@ function buildOutpost(data) {
     rag.position.set(wallX + 0.12, 1.78, wallZ + 0.08);
     rag.lookAt(0, 1.55, 0.4);
     rag.name = "leakRag";
-    g.add(rag);
+    deck.add(rag);
     const steam = makeLeakSteam();
     steam.position.set(leakLocal.x, 1.55, leakLocal.z);
-    g.add(steam);
+    deck.add(steam);
     const leakGlow = new THREE.PointLight(0x9ee8ff, 1.35, 7);
     leakGlow.position.set(leakLocal.x, 1.7, leakLocal.z);
     leakGlow.name = "leakLight";
-    g.add(leakGlow);
+    deck.add(leakGlow);
     const leakTag = makePlate("LEAK", 0.95, 0.22);
     leakTag.position.set(leakLocal.x + 1.15, 1.85, leakLocal.z - 0.4);
     leakTag.name = "leakPlate";
-    g.add(leakTag);
+    deck.add(leakTag);
     const patch = new THREE.Mesh(
       new THREE.CircleGeometry(0.88, 16),
       std({ color: 0xe8dcc8, map: tex.hull, roughness: 0.7 })
@@ -1492,7 +1583,7 @@ function buildOutpost(data) {
     patch.rotation.copy(hole.rotation);
     patch.name = "patch";
     patch.visible = false;
-    g.add(patch);
+    deck.add(patch);
   } else if (data.kind === "rover") {
     const ready = takeModel("rover", 5.5);
     if (ready) g.add(ready);

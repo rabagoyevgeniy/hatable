@@ -1,20 +1,24 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { lookRates, cameraLookXZ, clampPitch } from "../src/systems/orbit.js";
-import { heightAt } from "../src/noise.js";
-import { SPAWN, HAB_POS, HAB_HATCH } from "../src/data.js";
+import { heightAt, rawHeight, stationPadHeight } from "../src/noise.js";
+import { SPAWN, HAB_POS, HAB_HATCH, YARD_PADS } from "../src/data.js";
+import { foundationMask, stationCoreMask } from "../src/systems/foundation.js";
 import {
   AIRLOCK,
   BLOCKERS,
   FOOT_OFFSET,
+  HAB_FLOOR_LIFT,
   HAB_INNER_R,
   HAB_WALL_R,
   LAB,
   MOBILE_TERRAIN_SEGS,
   PLAYER_RADIUS,
   TERRAIN_HALF,
+  airlockRampT,
   emergencyUnground,
   groundYAt,
+  habFloorY,
   habRadial,
   inAirlockCorridor,
   isInsideHabHull,
@@ -248,8 +252,79 @@ must(i18n.includes("stillNeedIce"), "empty still asks for ice");
   must(pos.x < LAB.x + 1.5, "west walk from the Hab reaches the lab");
 }
 
+must(worldSrc.includes("habDeck"), "Hab sits on a raised deck over footings");
+must(worldSrc.includes("HAB_FLOOR_LIFT"), "visual Hab deck uses the same lift as player floor");
+must(worldSrc.includes("foundationMask"), "terrain mesh samples the station foundation");
+must(!worldSrc.includes("CircleGeometry(32"), "no stamped circular yard overlay");
+
 must(BLOCKERS.length >= 4, "locker and major furniture have collision");
 must(existsSync(resolve(root, "src/systems/collision.js")), "collision module");
+must(existsSync(resolve(root, "src/systems/foundation.js")), "foundation mask module");
+
+/* Graded mission site: same heightAt for mesh, player, and pads. */
+{
+  const pad = stationPadHeight();
+  must(Math.abs(heightAt(HAB_POS.x, HAB_POS.z) - pad) < 0.08, "Hab origin is graded to the pad");
+  must(foundationMask(HAB_POS.x, HAB_POS.z) > 0.98, "Hab origin is inside the foundation core");
+  must(foundationMask(HAB_HATCH.x, HAB_HATCH.z) > 0.95, "airlock mouth is on prepared ground");
+  must(stationCoreMask(HAB_HATCH.x, HAB_HATCH.z) > 0.7, "airlock mouth is in the station core");
+  must(foundationMask(LAB.x, LAB.z) > 0.9, "lab sits on the foundation");
+  must(foundationMask(-14.6, 2.4) > 0.75, "greenhouse zone is graded");
+  const still = YARD_PADS.find((p) => p.station === "still");
+  must(still && foundationMask(still.x, still.z) > 0.85, "still pad is on prepared ground");
+  must(Math.abs(heightAt(still.x, still.z) - pad) < 0.12, "still pad Y matches station grade");
+  must(foundationMask(100, 100) < 1e-4, "far dunes are not flattened");
+  must(Math.abs(heightAt(100, 100) - rawHeight(100, 100)) < 1e-9, "untouched terrain equals rawHeight");
+}
+
+/* Mesh bilinear agrees with heightAt at a vertex on the pad. */
+{
+  const v = meshVertexWorld(48, 49, segs);
+  must(Math.abs(meshHeightAt(v.x, v.z, segs, heightAt) - heightAt(v.x, v.z)) < 1e-9, "pad vertex mesh Y is heightAt");
+}
+
+/* Player on the site stands on the same function as the mesh. */
+{
+  const pos = { x: HAB_HATCH.x, y: -40, z: HAB_HATCH.z + 2.6 };
+  snapToGround(pos, segs, heightAt);
+  const meshY = meshHeightAt(pos.x, pos.z, segs, heightAt);
+  must(Math.abs(pos.y - (meshY + FOOT_OFFSET)) < 1e-9, "hatch approach feet use mesh height");
+  const site = { x: 6.2, y: 0, z: 8 };
+  snapToGround(site, segs, heightAt);
+  must(Math.abs(site.y - (groundYAt(site.x, site.z, segs, heightAt) + FOOT_OFFSET)) < 1e-9, "yard feet match groundYAt");
+}
+
+/* Envelope blend has no cliff walking out from the Hab. */
+{
+  let cliff = 0;
+  let prev = heightAt(HAB_POS.x, HAB_POS.z);
+  for (let d = 0.5; d <= 42; d += 0.5) {
+    const z = HAB_POS.z + d;
+    const h = heightAt(HAB_POS.x, z);
+    if (Math.abs(h - prev) > 0.55) cliff++;
+    prev = h;
+  }
+  must(cliff === 0, `foundation falloff is a cliff (${cliff} steps)`);
+}
+
+/* Airlock is a ramp, not a vertical teleport. */
+{
+  must(HAB_FLOOR_LIFT > 0.15 && HAB_FLOOR_LIFT < 0.5, "Hab deck is a short step, not a tower");
+  const mouth = groundYAt(0, AIRLOCK.maxZ, segs, heightAt);
+  const door = groundYAt(0, AIRLOCK.minZ, segs, heightAt);
+  const floor = habFloorY(heightAt);
+  must(Math.abs(door - floor) < 0.04, "airlock inner end meets Hab floor");
+  must(Math.abs(mouth - meshHeightAt(0, AIRLOCK.maxZ, segs, heightAt)) < 0.04, "airlock mouth meets graded sand");
+  must(door > mouth + 0.08, "airlock rises onto the deck");
+  must(airlockRampT(AIRLOCK.maxZ) < 0.02, "ramp starts at 0 at the hatch");
+  must(airlockRampT(AIRLOCK.minZ) > 0.98, "ramp finishes at 1 at the Hab door");
+  let prev = mouth;
+  for (let z = AIRLOCK.maxZ; z >= AIRLOCK.minZ; z -= 0.2) {
+    const y = groundYAt(0, z, segs, heightAt);
+    must(y + 1e-4 >= prev - 0.01, "airlock ramp is monotonic inward");
+    prev = y;
+  }
+}
 
 if (fail.length) {
   console.error("PLAYABILITY FAIL");

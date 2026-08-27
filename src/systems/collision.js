@@ -9,7 +9,8 @@ export { HAB_POS };
 /** Main living-module hull. */
 export const HAB_WALL_R = 6.95;
 export const HAB_INNER_R = 6.48;
-export const HAB_FLOOR_LIFT = 0.1;
+/** Deck height above graded sand — visual floor and player interior share this. */
+export const HAB_FLOOR_LIFT = 0.28;
 export const PLAYER_RADIUS = 0.38;
 /** Soles sit on the sand, not in it. Physics Y, not a camera cheat. */
 export const FOOT_OFFSET = 0.07;
@@ -91,6 +92,18 @@ export function habFloorY(heightFn) {
   return heightFn(HAB_POS.x, HAB_POS.z) + HAB_FLOOR_LIFT;
 }
 
+function smoothstep(t) {
+  const x = Math.max(0, Math.min(1, t));
+  return x * x * (3 - 2 * x);
+}
+
+/** 0 at the hatch mouth, 1 at the Hab door — used as a physical threshold, not a teleport. */
+export function airlockRampT(z) {
+  const span = AIRLOCK.maxZ - AIRLOCK.minZ;
+  if (span <= 1e-6) return 1;
+  return smoothstep((AIRLOCK.maxZ - z) / span);
+}
+
 export function habRadial(x, z) {
   return Math.hypot(x - HAB_POS.x, z - HAB_POS.z);
 }
@@ -116,8 +129,14 @@ export function isSheltered(x, z) {
 }
 
 export function groundYAt(x, z, segments, heightFn) {
-  if (isSheltered(x, z)) return habFloorY(heightFn);
-  return terrainHeightAt(x, z, segments, heightFn);
+  const terrain = terrainHeightAt(x, z, segments, heightFn);
+  const floor = habFloorY(heightFn);
+  if (isInsideHabHull(x, z) || isInsideLab(x, z) || inLabTube(x, z)) return floor;
+  if (inAirlockCorridor(x, z)) {
+    const t = airlockRampT(z);
+    return terrain + (floor - terrain) * t;
+  }
+  return terrain;
 }
 
 const PUSH_ITERS = 10;
