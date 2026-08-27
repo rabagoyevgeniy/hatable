@@ -227,6 +227,22 @@ async function bootGame() {
   if (!mobile) preloadRest().then(() => refreshOutpostModels(world));
   systemsReady = true;
   document.body.dataset.booted = "1";
+  if (typeof window !== "undefined" && new URLSearchParams(location.search).has("qa")) {
+    window.__strandedQa = {
+      teleport(x, z, yaw) {
+        player.root.position.x = x;
+        player.root.position.z = z;
+        if (yaw != null) {
+          player.camYaw = yaw;
+          player.yaw = yaw;
+          player.facingYaw = yaw;
+        }
+      },
+      clock(t) {
+        world.clock = t;
+      },
+    };
+  }
   if (queuedStart !== null) beginPlay(queuedStart);
 
   canvas.addEventListener("click", () => {

@@ -770,15 +770,19 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   world.daylight = 0.5 + 0.5 * Math.sin(world.clock * Math.PI * 2);
   const night = 1 - world.daylight;
   const ang = world.clock * Math.PI * 2;
+  const elev = Math.sin(ang);
   world.sun.position.set(
     playerPos.x + Math.cos(ang) * 70,
-    14 + Math.max(6, Math.sin(ang) * 88),
+    Math.max(4, 18 + elev * 80),
     playerPos.z + Math.sin(ang) * 36 - 28
   );
   world.sun.target.position.set(playerPos.x, playerPos.y, playerPos.z);
-  world.sun.intensity = Math.max(mobile ? 0.95 : 0.12, world.daylight * (mobile ? 1.55 : 1.7));
-  world.hemi.intensity = (mobile ? 1.15 : 0.32) + world.daylight * (mobile ? 1.05 : 0.85);
-  if (world.fill) world.fill.intensity = (mobile ? 0.55 : 0.22) + world.daylight * 0.28 + night * 0.22;
+  world.sun.intensity = Math.max(mobile ? 0.05 : 0.03, Math.max(0, elev) * (mobile ? 1.7 : 1.85));
+  world.hemi.intensity = (mobile ? 0.18 : 0.12) + world.daylight * (mobile ? 1.25 : 0.95);
+  if (world.fill) world.fill.intensity = (mobile ? 0.1 : 0.06) + world.daylight * 0.58 + night * 0.12;
+  if (world.terrain?.material?.emissiveIntensity != null) {
+    world.terrain.material.emissiveIntensity = mobile ? 0.08 + world.daylight * 0.47 : 0;
+  }
   const sunDir = world.sun.position.clone().sub(new THREE.Vector3(playerPos.x, 0, playerPos.z)).normalize();
   if (world.sunMesh) {
     world.sunMesh.position.copy(sunDir).multiplyScalar(380);
@@ -805,10 +809,10 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   );
   if (mobile) {
     const warm = new THREE.Color(0xd48958);
-    fogCol.copy(warm).lerp(new THREE.Color(0x6a3a28), Math.min(0.42, night * 0.5 + world.storm * 0.25));
+    fogCol.copy(warm).lerp(new THREE.Color(0x140808), Math.min(0.82, night * 0.88 + world.storm * 0.22));
     world.scene.background.copy(fogCol);
     world.scene.fog.color.copy(fogCol);
-    world.scene.fog.density = 0.0055 + world.storm * 0.01;
+    world.scene.fog.density = 0.0048 + night * 0.002 + world.storm * 0.01;
   } else {
     world.scene.background.copy(fogCol);
     world.scene.fog.color.copy(fogCol);
@@ -880,6 +884,8 @@ export function updateWorld(world, dt, playerPos, scanning, playing = true) {
   }
 
   const hab = world.outposts.find((o) => o.kind === "hab");
+  const beacon = hab?.group.getObjectByName("habBeacon");
+  if (beacon) beacon.intensity = (mobile ? 2.4 : 1.6) + night * (mobile ? 5.2 : 3.6);
   const inner = hab?.group.getObjectByName("innerLight");
   const bat = world.hab?.battery ?? 0.3;
   const live = world.hab?.gridOn;
@@ -1391,6 +1397,25 @@ function buildOutpost(data) {
       g.add(box(shoe, 0.2, pierH, 0.2, -12.35 + ox, pierH * 0.5, oz));
     }
     g.add(box(padMat, 8.6, 0.16, 1.25, -14.6, 0.08, -5.8));
+    g.add(box(padMat, 1.55, 0.16, 0.85, -9.15, 0.08, 0));
+    g.add(box(shoe, 0.2, pierH, 0.2, -9.15, pierH * 0.5, 1.02));
+    g.add(box(shoe, 0.2, pierH, 0.2, -9.15, pierH * 0.5, -1.02));
+    const habPlinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(7.08, 7.22, HAB_FLOOR_LIFT + 0.12, habSegs, 1, true, Math.PI * 0.16, Math.PI * 1.68),
+      padMat
+    );
+    habPlinth.position.y = (HAB_FLOOR_LIFT + 0.12) * 0.5;
+    g.add(habPlinth);
+    const labPlinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.4, 3.52, HAB_FLOOR_LIFT + 0.12, habSegs),
+      padMat
+    );
+    labPlinth.position.set(-12.35, (HAB_FLOOR_LIFT + 0.12) * 0.5, 0);
+    g.add(labPlinth);
+    const lockH = 2.6 + HAB_FLOOR_LIFT;
+    g.add(box(hull, 2.7, lockH, 4.9, 0, lockH * 0.5, 9.15));
+    const tubeH = 2.25 + HAB_FLOOR_LIFT;
+    g.add(box(hull, 6.4, tubeH, 2.15, -9.15, tubeH * 0.5, 0));
     const solarLegH = HAB_FLOOR_LIFT + 1.12;
     for (let i = 0; i < 4; i++) {
       const pz = -4.2 + i * 2.15;
@@ -1425,7 +1450,6 @@ function buildOutpost(data) {
       w.name = "habWindow";
       deck.add(w);
     }
-    deck.add(box(hull, 2.7, 2.6, 4.9, 0, 1.35, 9.15));
     deck.add(box(hull, 0.32, 2.6, 0.18, -1.22, 1.35, 11.52));
     deck.add(box(hull, 0.32, 2.6, 0.18, 1.22, 1.35, 11.52));
     deck.add(box(hull, 2.7, 0.28, 0.18, 0, 2.55, 11.52));
@@ -1480,7 +1504,6 @@ function buildOutpost(data) {
     labFloor.rotation.x = -Math.PI / 2;
     labFloor.position.set(-12.35, 0.06, 0);
     deck.add(labFloor);
-    deck.add(box(hull, 6.4, 2.25, 2.15, -9.15, 1.2, 0));
     const labTag = makePlate(mobile ? "LAB" : "LAB", 1.1, 0.28);
     labTag.position.set(-12.35, 2.35, 3.35);
     deck.add(labTag);
