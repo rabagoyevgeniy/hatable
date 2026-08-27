@@ -1,3 +1,6 @@
+import { HAB_POS } from "./data.js";
+import { foundationMask, OUTPOST_HUBS, radialFalloff } from "./systems/foundation.js";
+
 function fade(t) {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
@@ -36,15 +39,6 @@ export function fbm(x, z, octaves = 5) {
   return value;
 }
 
-const hubs = [
-  [0, 8],
-  [86, -46],
-  [-78, 62],
-  [48, 108],
-  [-138, -92],
-  [196, -158],
-];
-
 export function rawHeight(x, z) {
   const dunes = fbm(x * 0.008, z * 0.008, 5) * 16;
   const ripples = fbm(x * 0.03 + 40, z * 0.03, 3) * 3.4;
@@ -52,16 +46,35 @@ export function rawHeight(x, z) {
   return dunes + ripples + rocks - 8;
 }
 
+let stationPadY = null;
+const outpostPadY = new Map();
+
+/** Hab-site grade elevation: natural height at the Hab origin. */
+export function stationPadHeight() {
+  if (stationPadY == null) stationPadY = rawHeight(HAB_POS.x, HAB_POS.z);
+  return stationPadY;
+}
+
+/**
+ * Authoritative ground height. Mesh, player, loot, and props must all sample this
+ * (then bilinear through the PlaneGeometry via meshHeightAt).
+ */
 export function heightAt(x, z) {
   let h = rawHeight(x, z);
-  for (const [hx, hz] of hubs) {
-    const dx = x - hx;
-    const dz = z - hz;
-    const d = Math.hypot(dx, dz);
-    if (d < 22) {
-      const t = fade(1 - d / 22);
-      h = lerp(h, 0.15, t);
+  const site = foundationMask(x, z);
+  if (site > 1e-4) {
+    const packed = (fbm(x * 0.11 + 3, z * 0.11) - 0.5) * 0.05;
+    h = lerp(h, stationPadHeight() + packed * Math.min(1, site * 1.4), site);
+  }
+  for (const hub of OUTPOST_HUBS) {
+    const t = radialFalloff(x, z, hub.x, hub.z, hub.inner, hub.outer);
+    if (t <= 1e-4) continue;
+    let py = outpostPadY.get(hub.x);
+    if (py == null) {
+      py = rawHeight(hub.x, hub.z);
+      outpostPadY.set(hub.x, py);
     }
+    h = lerp(h, py, t);
   }
   return h;
 }
